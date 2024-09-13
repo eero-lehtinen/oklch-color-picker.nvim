@@ -36,7 +36,6 @@ function M.download_picker_app()
 	log_status("Downloading picker from " .. url, vim.log.levels.INFO)
 
 	local res = vim.system({ "curl", "-o", archive, "-L", url }, { cwd = cwd }):wait()
-	print(vim.inspect(res))
 	if res.code ~= 0 then
 		log_status("Curl failed\nstdout: " .. res.stdout .. "\nstderr: " .. res.stderr, vim.log.levels.ERROR)
 		return
