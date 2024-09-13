@@ -23,6 +23,11 @@ local function apply_new_color(color)
 	end
 
 	vim.schedule(function()
+		if pending_edit.changedtick ~= vim.api.nvim_buf_get_changedtick(pending_edit.bufnr) then
+			utils.log("Not applying new color '" .. color .. "' because the buffer has changed", vim.log.levels.WARN)
+			return
+		end
+
 		vim.api.nvim_buf_set_text(
 			pending_edit.bufnr,
 			pending_edit.line_number - 1,
@@ -133,6 +138,7 @@ function M.pick_color_under_cursor()
 
 	pending_edit = {
 		bufnr = bufnr,
+		changedtick = vim.api.nvim_buf_get_changedtick(bufnr),
 		line_number = row,
 		start = pos[1],
 		finish = pos[2],
