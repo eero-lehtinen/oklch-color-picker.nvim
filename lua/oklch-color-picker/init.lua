@@ -104,7 +104,7 @@ local function find_color(line, cursor_col)
 		"()rgb%(.*%)()",
 		"()oklch%(.*%)()",
 		"()hsl%(.*%)()",
-		"%(().*()%)",
+		"%(()[%d.,%s]*()%)", -- raw color in brackets
 	}
 
 	for _, pattern in ipairs(patterns) do
