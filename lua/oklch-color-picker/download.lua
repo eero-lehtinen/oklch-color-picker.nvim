@@ -12,7 +12,7 @@ function M.download_picker_app()
 	-- 	or utils.log
 	local log_status = utils.log
 
-	local version = "1.0.0"
+	local version = "1.0.1"
 	local platform
 	local archive_ext
 	local sysname = vim.loop.os_uname().sysname
