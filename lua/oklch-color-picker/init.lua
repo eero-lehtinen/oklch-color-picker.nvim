@@ -52,22 +52,42 @@ local function start_app()
 	end
 	path = make_path()
 
-	local res = vim.system({ utils.executable(), pending_edit.color }, { env = { PATH = path } }):wait()
-
-	if res.code ~= 0 then
-		utils.log(res.stderr, vim.log.levels.ERROR)
-		return
+	local stdout = function(err, data)
+		if data then
+			utils.log("Stdout: " .. data, vim.log.levels.DEBUG)
+			if data == "" then
+				utils.log("Picker returned an empty string", vim.log.levels.WARN)
+				return
+			end
+			local color = data:match("^[^\r\n]*")
+			apply_new_color(color)
+		elseif err then
+			utils.log("Stdout error: " .. err, vim.log.levels.DEBUG)
+		else
+			utils.log("Stdout closed", vim.log.levels.DEBUG)
+		end
 	end
 
-	utils.log("Picker success " .. res.stdout, vim.log.levels.DEBUG)
-
-	if res.stdout == "" then
-		utils.log("Picker returned an empty string", vim.log.levels.WARN)
-		return
+	local stderr = function(err, data)
+		if data then
+			utils.log(data:match("^[^\r\n]*"), vim.log.levels.WARN)
+		elseif err then
+			utils.log("Stderr error: " .. err, vim.log.levels.DEBUG)
+		else
+			utils.log("Stderr closed", vim.log.levels.DEBUG)
+		end
 	end
 
-	local color = res.stdout:match("^[^\r\n]*")
-	apply_new_color(color)
+	vim.system(
+		{ utils.executable(), pending_edit.color },
+		{ env = { PATH = path }, stdout = stdout, stderr = stderr },
+		function(res)
+			if res.code ~= 0 then
+				utils.log("App failed and exited with code " .. res.code, vim.log.levels.DEBUG)
+			end
+			utils.log("App exited successfully " .. vim.inspect(res), vim.log.levels.DEBUG)
+		end
+	)
 end
 
 local function find_color(line, cursor_col)
