@@ -13,8 +13,6 @@ function M.setup(config)
 	vim.opt.path:append(lua_path() .. "../app")
 end
 
-local uv = vim.uv
-
 local pending_edit = nil
 
 local function log(msg, level)
@@ -35,6 +33,15 @@ local function executable()
 end
 
 function M.download_picker_app()
+	local log_status = coroutine.running()
+			and function(msg, _)
+				log(msg, vim.log.levels.TRACE)
+				-- vim.schedule(function()
+				-- 	coroutine.yield({ msg = msg, level = vim.log.levels.TRACE })
+				-- end)
+			end
+		or log
+
 	local version = "1.0.0"
 	local platform
 	local archive_ext
@@ -49,7 +56,7 @@ function M.download_picker_app()
 		platform = "x86_64-pc-windows-gnu"
 		archive_ext = ".zip"
 	else
-		log("Unsupported platform: " .. sysname, vim.log.levels.ERROR)
+		log_status("Unsupported platform: " .. sysname, vim.log.levels.ERROR)
 		return
 	end
 
@@ -58,50 +65,61 @@ function M.download_picker_app()
 
 	local url = "https://github.com/eero-lehtinen/oklch-color-picker/releases/download/" .. version .. "/" .. archive
 
-	local cwd = lua_path() .. ".."
+	local cwd = lua_path() .. "/.."
 
-	log("Downloading picker from " .. url, vim.log.levels.INFO)
+	log_status("Downloading picker from " .. url, vim.log.levels.INFO)
 
-	uv.spawn("curl", { args = {
-		"-L",
+	local done = false
+
+	vim.loop.spawn("curl", { args = {
 		"-o",
 		archive,
+		"-L",
 		url,
 	}, cwd = cwd }, function(code)
 		if code ~= 0 then
-			log("Curl failed with code " .. code, vim.log.levels.ERROR)
+			log_status("Curl failed with code " .. code, vim.log.levels.ERROR)
+			done = true
 			return
 		end
-		log("Download success, extracting", vim.log.levels.INFO)
+		log_status("Download success, extracting", vim.log.levels.INFO)
 
-		local on_extract = function(code)
+		local on_extract_done = function(code)
 			if code ~= 0 then
-				log("Extraction failed with code " .. code, vim.log.levels.ERROR)
+				log_status("Extraction failed with code " .. code, vim.log.levels.ERROR)
+				done = true
 				return
 			end
 
 			os.remove(cwd .. "/" .. archive)
-			os.remove(cwd .. "/app/" + executable())
+			os.remove(cwd .. "/app/" .. executable())
 			os.remove(cwd .. "/app")
 			local success, err = os.rename(cwd .. "/" .. archive_basename, cwd .. "/app")
 			if not success then
-				log("Failed to rename archive to app: " .. err, vim.log.levels.ERROR)
+				log_status("Failed to rename archive to app: " .. err, vim.log.levels.ERROR)
+				done = true
 				return
 			end
 
-			log("Extraction success", vim.log.levels.INFO)
+			log_status("Extraction success", vim.log.levels.INFO)
+
+			done = true
 		end
 
 		if is_windows() then
-			uv.spawn(
+			vim.loop.spawn(
 				"powershell",
 				{ args = { "-command", "Expand-Archive", "-Path", archive, "-DestinationPath", "." }, cwd = cwd },
-				on_extract
+				on_extract_done
 			)
 		else
-			uv.spawn("tar", { args = { "xzf", archive }, cwd = cwd }, on_extract)
+			vim.loop.spawn("tar", { args = { "xzf", archive }, cwd = cwd }, on_extract_done)
 		end
 	end)
+
+	vim.wait(5000, function()
+		return done
+	end, 100)
 end
 
 local function apply_new_color(color)
@@ -129,10 +147,10 @@ local function start_app()
 		return
 	end
 
-	local stdout = uv.new_pipe()
-	local stderr = uv.new_pipe()
+	local stdout = vim.loop.new_pipe()
+	local stderr = vim.loop.new_pipe()
 
-	uv.spawn(executable(), { args = { pending_edit.color }, stdio = { nil, stdout, stderr } }, function(code)
+	vim.loop.spawn(executable(), { args = { pending_edit.color }, stdio = { nil, stdout, stderr } }, function(code)
 		if code ~= 0 then
 			log("App closed: exit_code " .. code, vim.log.levels.DEBUG)
 			return
