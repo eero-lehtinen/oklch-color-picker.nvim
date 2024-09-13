@@ -62,7 +62,7 @@ local function start_app()
 	utils.log("Picker success " .. res.stdout, vim.log.levels.DEBUG)
 
 	if res.stdout == "" then
-		utils.log("Picker returned empty string", vim.log.levels.WARN)
+		utils.log("Picker returned an empty string", vim.log.levels.WARN)
 		return
 	end
 
