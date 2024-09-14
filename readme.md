@@ -26,7 +26,7 @@ This plugin doesn't highlight any colors in the editor, so [brenoprata10/nvim-hi
     opts = {}
 },
 ```
-You can either include the `build = 'download.lua'` line to download the picker automatically or download it yourself from [https://github.com/eero-lehtinen/oklch-color-picker/releases] and put it to your PATH. The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ hardware acceleration that I molded to fit this use case.
+You can either include the `build = 'download.lua'` line to download the picker automatically or download it yourself from [Github releases](https://github.com/eero-lehtinen/oklch-color-picker/releases) and put it to your PATH. The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ hardware acceleration that I molded to fit this use case.
 
 ## Usage
 
