@@ -190,7 +190,8 @@ local function find_color(line, cursor_col, ft)
 	return nil
 end
 
-function M.pick_under_cursor()
+--- @param force_color_format string|nil
+function M.pick_under_cursor(force_color_format)
 	local cursor_pos = vim.api.nvim_win_get_cursor(0)
 	local row = cursor_pos[1]
 	local col = cursor_pos[2] + 1
@@ -216,7 +217,7 @@ function M.pick_under_cursor()
 		start = res.pos[1],
 		finish = res.pos[2],
 		color = res.color,
-		color_format = res.color_format,
+		color_format = force_color_format or res.color_format,
 	}
 
 	start_app()
