@@ -26,6 +26,7 @@ This plugin doesn't highlight any colors in the editor, so [brenoprata10/nvim-hi
     opts = {}
 },
 ```
+
 You can either include the `build = 'download.lua'` line to download the picker automatically or download it yourself from [Github releases](https://github.com/eero-lehtinen/oklch-color-picker/releases) and put it to your PATH. The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ hardware acceleration that I molded to fit this use case.
 
 ## Usage
@@ -120,7 +121,7 @@ The raw formats are just lists of "raw" numbers that can be used with any progra
 
 The patterns used are normal lua patterns. Css color are mostly already supported, so you should probably only add raw color formats to better support the languages you use. The default `numbers_in_brackets` should already handle most needs, but if you have linear colors, you have to specify new ones yourself.
 
-The patterns should contain two empty groups `()` to designate the replacement range. E.g. `vec3%(().*()%)` will find `1.,2.,3.` from within the text `vec3(1.,2.,3.)`, which is correct. The pattern doesn't need to be too accurate with the digits because the picker handles the validation and quickly responds if the color is invalid. It doesn't care if there are commas or invalid characters within the match, the numbers will be extracted out. Finally, remember to escape literal brackets `(` with `%`.
+The patterns should contain two empty groups `()` to designate the replacement range. E.g. `vec3%(().*()%)` will find `1.,2.,3.` from within the text `vec3(1.,2.,3.)`, which is correct. The pattern doesn't need to be too accurate with the digits because the picker handles the validation and quickly responds if the color is invalid. Finally, remember to escape literal brackets `(` with `%`.
 
 ## Other similar plugins
 
