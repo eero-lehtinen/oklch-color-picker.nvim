@@ -3,7 +3,7 @@ local utils = require("oklch-color-picker.utils")
 ---@class oklch
 local M = {}
 
----@alias oklch.PatternList { [number]: string, format: string|nil }
+---@alias oklch.PatternList { [number]: string, format: string|nil, ft: string[]|nil }
 
 ---@class oklch.Config
 local default_config = {
@@ -129,11 +129,12 @@ end
 
 --- @param line string
 --- @param cursor_col number
+--- @param ft string|nil
 --- @return { pos: [number, number], color: string, color_format: string|nil }| nil
-local function find_color(line, cursor_col)
+local function find_color(line, cursor_col, ft)
 	for _, patterns in ipairs({ M.config.custom_patterns, M.config.patterns }) do
 		for key, pattern_list in pairs(patterns) do
-			if pattern_list then
+			if pattern_list and (not pattern_list.ft or (ft and vim.tbl_contains(pattern_list.ft, ft))) then
 				for i, pattern in ipairs(pattern_list) do
 					for start_pos, end_pos in line:gmatch(pattern) do
 						if type(start_pos) ~= "number" then
@@ -174,8 +175,9 @@ function M.pick_under_cursor()
 	local bufnr = vim.api.nvim_get_current_buf()
 
 	local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
+	local ft = vim.api.nvim_buf_get_option(bufnr, "filetype")
 
-	local res = find_color(line, col)
+	local res = find_color(line, col, ft)
 
 	if not res then
 		utils.log("No color under cursor", vim.log.levels.INFO)
