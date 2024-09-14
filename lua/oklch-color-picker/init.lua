@@ -3,28 +3,35 @@ local utils = require("oklch-color-picker.utils")
 ---@class oklch
 local M = {}
 
----@alias oklch.PatternList { [number]: string, format: string|nil, ft: string[]|nil }
+---@alias oklch.PatternList { name: string|nil, format: string|nil, ft: string[]|nil, [number]: string,  }
 
 ---@class oklch.Config
 local default_config = {
 	---@type integer
 	log_level = vim.log.levels.INFO,
-	---@type { css: oklch.PatternList, numbers_in_brackets: oklch.PatternList }
-	patterns = {
-		hex = {
+	---@type oklch.PatternList[]
+	default_patterns = {
+		{
+			name = "hex",
 			"()#%x%x%x%x%x%x%x%x()",
 			"()#%x%x%x%x%x%x()",
 			"()#%x%x%x%x()",
 			"()#%x%x%x()",
 		},
-		css = {
+		{
+			name = "css",
 			"()rgb%(.*%)()",
 			"()oklch%(.*%)()",
 			"()hsl%(.*%)()",
 		},
-		numbers_in_brackets = { "%(()[%d.,%s]*()%)" },
+		{
+			name = "numbers_in_brackets",
+			"%(()[%d.,%s]*()%)",
+		},
 	},
-	---@type { [string]: oklch.PatternList }
+	---@type string[]
+	disable_default_patterns = {},
+	---@type oklch.PatternList[]
 	custom_patterns = {},
 }
 
@@ -35,6 +42,22 @@ M.config = {}
 function M.setup(config)
 	M.config = vim.tbl_deep_extend("force", default_config, config or {})
 	utils.setup(M.config)
+
+	for _, name in ipairs(M.config.disable_default_patterns) do
+		for i = #M.config.default_patterns, 1, -1 do
+			if M.config.default_patterns[i].name == name then
+				table.remove(M.config.default_patterns, i)
+			end
+		end
+	end
+
+	for _, patterns in ipairs({ M.config.default_patterns, M.config.custom_patterns }) do
+		for _, pattern_list in ipairs(patterns) do
+			for i = 1, #pattern_list do
+				pattern_list[i] = "()" .. pattern_list[i] .. "()"
+			end
+		end
+	end
 end
 
 --- @alias oklch.PendingEdit { bufnr: number, changedtick: number, line_number: number, start: number, finish: number, color: string, color_format: string|nil }|nil
@@ -132,15 +155,15 @@ end
 --- @param ft string|nil
 --- @return { pos: [number, number], color: string, color_format: string|nil }| nil
 local function find_color(line, cursor_col, ft)
-	for _, patterns in ipairs({ M.config.custom_patterns, M.config.patterns }) do
-		for key, pattern_list in pairs(patterns) do
+	for _, patterns in ipairs({ M.config.custom_patterns, M.config.default_patterns }) do
+		for _, pattern_list in ipairs(patterns) do
 			if pattern_list and (not pattern_list.ft or (ft and vim.tbl_contains(pattern_list.ft, ft))) then
 				for i, pattern in ipairs(pattern_list) do
-					for start_pos, end_pos in line:gmatch(pattern) do
-						if type(start_pos) ~= "number" then
+					for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
+						if type(replace_start) ~= "number" then
 							utils.log(
 								"Pattern "
-									.. key
+									.. (pattern_list.name or "unnamed")
 									.. "["
 									.. i
 									.. "] = '"
@@ -150,10 +173,10 @@ local function find_color(line, cursor_col, ft)
 							)
 							return nil
 						else
-							if cursor_col >= start_pos and cursor_col <= end_pos - 1 then
+							if cursor_col >= match_start and cursor_col <= match_end - 1 then
 								return {
-									pos = { start_pos, end_pos - 1 },
-									color = line:sub(start_pos --[[@as number]], end_pos - 1),
+									pos = { replace_start, replace_end - 1 },
+									color = line:sub(replace_start --[[@as number]], replace_end - 1),
 									color_format = pattern_list.format,
 								}
 							end
