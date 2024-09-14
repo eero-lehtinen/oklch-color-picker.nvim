@@ -1,13 +1,13 @@
 local utils = require("oklch-color-picker.utils")
 
-local M = {}
-
-function M.download_picker_program()
+local function download_picker_program()
 	local log_status = coroutine.running()
 			and function(msg, level)
 				coroutine.yield({ msg = msg, level = level })
 			end
-		or utils.log
+		or function(msg, _)
+			print(msg)
+		end
 
 	local version = "1.1.0"
 	local platform
@@ -71,4 +71,4 @@ function M.download_picker_program()
 	log_status("Extraction success", vim.log.levels.INFO)
 end
 
-return M
+download_picker_program()
