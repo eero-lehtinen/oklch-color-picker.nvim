@@ -4,14 +4,11 @@
 
 - Choose a color from your buffer and edit it in a graphical editor
 - Supports many color formats:
-
   - Hex (`#RRGGBB`, `#RRGGBBAA`)
   - Other common CSS formats (`rgb(..)`, `hsl(..)`, `oklch(..)`)
   - Any number in brackets can be detected as a color (e.g. `vec3(0.5, 0.5, 0.5)` or `vec4(0.5, 0.5, 0.5, 1.0)`)
   - You can also define your own formats to have more control
-
 - The picker application uses the Oklch colorspace
-
   - Motivation: [An article by the Oklab creator](https://bottosson.github.io/posts/oklab/)
   - Oklch uses the same theory as Oklab, but uses parameters that are easier to understand
   - L<sub>r</sub> estimate is used instead of L as specified in [another article by the same guy](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab)
@@ -25,12 +22,11 @@ This plugin doesn't highlight any colors in the editor, so [brenoprata10/nvim-hi
 ```lua
 {
     'eero-lehtinen/oklch-color-picker.nvim',
-    -- You can either include this line to download automatically or get the binary yourself
-    -- from (https://github.com/eero-lehtinen/oklch-color-picker/releases) and put it in your PATH
     build = 'download.lua',
     opts = {}
 },
 ```
+You can either include the `build = 'download.lua'` line to download automatically or download the picker yourself from [https://github.com/eero-lehtinen/oklch-color-picker/releases] and put it to your PATH.
 
 ## Usage
 
@@ -89,21 +85,21 @@ Define your own patterns:
 custom_patterns = {
     {
         -- (Optional) Used in possible error messages with invalid patterns
-        name = 'my_rust_color',
+        name = 'glsl_linear',
         -- (Optional) Often useless because the picker application detects formats automatically.
-        format = 'raw_rgb',
+        format = 'raw_rgb_linear',
         -- (Optional) Filetypes to apply the pattern to. Must be a table.
-        ft = { 'rust' },
+        ft = { 'glsl' },
         -- The list of patterns.
-        'MyColor::rgb%(().*()%)',
-        'Srgba::new%(().*()%)',
+        'vec3%(().*()%)',  -- Extracts the numbers `0.1, 0.2, 0.3` from code `vec3(0.1, 0.2, 0.3)`
+        'vec4%(().*()%)',
     },
     {
-        name = 'glsl_linear',
-        format = 'raw_rgb_linear',
-        ft = { 'glsl' },
-        'vec3%(().*()%)',
-        'vec4%(().*()%)',
+        name = 'my_rust_color',
+        format = 'raw_rgb',
+        ft = { 'rust' },
+        'MyColor::rgb%(().*()%)',
+        'Srgba::new%(().*()%)',
     },
     -- You can have as many patterns as you want.
     -- They are ordered and the first one that matches is used.
@@ -124,7 +120,7 @@ The raw formats are just lists of "raw" numbers that can be used with any progra
 
 The patterns used are normal lua patterns. Css color are mostly already supported, so you should probably only add raw color formats to better support the languages you use. The default `numbers_in_brackets` should already handle most needs, but if you have linear colors, you have to specify new ones yourself.
 
-The patterns should contain two empty groups `()` to designate the replacement range. E.g. `vec3%(().*()%)` will find `1.,2.,3.` from within the text `vec3(1.,2.,3.)`, which is correct. The pattern doesn't need to be too accurate with the digits because the picker handles the validation and quickly resonds if the color is invalid. It doesn't care if there are commas or invalid characters within the match, the numbers will be extracted out. Finally, remember to escape literal brackets `(` with `%`.
+The patterns should contain two empty groups `()` to designate the replacement range. E.g. `vec3%(().*()%)` will find `1.,2.,3.` from within the text `vec3(1.,2.,3.)`, which is correct. The pattern doesn't need to be too accurate with the digits because the picker handles the validation and quickly responds if the color is invalid. It doesn't care if there are commas or invalid characters within the match, the numbers will be extracted out. Finally, remember to escape literal brackets `(` with `%`.
 
 ## Other similar plugins
 
