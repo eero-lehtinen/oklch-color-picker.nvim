@@ -1,18 +1,48 @@
 local utils = require("oklch-color-picker.utils")
 
+---@class oklch
 local M = {}
 
-M.default_config = {
+---@alias oklch.PatternList { [number]: string, format: string|nil }
+
+---@class oklch.Config
+local default_config = {
+	---@type integer
 	log_level = vim.log.levels.INFO,
+	---@type { css: oklch.PatternList, numbers_in_brackets: oklch.PatternList }
+	patterns = {
+		hex = {
+			"()#%x%x%x%x%x%x%x%x()",
+			"()#%x%x%x%x%x%x()",
+			"()#%x%x%x%x()",
+			"()#%x%x%x()",
+		},
+		css = {
+			"()rgb%(.*%)()",
+			"()oklch%(.*%)()",
+			"()hsl%(.*%)()",
+		},
+		numbers_in_brackets = { "%(()[%d.,%s]*()%)" },
+	},
+	---@type { [string]: oklch.PatternList }
+	custom_patterns = {},
 }
 
+---@type oklch.Config
+M.config = {}
+
+---@param config oklch.Config
 function M.setup(config)
-	M.config = vim.tbl_deep_extend("force", M.default_config, config or {})
+	M.config = vim.tbl_deep_extend("force", default_config, config or {})
 	utils.setup(M.config)
 end
 
+--- @alias oklch.PendingEdit { bufnr: number, changedtick: number, line_number: number, start: number, finish: number, color: string, color_format: string|nil }|nil
+
+--- @type oklch.PendingEdit
 local pending_edit = nil
 
+---@param color string
 local function apply_new_color(color)
 	if not pending_edit then
 		utils.log("Don't call apply_new_color if there is no pending edit!!!", vim.log.levels.DEBUG)
@@ -37,8 +67,11 @@ local function apply_new_color(color)
 	end)
 end
 
+---@type string|nil
 local path = nil
-local make_path = function()
+
+---@return string
+local function make_path()
 	if path ~= nil then
 		return path
 	end
@@ -80,42 +113,60 @@ local function start_app()
 		end
 	end
 
-	vim.system(
-		{ utils.executable(), pending_edit.color },
-		{ env = { PATH = path }, stdout = stdout, stderr = stderr },
-		function(res)
-			if res.code ~= 0 then
-				utils.log("App failed and exited with code " .. res.code, vim.log.levels.DEBUG)
-			end
-			utils.log("App exited successfully " .. vim.inspect(res), vim.log.levels.DEBUG)
+	local cmd = { utils.executable(), pending_edit.color }
+	if pending_edit.color_format then
+		table.insert(cmd, "--format")
+		table.insert(cmd, pending_edit.color_format)
+	end
+
+	vim.system(cmd, { env = { PATH = path }, stdout = stdout, stderr = stderr }, function(res)
+		if res.code ~= 0 then
+			utils.log("App failed and exited with code " .. res.code, vim.log.levels.DEBUG)
 		end
-	)
+		utils.log("App exited successfully " .. vim.inspect(res), vim.log.levels.DEBUG)
+	end)
 end
 
+--- @param line string
+--- @param cursor_col number
+--- @return { pos: [number, number], color: string, color_format: string|nil }| nil
 local function find_color(line, cursor_col)
-	local patterns = {
-		"()#%x%x%x%x%x%x%x%x()",
-		"()#%x%x%x%x%x%x()",
-		"()#%x%x%x%x()",
-		"()#%x%x%x()",
-		"()rgb%(.*%)()",
-		"()oklch%(.*%)()",
-		"()hsl%(.*%)()",
-		"%(()[%d.,%s]*()%)", -- raw color in brackets
-	}
-
-	for _, pattern in ipairs(patterns) do
-		for start_pos, end_pos in line:gmatch(pattern) do
-			if cursor_col >= start_pos and cursor_col <= end_pos - 1 then
-				return { start_pos, end_pos - 1 }, line:sub(start_pos, end_pos - 1)
+	for _, patterns in ipairs({ M.config.custom_patterns, M.config.patterns }) do
+		for key, pattern_list in pairs(patterns) do
+			if pattern_list then
+				for i, pattern in ipairs(pattern_list) do
+					for start_pos, end_pos in line:gmatch(pattern) do
+						if type(start_pos) ~= "number" then
+							utils.log(
+								"Pattern "
+									.. key
+									.. "["
+									.. i
+									.. "] = '"
+									.. pattern
+									.. "' is invalid. It should contain two empty '()' groups to designate the replacement range and no other groups. Remember to escape literal brackets: '%(' or '%)'",
+								vim.log.levels.ERROR
+							)
+							return nil
+						else
+							if cursor_col >= start_pos and cursor_col <= end_pos - 1 then
+								return {
+									pos = { start_pos, end_pos - 1 },
+									color = line:sub(start_pos --[[@as number]], end_pos - 1),
+									color_format = pattern_list.format,
+								}
+							end
+						end
+					end
+				end
 			end
 		end
 	end
 
-	return nil, nil
+	return nil
 end
 
-function M.pick_color_under_cursor()
+function M.pick_under_cursor()
 	local cursor_pos = vim.api.nvim_win_get_cursor(0)
 	local row = cursor_pos[1]
 	local col = cursor_pos[2] + 1
@@ -124,22 +175,23 @@ function M.pick_color_under_cursor()
 
 	local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
 
-	local pos, color = find_color(line, col)
+	local res = find_color(line, col)
 
-	if not pos or not color then
+	if not res then
 		utils.log("No color under cursor", vim.log.levels.INFO)
 		return
 	end
 
-	utils.log("Found color at position " .. vim.inspect(pos) .. " with color " .. color, vim.log.levels.DEBUG)
+	utils.log("Found color " .. res.color .. "at position " .. vim.inspect(res.pos), vim.log.levels.DEBUG)
 
 	pending_edit = {
 		bufnr = bufnr,
 		changedtick = vim.api.nvim_buf_get_changedtick(bufnr),
 		line_number = row,
-		start = pos[1],
-		finish = pos[2],
-		color = color,
+		start = res.pos[1],
+		finish = res.pos[2],
+		color = res.color,
+		color_format = res.color_format,
 	}
 
 	start_app()

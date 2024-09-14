@@ -68,7 +68,7 @@ local function download_picker_program()
 		return
 	end
 
-	log_status("Extraction success", vim.log.levels.INFO)
+	log_status("Extraction success, binary in " .. cwd .. "/app", vim.log.levels.INFO)
 end
 
 download_picker_program()
