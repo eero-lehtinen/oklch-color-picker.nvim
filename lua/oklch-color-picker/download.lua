@@ -2,13 +2,12 @@ local utils = require("oklch-color-picker.utils")
 
 local M = {}
 
-function M.download_picker_app()
+function M.download_picker_program()
 	local log_status = coroutine.running()
 			and function(msg, level)
 				coroutine.yield({ msg = msg, level = level })
 			end
 		or utils.log
-	-- local log_status = utils.log
 
 	local version = "1.0.1"
 	local platform

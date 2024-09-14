@@ -3,7 +3,7 @@ local utils = require("oklch-color-picker.utils")
 
 local M = {}
 
-M.download_picker_app = download.download_picker_app
+M.download_picker_program = download.download_picker_program
 
 M.default_config = {
 	log_level = vim.log.levels.INFO,
