@@ -91,7 +91,7 @@ custom_patterns = {
         -- (Optional) Filetypes to apply the pattern to. Must be a table.
         ft = { 'glsl' },
         -- The list of patterns.
-        'vec3%(().*()%)',  -- Extracts the numbers `0.1, 0.2, 0.3` from code `vec3(0.1, 0.2, 0.3)`
+        'vec3%(().*()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
         'vec4%(().*()%)',
     },
     {
