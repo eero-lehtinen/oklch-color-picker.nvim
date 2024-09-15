@@ -77,7 +77,7 @@ custom_patterns = {
   {
     -- (Optional) Used in possible error messages with invalid patterns.
     name = 'glsl_vec_linear',
-    -- (Optional) Often useless because the picker application detects formats automatically.
+    -- (Optional) Color format for the picker. Auto detect by default.
     format = 'raw_rgb_linear',
     -- (Optional) Filetypes to apply the pattern to. Must be a table.
     ft = { 'glsl' },
