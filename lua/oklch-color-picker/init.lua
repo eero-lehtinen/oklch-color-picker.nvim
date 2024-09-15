@@ -43,7 +43,9 @@ function M.setup(config)
   M.config = vim.tbl_deep_extend('force', default_config, config or {})
   utils.setup(M.config)
 
-  vim.api.nvim_create_user_command('ColorPickOklch', M.pick_under_cursor, {})
+  vim.api.nvim_create_user_command('ColorPickOklch', function()
+    M.pick_under_cursor()
+  end, {})
 
   for _, name in ipairs(M.config.disable_default_patterns) do
     for i = #M.config.default_patterns, 1, -1 do
