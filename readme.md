@@ -107,7 +107,7 @@ The raw formats are just lists of numbers separated by commas that can be used w
 
 The patterns used are normal lua patterns. Css color are mostly already supported, so you should probably only add raw color formats to better support the languages you use.
 
-The default `numbers_in_brackets` should already handle most needs. It matches any number of digits, dots and commas inside brackets. The numbers are validated by the picker application so the pattern doesn't need to specify exact number matching. You can still create your own patterns if you have linear colors that can't be auto detected, or want to detect a color when the cursor is over any part of the match, not just inside the brackets.
+The default `numbers_in_brackets` should already handle most needs. It matches any number of digits, dots and commas inside brackets. The numbers are validated by the picker application so the pattern doesn't need to specify exact number matching. You can still create your own patterns if you have linear colors that can't be auto detected or if your type names clash with css patterns.
 
 The patterns should contain two empty groups `()` to designate the replacement range. E.g. `vec3%(().*()%)` will find `.1,.2,.2` from within the text `vec3(.1,.2,.3)`. Remember to escape literal brackets `(` with `%`.
 
