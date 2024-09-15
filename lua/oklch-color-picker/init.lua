@@ -91,6 +91,8 @@ local function apply_new_color(color)
       { color }
     )
     pending_edit = nil
+
+    utils.log('Color ' .. color .. ' applied', vim.log.levels.INFO)
   end)
 end
 
