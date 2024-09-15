@@ -115,3 +115,4 @@ The patterns should contain two empty groups `()` to designate the replacement r
 
 - [KabbAmine/vCoolor.vim](https://github.com/KabbAmine/vCoolor.vim)
 - [ziontee113/color-picker.nvim](https://github.com/ziontee113/color-picker.nvim)
+- [My previous attempt (oklch-color-picker-0.nvim)](https://github.com/eero-lehtinen/oklch-color-picker-0.nvim)
