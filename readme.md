@@ -21,54 +21,44 @@ This plugin doesn't highlight any colors in the editor, so [brenoprata10/nvim-hi
 
 ```lua
 {
-    'eero-lehtinen/oklch-color-picker.nvim',
-    build = 'download.lua',
-    opts = {}
+  'eero-lehtinen/oklch-color-picker.nvim',
+  build = 'download.lua',
+  keys = {
+    { '<leader>p', function() require('oklch-color-picker').pick_under_cursor() end },
+  },
+  cmd = "ColorPickOklch",
+  opts = {}
 },
 ```
 
 You can either include the `build = 'download.lua'` line to download the picker automatically or download it yourself from [Github releases](https://github.com/eero-lehtinen/oklch-color-picker/releases) and put it to your PATH. The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ hardware acceleration that I molded to fit this use case.
 
-## Usage
-
-Use `:ColorPickOklch` to pick a color under the cursor, or call
-
-```lua
-require('oklch-color-picker').pick_under_cursor()
-```
-
-Keymaps you have to setup yourself, e.g.
-
-```lua
-vim.keymap.set('n', '<leader>p', require('oklch-color-picker').pick_under_cursor)
-```
-
 ## Default Options
 
 ```lua
-local default_config = {
-    log_level = vim.log.levels.INFO,
-    default_patterns = {
-        {
-            name = "hex",
-            "()#%x%x%x%x%x%x%x%x()",
-            "()#%x%x%x%x%x%x()",
-            "()#%x%x%x%x()",
-            "()#%x%x%x()",
-        },
-        {
-            name = "css",
-            "()rgb%(.*%)()",
-            "()oklch%(.*%)()",
-            "()hsl%(.*%)()",
-        },
-        {
-            name = "numbers_in_brackets",
-            "%(()[%d.,%s]*()%)",
-        },
+{
+  log_level = vim.log.levels.INFO,
+  default_patterns = {
+    {
+      name = 'hex',
+      '()#%x%x%x%x%x%x%x%x()',
+      '()#%x%x%x%x%x%x()',
+      '()#%x%x%x%x()',
+      '()#%x%x%x()',
     },
-    disable_default_patterns = {},
-    custom_patterns = {},
+    {
+      name = 'css',
+      '()rgb%(.*%)()',
+      '()oklch%(.*%)()',
+      '()hsl%(.*%)()',
+    },
+    {
+      name = 'numbers_in_brackets',
+      '%(()[%d.,%s]*()%)',
+    },
+  },
+  disable_default_patterns = {},
+  custom_patterns = {},
 }
 ```
 
@@ -84,28 +74,25 @@ Define your own patterns:
 
 ```lua
 custom_patterns = {
-    {
-        -- (Optional) Used in possible error messages with invalid patterns
-        name = 'glsl_vec_linear',
-        -- (Optional) Often useless because the picker application detects formats automatically.
-        format = 'raw_rgb_linear',
-        -- (Optional) Filetypes to apply the pattern to. Must be a table.
-        ft = { 'glsl' },
-        -- The list of patterns.
-        'vec3%(().*()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
-        'vec4%(().*()%)',
-    },
-    {
-        name = 'my_rust_color',
-        ft = { 'rust' },
-        'MyColor::rgb%(().*()%)',
-        'Srgba::new%(().*()%)',
-    },
-    -- You can have as many patterns as you want.
-    -- They are ordered and the first one that matches is used.
-    {
-      -- ...
-    },
+  {
+    -- (Optional) Used in possible error messages with invalid patterns
+    name = 'glsl_vec_linear',
+    -- (Optional) Often useless because the picker application detects formats automatically.
+    format = 'raw_rgb_linear',
+    -- (Optional) Filetypes to apply the pattern to. Must be a table.
+    ft = { 'glsl' },
+    -- The list of patterns.
+    'vec3%(().*()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
+    'vec4%(().*()%)',
+  },
+  {
+    name = 'my_rust_color',
+    ft = { 'rust' },
+    'MyColor::rgb%(().*()%)',
+    'Srgba::new%(().*()%)',
+  },
+  -- You can have as many patterns as you want.
+  -- They are ordered and the first one that matches is used.
 },
 ```
 
