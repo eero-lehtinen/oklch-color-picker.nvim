@@ -4,7 +4,7 @@
 
 - Choose a color from your buffer and edit it in a graphical editor
 - Supports many color formats:
-  - Hex (`#RRGGBB`, `#RRGGBBAA`)
+  - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`)
   - Other common CSS formats (`rgb(..)`, `hsl(..)`, `oklch(..)`)
   - Any number in brackets can be detected as a color (e.g. `vec3(0.5, 0.5, 0.5)` or `vec4(0.5, 0.5, 0.5, 1.0)`)
   - You can also define your own formats to have more control
@@ -67,7 +67,7 @@ You can either include the `build = 'download.lua'` line to download the picker 
 List names of default patterns you want to disable:
 
 ```lua
-disable_default_patterns = { 'numbers_in_brackets' },
+disable_default_patterns = { 'numbers_in_brackets' }
 ```
 
 Define your own patterns:
@@ -75,7 +75,7 @@ Define your own patterns:
 ```lua
 custom_patterns = {
   {
-    -- (Optional) Used in possible error messages with invalid patterns
+    -- (Optional) Used in possible error messages with invalid patterns.
     name = 'glsl_vec_linear',
     -- (Optional) Often useless because the picker application detects formats automatically.
     format = 'raw_rgb_linear',
