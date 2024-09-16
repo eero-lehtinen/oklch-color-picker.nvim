@@ -1,6 +1,6 @@
-<h1 align="center">OKLCH Color Picker for Neovim</h1>
+<h1 align="center">oklch-color-picker.nvim</h1>
 
-https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
+<p align="center">Sometimes the resolution of a cli just isn't enough</p>
 
 ## Features
 
@@ -15,7 +15,11 @@ https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
   - Oklch uses the same theory as Oklab, but uses parameters that are easier to understand
   - L<sub>r</sub> estimate is used instead of L as specified in [another article by the same guy](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab)
 
-This plugin doesn't highlight any colors in the editor, so [brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) is a good companion plugin.
+This plugin doesn't highlight any colors in the editor, so a highligher like [uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) or [brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) is a good companion plugin.
+
+## Demo
+
+https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
 
 ## Installation
 
