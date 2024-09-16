@@ -10,7 +10,7 @@
   - Other common CSS formats (`rgb(..)`, `hsl(..)`, `oklch(..)`)
   - Any number in brackets can be detected as a color (e.g. `vec3(0.5, 0.5, 0.5)` or `vec4(0.5, 0.5, 0.5, 1.0)`)
   - You can also define your own formats to have more control
-- The picker application uses the Oklch colorspace
+- The picker application uses a perceptual colorspace (Oklch) for intuitive editing
   - Motivation: [An article by the Oklab creator](https://bottosson.github.io/posts/oklab/)
   - Oklch uses the same theory as Oklab, but uses parameters that are easier to understand
   - L<sub>r</sub> estimate is used instead of L as specified in [another article by the same guy](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab)
