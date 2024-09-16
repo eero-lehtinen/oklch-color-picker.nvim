@@ -1,4 +1,6 @@
-# OKLCH Color Picker for Neovim
+<h1 align="center">OKLCH Color Picker for Neovim</h1>
+
+https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
 
 ## Features
 
