@@ -13,7 +13,18 @@ end
 function M.log(msg, level)
   if level >= (M.config ~= nil and M.config.log_level or vim.log.levels.INFO) then
     vim.schedule(function()
-      vim.notify('oklch-color-picker: ' .. msg, level)
+      msg = 'oklch-color-picker: ' .. msg
+
+      if level == vim.log.levels.INFO then
+        -- trim beginning until echospace
+        local max_len = vim.v.echospace
+        local len = msg:len()
+        if len > max_len then
+          msg = '<' .. msg:sub(len - max_len + 2)
+        end
+      end
+
+      vim.notify(msg, level)
     end)
   end
 end
