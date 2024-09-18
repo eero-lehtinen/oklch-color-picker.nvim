@@ -2,6 +2,11 @@
 
 <p align="center">Sometimes the resolution of a cli just isn't enough</p>
 
+<p align="center" width="100%"> 
+  <img src="https://github.com/user-attachments/assets/62ed2fb8-fc71-4c7a-9b60-ad7768aabbce" alt="screenshot">
+</p>
+
+
 ## Features
 
 - Choose a color from your buffer and edit it in a graphical editor
