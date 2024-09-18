@@ -15,7 +15,7 @@
   - Other common CSS formats (`rgb(..)`, `hsl(..)`, `oklch(..)`)
   - Any number in brackets can be detected as a color (e.g. `vec3(0.5, 0.5, 0.5)` or `vec4(0.5, 0.5, 0.5, 1.0)`)
   - You can also define your own formats to have more control
-- The picker application uses a perceptual colorspace (Oklch) for intuitive editing
+- [The picker application](https://github.com/eero-lehtinen/oklch-color-picker) uses a perceptual colorspace (Oklch) for intuitive editing
   - Motivation: [An article by the Oklab creator](https://bottosson.github.io/posts/oklab/)
   - Oklch uses the same theory as Oklab, but uses parameters that are easier to understand
   - L<sub>r</sub> estimate is used instead of L as specified in [another article by the same guy](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab)
@@ -42,7 +42,7 @@ https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
 },
 ```
 
-You can either include the `build = 'download.lua'` line to download the picker automatically or download it yourself from [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker/releases) (it's open source too in a different repo!) and put it to your PATH. The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ hardware acceleration that I molded to fit this use case.
+You can either include the `build = 'download.lua'` line to download the picker automatically or download it yourself from [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker) (it's open source too in a different repo!) and put it to your PATH. The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ hardware acceleration that I molded to fit this use case.
 
 ## Default Options
 
