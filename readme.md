@@ -42,7 +42,7 @@ https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
 },
 ```
 
-You can either include the `build = 'download.lua'` line to download the picker automatically or download it yourself from [Github releases](https://github.com/eero-lehtinen/oklch-color-picker/releases) and put it to your PATH. The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ hardware acceleration that I molded to fit this use case.
+You can either include the `build = 'download.lua'` line to download the picker automatically or download it yourself from [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker/releases) (it's open source too in a different repo!) and put it to your PATH. The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ hardware acceleration that I molded to fit this use case.
 
 ## Default Options
 
