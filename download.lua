@@ -7,7 +7,7 @@ local function download_picker_program()
     print(msg)
   end
 
-  local version = '1.3.1'
+  local version = '1.4.1'
   local platform
   local archive_ext
   local sysname = vim.loop.os_uname().sysname
