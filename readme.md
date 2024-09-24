@@ -6,7 +6,6 @@
   <img src="https://github.com/user-attachments/assets/62ed2fb8-fc71-4c7a-9b60-ad7768aabbce" alt="screenshot">
 </p>
 
-
 ## Features
 
 - Choose a color from your buffer and edit it in a graphical editor
@@ -36,7 +35,8 @@ https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
   'eero-lehtinen/oklch-color-picker.nvim',
   build = 'download.lua',
   keys = {
-    { '<leader>p', function() require('oklch-color-picker').pick_under_cursor() end },
+    -- One handed keymaps recommended, you will be using the mouse
+    { '<leader>v', function() require('oklch-color-picker').pick_under_cursor() end },
   },
   cmd = "ColorPickOklch",
   opts = {}
