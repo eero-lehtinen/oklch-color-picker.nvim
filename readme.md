@@ -105,6 +105,7 @@ custom_patterns = {
   },
   -- You can have as many patterns as you want.
   -- They are ordered and the first one that matches is used.
+  -- Custom patterns have priority over default patterns.
 },
 ```
 
