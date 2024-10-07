@@ -78,7 +78,7 @@ local function apply_new_color(color)
 
   vim.schedule(function()
     if pending_edit.changedtick ~= vim.api.nvim_buf_get_changedtick(pending_edit.bufnr) then
-      utils.log("Not applying new color '" .. color .. "' because the buffer has changed", vim.log.levels.WARN)
+      utils.log(string.format("Not applying new color '%s' because the buffer has changed", color), vim.log.levels.WARN)
       return
     end
 
@@ -168,8 +168,12 @@ local function find_color(line, cursor_col, ft)
           for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
             if type(replace_start) ~= 'number' then
               utils.log(
-                ('Pattern ' .. (pattern_list.name or 'unnamed') .. '[' .. i .. "] = '" .. pattern)
-                  .. "' is invalid. It should contain two empty '()' groups to designate the replacement range and no other groups. Remember to escape literal brackets: '%(' and '%)'",
+                string.format(
+                  "Pattern %s[%d] = '%s' is invalid. It should contain two empty '()' groups to designate the replacement range and no other groups. Remember to escape literal brackets: '%%(' and '%%)'",
+                  (pattern_list.name or 'unnamed'),
+                  i,
+                  pattern
+                ),
                 vim.log.levels.ERROR
               )
               return nil
@@ -209,7 +213,7 @@ function M.pick_under_cursor(force_color_format)
     return
   end
 
-  utils.log('Found color ' .. res.color .. 'at position ' .. vim.inspect(res.pos), vim.log.levels.DEBUG)
+  utils.log(string.format("Found color '%s' at position %s", res.color, vim.inspect(res.pos)), vim.log.levels.DEBUG)
 
   pending_edit = {
     bufnr = bufnr,
