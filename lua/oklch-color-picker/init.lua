@@ -3,40 +3,41 @@ local utils = require 'oklch-color-picker.utils'
 ---@class oklch
 local M = {}
 
----@alias oklch.PatternList { name: string|nil, format: string|nil, ft: string[]|nil, [number]: string,  }
+---@alias oklch.PatternList { priority: number|nil, format: string|nil, ft: string[]|nil, [number]: string,  }
 
 ---@class oklch.Config
 local default_config = {
   ---@type integer
   log_level = vim.log.levels.INFO,
-  ---@type oklch.PatternList[]
-  default_patterns = {
-    {
-      name = 'hex',
+  ---@type { [string]: oklch.PatternList}
+  patterns = {
+    hex = {
+      priority = -1,
       '()#%x%x%x%x%x%x%x%x()',
       '()#%x%x%x%x%x%x()',
       '()#%x%x%x%x()',
       '()#%x%x%x()',
     },
-    {
-      name = 'css',
+    css = {
+      priority = -1,
       '()rgb%(.*%)()',
       '()oklch%(.*%)()',
       '()hsl%(.*%)()',
     },
-    {
-      name = 'numbers_in_brackets',
+    numbers_in_brackets = {
+      priority = -10,
       '%(()[%d.,%s]*()%)',
     },
   },
-  ---@type string[]
-  disable_default_patterns = {},
-  ---@type oklch.PatternList[]
-  custom_patterns = {},
 }
 
 ---@type oklch.Config
 M.config = {}
+
+---@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: string[]|nil, [number]: string,  }
+
+--- @type oklch.FinalPatternList[]
+M.final_patterns = {}
 
 ---@param config oklch.Config
 function M.setup(config)
@@ -47,21 +48,21 @@ function M.setup(config)
     M.pick_under_cursor()
   end, {})
 
-  for _, name in ipairs(M.config.disable_default_patterns) do
-    for i = #M.config.default_patterns, 1, -1 do
-      if M.config.default_patterns[i].name == name then
-        table.remove(M.config.default_patterns, i)
-      end
+  for key, pattern_list in pairs(M.config.patterns) do
+    table.insert(M.final_patterns, {
+      name = key,
+      priority = pattern_list.priority or 0,
+      format = pattern_list.format,
+      ft = pattern_list.ft,
+    })
+    for i, pattern in ipairs(pattern_list) do
+      M.final_patterns[#M.final_patterns][i] = '()' .. pattern .. '()'
     end
   end
 
-  for _, patterns in ipairs { M.config.default_patterns, M.config.custom_patterns } do
-    for _, pattern_list in ipairs(patterns) do
-      for i = 1, #pattern_list do
-        pattern_list[i] = '()' .. pattern_list[i] .. '()'
-      end
-    end
-  end
+  table.sort(M.final_patterns, function(a, b)
+    return a.priority > b.priority
+  end)
 end
 
 --- @alias oklch.PendingEdit { bufnr: number, changedtick: number, line_number: number, start: number, finish: number, color: string, color_format: string|nil }|nil
@@ -161,30 +162,28 @@ end
 --- @param ft string|nil
 --- @return { pos: [number, number], color: string, color_format: string|nil }| nil
 local function find_color(line, cursor_col, ft)
-  for _, patterns in ipairs { M.config.custom_patterns, M.config.default_patterns } do
-    for _, pattern_list in ipairs(patterns) do
-      if pattern_list and (not pattern_list.ft or (ft and vim.tbl_contains(pattern_list.ft, ft))) then
-        for i, pattern in ipairs(pattern_list) do
-          for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
-            if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
-              utils.log(
-                string.format(
-                  "Pattern %s[%d] = '%s' is invalid. It should contain two empty '()' groups to designate the replacement range and no other groups. Remember to escape literal brackets: '%%(' and '%%)'",
-                  (pattern_list.name or 'unnamed'),
-                  i,
-                  pattern
-                ),
-                vim.log.levels.ERROR
-              )
-              return nil
-            else
-              if cursor_col >= match_start and cursor_col <= match_end - 1 then
-                return {
-                  pos = { replace_start, replace_end - 1 },
-                  color = line:sub(replace_start --[[@as number]], replace_end - 1),
-                  color_format = pattern_list.format,
-                }
-              end
+  for _, pattern_list in ipairs(M.final_patterns) do
+    if pattern_list and (not pattern_list.ft or (ft and vim.tbl_contains(pattern_list.ft, ft))) then
+      for i, pattern in ipairs(pattern_list) do
+        for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
+          if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
+            utils.log(
+              string.format(
+                "Pattern %s[%d] = '%s' is invalid. It should contain two empty '()' groups to designate the replacement range and no other groups. Remember to escape literal brackets: '%%(' and '%%)'",
+                pattern_list.name,
+                i,
+                pattern
+              ),
+              vim.log.levels.ERROR
+            )
+            return nil
+          else
+            if cursor_col >= match_start and cursor_col <= match_end - 1 then
+              return {
+                pos = { replace_start, replace_end - 1 },
+                color = line:sub(replace_start --[[@as number]], replace_end - 1),
+                color_format = pattern_list.format,
+              }
             end
           end
         end

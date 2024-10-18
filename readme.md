@@ -48,65 +48,66 @@ https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
 ## Default Options
 
 ```lua
-{
+local default_config = {
   log_level = vim.log.levels.INFO,
-  default_patterns = {
-    {
-      name = 'hex',
+  patterns = {
+    hex = {
+      priority = -1,
       '()#%x%x%x%x%x%x%x%x()',
       '()#%x%x%x%x%x%x()',
       '()#%x%x%x%x()',
       '()#%x%x%x()',
     },
-    {
-      name = 'css',
+    css = {
+      priority = -1,
       '()rgb%(.*%)()',
       '()oklch%(.*%)()',
       '()hsl%(.*%)()',
     },
-    {
-      name = 'numbers_in_brackets',
+    numbers_in_brackets = {
+      priority = -10,
       '%(()[%d.,%s]*()%)',
     },
   },
-  disable_default_patterns = {},
-  custom_patterns = {},
 }
 ```
 
 ## Configuration
 
-List names of default patterns you want to disable:
+Disable default patterns by setting an empty table:
 
 ```lua
-disable_default_patterns = { 'numbers_in_brackets' }
+{
+  patterns = {
+    css = {}
+  }
+}
 ```
 
 Define your own patterns:
 
 ```lua
-custom_patterns = {
-  {
-    -- (Optional) Used in possible error messages with invalid patterns.
-    name = 'glsl_vec_linear',
-    -- (Optional) Color format for the picker. Auto detect by default.
-    format = 'raw_rgb_linear',
-    -- (Optional) Filetypes to apply the pattern to. Must be a table.
-    ft = { 'glsl' },
-    -- The list of patterns.
-    'vec3%(().*()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
-    'vec4%(().*()%)',
-  },
-  {
-    name = 'my_rust_color',
-    ft = { 'rust' },
-    'MyColor::rgb%(().*()%)',
-    'Srgba::new%(().*()%)',
-  },
-  -- You can have as many patterns as you want.
-  -- They are ordered and the first one that matches is used.
-  -- Custom patterns have priority over default patterns.
-},
+{
+  patterns = {
+    glsl_vec_linear = {
+      -- (Optional) Higher priority patterns are tried first. Defaults to 0.
+      priority = 5,
+      -- (Optional) Color format for the picker. Auto detect by default.
+      format = 'raw_rgb_linear',
+      -- (Optional) Filetypes to apply the pattern to. Must be a table.
+      ft = { 'glsl' },
+      -- The list of patterns.
+      'vec3%(().*()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
+      'vec4%(().*()%)',
+    },
+    rust_color = {
+      ft = { 'rust' },
+      'MyColor::rgb%(().*()%)',
+      'Srgba::new%(().*()%)',
+    },
+    -- You can add as many patterns as you want.
+  }
+}
 ```
 
 ### Color Formats
