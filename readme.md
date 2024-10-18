@@ -22,10 +22,6 @@
 
 This plugin doesn't highlight any colors in the editor, so a highligher like [uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) or [brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) is a good companion plugin.
 
-## Demo
-
-https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
-
 ## Installation
 
 [lazy.nvim](https://github.com/folke/lazy.nvim)
@@ -44,6 +40,10 @@ https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
 ```
 
 You can either include the `build = 'download.lua'` line to download the picker automatically or download it yourself from [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker) (it's open source too in a different repo!) and put it in your PATH. The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ performance and startup time.
+
+## Demo
+
+https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
 
 ## Default Options
 
