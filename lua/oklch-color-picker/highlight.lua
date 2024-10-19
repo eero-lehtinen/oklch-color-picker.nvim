@@ -134,15 +134,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
             for i, line in ipairs(lines) do
               for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
                 if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
-                  utils.log(
-                    string.format(
-                      "Pattern %s[%d] = '%s' is invalid. It should contain two empty '()' groups to designate the replacement range and no other groups. Remember to escape literal brackets: '%%(' and '%%)'",
-                      pattern_list.name,
-                      j,
-                      pattern
-                    ),
-                    vim.log.levels.ERROR
-                  )
+                  utils.report_invalid_pattern(pattern_list.name, j, pattern)
                   return
                 else
                   local line_n = from_line + i

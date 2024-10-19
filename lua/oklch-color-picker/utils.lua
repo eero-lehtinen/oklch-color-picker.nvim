@@ -29,6 +29,21 @@ function M.log(msg, level)
   end
 end
 
+--- @param pattern_list_name string
+--- @param i integer
+--- @param pattern string
+function M.report_invalid_pattern(pattern_list_name, i, pattern)
+  M.log(
+    string.format(
+      "Pattern %s[%d] = '%s' is invalid. It should contain two empty '()' groups to designate the replacement range and no other groups. Remember to escape literal brackets: '%%(' and '%%)'",
+      pattern_list_name,
+      i,
+      pattern
+    ),
+    vim.log.levels.ERROR
+  )
+end
+
 ---@return string
 function M.root_path()
   local path = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h')

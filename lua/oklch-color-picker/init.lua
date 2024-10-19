@@ -160,15 +160,7 @@ local function find_color(line, cursor_col, ft)
       for i, pattern in ipairs(pattern_list) do
         for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
           if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
-            utils.log(
-              string.format(
-                "Pattern %s[%d] = '%s' is invalid. It should contain two empty '()' groups to designate the replacement range and no other groups. Remember to escape literal brackets: '%%(' and '%%)'",
-                pattern_list.name,
-                i,
-                pattern
-              ),
-              vim.log.levels.ERROR
-            )
+            utils.report_invalid_pattern(pattern_list.name, i, pattern)
             return nil
           else
             if cursor_col >= match_start and cursor_col <= match_end - 1 then
