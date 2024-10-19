@@ -90,7 +90,7 @@ M.pending_timer = vim.uv.new_timer()
 --- @param bufnr integer
 --- @param from_line integer
 --- @param to_line integer
-function M.update_lines(bufnr, from_line, to_line)
+M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
   if not M.bufs[bufnr].pending_changes then
     M.bufs[bufnr].pending_changes = {
       from_line = math.max(from_line, vim.fn.line 'w0'),
@@ -187,7 +187,7 @@ function M.update_lines(bufnr, from_line, to_line)
       -- print(string.format('lines update took: %s us from line %d to %d', us, from_line, to_line))
     end)
   )
-end
+end)
 
 M.hex_color_groups = {}
 
