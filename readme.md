@@ -50,10 +50,7 @@ local default_config = {
   patterns = {
     hex = {
       priority = -1,
-      '()#%x%x%x%x%x%x%x%x()%f[%W]',
-      '()#%x%x%x%x%x%x()%f[%W]',
-      '()#%x%x%x%x()%f[%W]',
-      '()#%x%x%x()%f[%W]',
+      '()#%x%x%x+()%f[%W]',
     },
     css = {
       priority = -1,
