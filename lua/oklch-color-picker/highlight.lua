@@ -92,11 +92,11 @@ M.pending_timer = vim.uv.new_timer()
 --- @param to_line integer
 M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
   local buf_data = M.bufs[bufnr]
-  if not buf_data then
+  if buf_data == nil then
     return
   end
 
-  if not buf_data.pending_changes then
+  if buf_data.pending_changes == nil then
     buf_data.pending_changes = {
       from_line = math.max(from_line, vim.fn.line 'w0'),
       to_line = math.min(to_line, vim.fn.line 'w$'),
@@ -112,7 +112,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
     0,
     vim.schedule_wrap(function()
       local buf_data = M.bufs[bufnr]
-      if not buf_data or not buf_data.pending_changes then
+      if buf_data == nil or buf_data.pending_changes == nil then
         return
       end
 
@@ -120,7 +120,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
 
       local from_line = buf_data.pending_changes.from_line --[[@as integer]]
       local to_line = buf_data.pending_changes.to_line --[[@as integer]]
-      M.pending_changes = nil
+      buf_data.pending_changes = nil
 
       local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
       pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, from_line, to_line)
@@ -128,11 +128,10 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
       local ft = vim.bo['filetype']
 
       local matches = {}
-      for i, line in ipairs(lines) do
-        local line_matches = {}
-        for _, pattern_list in ipairs(M.patterns) do
-          if pattern_list and (not pattern_list.ft or (ft and vim.tbl_contains(pattern_list.ft, ft))) then
-            for j, pattern in ipairs(pattern_list) do
+      for _, pattern_list in ipairs(M.patterns) do
+        if pattern_list and (not pattern_list.ft or (ft and vim.tbl_contains(pattern_list.ft, ft))) then
+          for j, pattern in ipairs(pattern_list) do
+            for i, line in ipairs(lines) do
               for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
                 if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
                   utils.log(
@@ -146,8 +145,12 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
                   )
                   return
                 else
+                  local line_n = from_line + i
+                  if matches[line_n] == nil then
+                    matches[line_n] = {}
+                  end
                   local has_space = true
-                  for _, match in ipairs(line_matches) do
+                  for _, match in ipairs(matches[line_n]) do
                     if not (match.match_start > match_end or match.match_end < match_start) then
                       has_space = false
                       break
@@ -155,10 +158,9 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
                   end
 
                   if has_space then
-                    table.insert(line_matches, {
+                    table.insert(matches[line_n], {
                       match_start = match_start,
                       match_end = match_end,
-                      line = from_line + i,
                       color = line:sub(replace_start --[[@as number]], replace_end - 1),
                       color_format = pattern_list.format,
                     })
@@ -168,24 +170,24 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
             end
           end
         end
-
-        vim.list_extend(matches, line_matches)
       end
 
-      if #matches > 0 then
+      if next(matches) ~= nil then
         M.add_hex_colors(matches)
-      end
-      for _, match in ipairs(matches) do
-        if match.hex then
-          local group = M.compute_hex_color_group(match.hex)
-          pcall(
-            vim.api.nvim_buf_set_extmark,
-            bufnr,
-            M.ns,
-            match.line - 1,
-            match.match_start - 1,
-            { priority = 500, end_col = match.match_end - 1, hl_group = group }
-          )
+        for line_n, line_matches in pairs(matches) do
+          for _, match in ipairs(line_matches) do
+            if match.hex then
+              local group = M.compute_hex_color_group(match.hex)
+              pcall(
+                vim.api.nvim_buf_set_extmark,
+                bufnr,
+                M.ns,
+                line_n - 1,
+                match.match_start - 1,
+                { priority = 500, end_col = match.match_end - 1, hl_group = group }
+              )
+            end
+          end
         end
       end
 
@@ -250,7 +252,7 @@ local connected = nil
 --- @type integer
 M.request_counter = 0
 
---- @param matches {color: string, color_format: string, hex: string|nil|}[]
+--- @param matches {[integer]: {color: string, color_format: string, hex: string|nil|}}
 --- @return string|nil
 function M.add_hex_colors(matches)
   if not connected then
@@ -263,8 +265,12 @@ function M.add_hex_colors(matches)
   M.request_counter = (M.request_counter + 1) % 1000
   local c = M.request_counter
   local parts = {}
-  for _, match in ipairs(matches) do
-    table.insert(parts, (match.color_format or 'auto') .. ';' .. match.color)
+  local line_iter_order = {}
+  for line_n, line_matches in pairs(matches) do
+    for _, match in ipairs(line_matches) do
+      table.insert(parts, (match.color_format or 'auto') .. ';' .. match.color)
+    end
+    table.insert(line_iter_order, line_n)
   end
   connected.write(string.format('%d:%s\n', c, table.concat(parts, '¿¿')))
 
@@ -275,15 +281,21 @@ function M.add_hex_colors(matches)
 
   local hexes = strsplit('¿¿', result)
 
-  for i, hex in ipairs(hexes) do
-    if hex:find '^ERR' then
-      matches[i].hex = nil
-    else
-      -- Remove alpha if it's there
-      if #hex == 9 then
-        hex = hex:sub(1, -3)
+  local hex_i = 1
+
+  for _, line_n in ipairs(line_iter_order) do
+    for _, match in ipairs(matches[line_n]) do
+      local hex = hexes[hex_i]
+      if hex:find '^ERR' then
+        match.hex = nil
+      else
+        -- Remove alpha if it's there
+        if #hex == 9 then
+          hex = hex:sub(1, -3)
+        end
+        match.hex = hex
       end
-      matches[i].hex = hex
+      hex_i = hex_i + 1
     end
   end
 
