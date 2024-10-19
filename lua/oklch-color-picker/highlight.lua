@@ -4,6 +4,8 @@ local M = {}
 
 --- @type oklch.FinalPatternList[]
 M.patterns = nil
+--- @type { enabled: boolean, delay: number }
+M.config = nil
 
 local pipe_n = 'oklch-color-picker.sock'
 local pipe_name = utils.is_windows() and '\\\\.\\pipe\\' .. pipe_n or '/tmp/' .. pipe_n
@@ -11,11 +13,11 @@ local pipe_name = utils.is_windows() and '\\\\.\\pipe\\' .. pipe_n or '/tmp/' ..
 --- @type uv_pipe_t|nil
 local pipe = nil
 
----@param config { enabled: boolean, delay: number }
+--- @param config { enabled: boolean, delay: number }
 --- @param patterns oklch.FinalPatternList[]
 function M.setup(config, patterns)
+  M.config = config
   M.patterns = patterns
-  M.pending_delay = config.delay
 
   if not config.enabled then
     return
@@ -83,8 +85,6 @@ function M.update(bufnr)
   M.update_lines(bufnr, 0, 100000000)
 end
 
---- @type integer
-M.pending_delay = 70
 M.pending_timer = vim.uv.new_timer()
 
 --- @param bufnr integer
@@ -103,7 +103,7 @@ function M.update_lines(bufnr, from_line, to_line)
 
   M.pending_timer:stop()
   M.pending_timer:start(
-    M.pending_delay,
+    M.config.delay,
     0,
     vim.schedule_wrap(function()
       if not M.bufs[bufnr].pending_changes then
