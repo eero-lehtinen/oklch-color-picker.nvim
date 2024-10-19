@@ -91,14 +91,19 @@ M.pending_timer = vim.uv.new_timer()
 --- @param from_line integer
 --- @param to_line integer
 M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
-  if not M.bufs[bufnr].pending_changes then
-    M.bufs[bufnr].pending_changes = {
+  local buf_data = M.bufs[bufnr]
+  if not buf_data then
+    return
+  end
+
+  if not buf_data.pending_changes then
+    buf_data.pending_changes = {
       from_line = math.max(from_line, vim.fn.line 'w0'),
       to_line = math.min(to_line, vim.fn.line 'w$'),
     }
   else
-    M.bufs[bufnr].pending_changes.from_line = math.max(math.min(M.bufs[bufnr].pending_changes.from_line, from_line), vim.fn.line 'w0')
-    M.bufs[bufnr].pending_changes.to_line = math.min(math.max(M.bufs[bufnr].pending_changes.to_line, to_line), vim.fn.line 'w$')
+    buf_data.pending_changes.from_line = math.max(math.min(buf_data.pending_changes.from_line, from_line), vim.fn.line 'w0')
+    buf_data.pending_changes.to_line = math.min(math.max(buf_data.pending_changes.to_line, to_line), vim.fn.line 'w$')
   end
 
   M.pending_timer:stop()
@@ -106,14 +111,15 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
     M.config.delay,
     0,
     vim.schedule_wrap(function()
-      if not M.bufs[bufnr].pending_changes then
+      local buf_data = M.bufs[bufnr]
+      if not buf_data or not buf_data.pending_changes then
         return
       end
 
       -- local t = vim.uv.hrtime()
 
-      local from_line = M.bufs[bufnr].pending_changes.from_line --[[@as integer]]
-      local to_line = M.bufs[bufnr].pending_changes.to_line --[[@as integer]]
+      local from_line = buf_data.pending_changes.from_line --[[@as integer]]
+      local to_line = buf_data.pending_changes.to_line --[[@as integer]]
       M.pending_changes = nil
 
       local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
