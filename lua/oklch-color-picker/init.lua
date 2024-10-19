@@ -1,4 +1,5 @@
 local utils = require 'oklch-color-picker.utils'
+local highlight = require 'oklch-color-picker.highlight'
 
 ---@class oklch
 local M = {}
@@ -7,28 +8,34 @@ local M = {}
 
 ---@class oklch.Config
 local default_config = {
-  ---@type integer
-  log_level = vim.log.levels.INFO,
   ---@type { [string]: oklch.PatternList}
   patterns = {
     hex = {
       priority = -1,
-      '()#%x%x%x%x%x%x%x%x()',
-      '()#%x%x%x%x%x%x()',
-      '()#%x%x%x%x()',
-      '()#%x%x%x()',
+      '()#%x%x%x%x%x%x%x%x()%f[%W]',
+      '()#%x%x%x%x%x%x()%f[%W]',
+      '()#%x%x%x%x()%f[%W]',
+      '()#%x%x%x()%f[%W]',
     },
     css = {
       priority = -1,
-      '()rgb%(.*%)()',
-      '()oklch%(.*%)()',
-      '()hsl%(.*%)()',
+      '()rgb%(.+%)()',
+      '()oklch%(.+%)()',
+      '()hsl%(.+%)()',
     },
     numbers_in_brackets = {
       priority = -10,
-      '%(()[%d.,%s]*()%)',
+      '%(()[%d.,%s]+()%)',
     },
   },
+  highlight = {
+    ---@type boolean
+    enabled = true,
+    ---@type number async delay in ms
+    delay = 100,
+  },
+  ---@type integer
+  log_level = vim.log.levels.INFO,
 }
 
 ---@type oklch.Config
@@ -63,6 +70,8 @@ function M.setup(config)
   table.sort(M.final_patterns, function(a, b)
     return a.priority > b.priority
   end)
+
+  highlight.setup(M.config.highlight, M.final_patterns)
 end
 
 --- @alias oklch.PendingEdit { bufnr: number, changedtick: number, line_number: number, start: number, finish: number, color: string, color_format: string|nil }|nil
@@ -97,25 +106,11 @@ local function apply_new_color(color)
   end)
 end
 
----@type string|nil
-local path = nil
-
----@return string
-local function make_path()
-  if path ~= nil then
-    return path
-  end
-  local path_sep = utils.is_windows() and ';' or ':'
-  path = utils.root_path() .. '/app' .. path_sep .. os.getenv 'PATH'
-  return path
-end
-
 local function start_app()
   if not pending_edit then
     utils.log("Can't start app, no pending edit", vim.log.levels.WARN)
     return
   end
-  path = make_path()
 
   local stdout = function(err, data)
     if data then
@@ -143,6 +138,7 @@ local function start_app()
     end
   end
 
+  local path = utils.get_path()
   local cmd = { utils.executable(), pending_edit.color }
   if pending_edit.color_format then
     table.insert(cmd, '--format')

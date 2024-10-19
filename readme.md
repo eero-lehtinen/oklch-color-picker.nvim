@@ -9,6 +9,7 @@
 ## Features
 
 - Choose a color from your buffer and edit it in a graphical editor
+- Add color highlights to all regular and custom colors
 - Supports many color formats:
   - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`)
   - Other common CSS formats (`rgb(..)`, `hsl(..)`, `oklch(..)`)
@@ -20,8 +21,6 @@
   - Oklch uses the same theory as Oklab, but uses parameters that are easier to understand
   - L<sub>r</sub> estimate is used instead of L as specified in [another article by the same guy](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab)
 
-This plugin doesn't highlight any colors in the editor, so a highligher like [uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) or [brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) is a good companion plugin.
-
 ## Installation
 
 [lazy.nvim](https://github.com/folke/lazy.nvim)
@@ -30,12 +29,11 @@ This plugin doesn't highlight any colors in the editor, so a highligher like [ug
 {
   'eero-lehtinen/oklch-color-picker.nvim',
   build = 'download.lua',
-  keys = {
+  config = function()
+    require('oklch-color-picker').setup {}
     -- One handed keymaps recommended, you will be using the mouse
-    { '<leader>v', function() require('oklch-color-picker').pick_under_cursor() end },
-  },
-  cmd = "ColorPickOklch",
-  opts = {}
+    vim.keymap.set('n', '<leader>v', '<cmd>ColorPickOklch<cr>')
+  end,
 },
 ```
 
@@ -49,26 +47,30 @@ https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
 
 ```lua
 local default_config = {
-  log_level = vim.log.levels.INFO,
   patterns = {
     hex = {
       priority = -1,
-      '()#%x%x%x%x%x%x%x%x()',
-      '()#%x%x%x%x%x%x()',
-      '()#%x%x%x%x()',
-      '()#%x%x%x()',
+      '()#%x%x%x%x%x%x%x%x()%f[%W]',
+      '()#%x%x%x%x%x%x()%f[%W]',
+      '()#%x%x%x%x()%f[%W]',
+      '()#%x%x%x()%f[%W]',
     },
     css = {
       priority = -1,
-      '()rgb%(.*%)()',
-      '()oklch%(.*%)()',
-      '()hsl%(.*%)()',
+      '()rgb%(.+%)()',
+      '()oklch%(.+%)()',
+      '()hsl%(.+%)()',
     },
     numbers_in_brackets = {
       priority = -10,
-      '%(()[%d.,%s]*()%)',
+      '%(()[%d.,%s]+()%)',
     },
   },
+  highlight = {
+    enabled = true,
+    delay = 100,
+  },
+  log_level = vim.log.levels.INFO,
 }
 ```
 

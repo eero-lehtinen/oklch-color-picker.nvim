@@ -31,7 +31,9 @@ end
 
 ---@return string
 function M.root_path()
-  return vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h') .. '/../..'
+  local path = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h')
+  path = path:gsub('/[^/]-/[^/]-$', '')
+  return path
 end
 
 ---@return boolean
@@ -43,6 +45,18 @@ end
 function M.executable()
   local executable_ext = M.is_windows() and '.exe' or ''
   return 'oklch-color-picker' .. executable_ext
+end
+
+--- @type string|nil
+local path
+
+---@return string
+function M.get_path()
+  if path ~= nil then
+    return path
+  end
+  path = M.root_path() .. '/app/'
+  return path
 end
 
 return M

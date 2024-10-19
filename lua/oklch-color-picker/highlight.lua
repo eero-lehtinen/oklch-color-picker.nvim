@@ -1,0 +1,442 @@
+local utils = require 'oklch-color-picker.utils'
+
+local M = {}
+
+--- @type oklch.FinalPatternList[]
+M.patterns = nil
+
+local pipe_n = 'oklch-color-picker.sock'
+local pipe_name = utils.is_windows() and '\\\\.\\pipe\\' .. pipe_n or '/tmp/' .. pipe_n
+
+--- @type uv_pipe_t|nil
+local pipe = nil
+
+---@param config { enabled: boolean, delay: number }
+--- @param patterns oklch.FinalPatternList[]
+function M.setup(config, patterns)
+  M.patterns = patterns
+  M.pending_delay = config.delay
+
+  if not config.enabled then
+    return
+  end
+
+  M.connect_pipe_throttled()
+
+  M.ns = vim.api.nvim_create_namespace 'OklchColorPickerNamespace'
+  M.gr = vim.api.nvim_create_augroup('OklchColorPicker', {})
+
+  vim.api.nvim_create_autocmd('BufEnter', {
+    group = M.gr,
+    callback = function(data)
+      M.on_buf_enter(data.buf, false)
+    end,
+  })
+end
+
+--- @type { [integer]: { pending_changes: { from_line: integer, to_line: integer }|nil } }
+M.bufs = {}
+--- @type integer
+M.ns = nil
+--- @type integer
+M.gr = nil
+
+--- @param bufnr number
+--- @param force_update boolean
+function M.on_buf_enter(bufnr, force_update)
+  if M.bufs[bufnr] then
+    if force_update or M.bufs[bufnr].pending_changes then
+      M.update(bufnr)
+    end
+    return
+  end
+
+  M.bufs[bufnr] = {
+    pending_changes = nil,
+  }
+
+  M.update(bufnr)
+
+  vim.api.nvim_buf_attach(bufnr, false, {
+    on_lines = function(_, _, _, from_line, _, to_line)
+      M.update_lines(bufnr, from_line, to_line)
+    end,
+    on_reload = function()
+      M.update(bufnr)
+    end,
+    on_detach = function()
+      M.bufs[bufnr] = nil
+    end,
+  })
+
+  vim.api.nvim_create_autocmd('WinScrolled', {
+    group = M.gr,
+    buffer = bufnr,
+    callback = function(data)
+      M.update(data.buf)
+    end,
+  })
+end
+
+--- @param bufnr integer
+function M.update(bufnr)
+  M.update_lines(bufnr, 0, 100000000)
+end
+
+--- @type integer
+M.pending_delay = 70
+M.pending_timer = vim.uv.new_timer()
+
+--- @param bufnr integer
+--- @param from_line integer
+--- @param to_line integer
+function M.update_lines(bufnr, from_line, to_line)
+  if not M.bufs[bufnr].pending_changes then
+    M.bufs[bufnr].pending_changes = {
+      from_line = math.max(from_line, vim.fn.line 'w0'),
+      to_line = math.min(to_line, vim.fn.line 'w$'),
+    }
+  else
+    M.bufs[bufnr].pending_changes.from_line = math.max(math.min(M.bufs[bufnr].pending_changes.from_line, from_line), vim.fn.line 'w0')
+    M.bufs[bufnr].pending_changes.to_line = math.min(math.max(M.bufs[bufnr].pending_changes.to_line, to_line), vim.fn.line 'w$')
+  end
+
+  M.pending_timer:stop()
+  M.pending_timer:start(
+    M.pending_delay,
+    0,
+    vim.schedule_wrap(function()
+      if not M.bufs[bufnr].pending_changes then
+        return
+      end
+
+      -- local t = vim.uv.hrtime()
+
+      local from_line = M.bufs[bufnr].pending_changes.from_line --[[@as integer]]
+      local to_line = M.bufs[bufnr].pending_changes.to_line --[[@as integer]]
+      M.pending_changes = nil
+
+      local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
+      pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, from_line, to_line)
+
+      local ft = vim.bo['filetype']
+
+      local matches = {}
+      for i, line in ipairs(lines) do
+        local line_matches = {}
+        for _, pattern_list in ipairs(M.patterns) do
+          if pattern_list and (not pattern_list.ft or (ft and vim.tbl_contains(pattern_list.ft, ft))) then
+            for j, pattern in ipairs(pattern_list) do
+              for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
+                if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
+                  utils.log(
+                    string.format(
+                      "Pattern %s[%d] = '%s' is invalid. It should contain two empty '()' groups to designate the replacement range and no other groups. Remember to escape literal brackets: '%%(' and '%%)'",
+                      pattern_list.name,
+                      j,
+                      pattern
+                    ),
+                    vim.log.levels.ERROR
+                  )
+                  return
+                else
+                  local has_space = true
+                  for _, match in ipairs(line_matches) do
+                    if not (match.match_start > match_end or match.match_end < match_start) then
+                      has_space = false
+                      break
+                    end
+                  end
+
+                  if has_space then
+                    table.insert(line_matches, {
+                      match_start = match_start,
+                      match_end = match_end,
+                      line = from_line + i,
+                      color = line:sub(replace_start --[[@as number]], replace_end - 1),
+                      color_format = pattern_list.format,
+                    })
+                  end
+                end
+              end
+            end
+          end
+        end
+
+        vim.list_extend(matches, line_matches)
+      end
+
+      if #matches > 0 then
+        M.add_hex_colors(matches)
+      end
+      for _, match in ipairs(matches) do
+        if match.hex then
+          local group = M.compute_hex_color_group(match.hex)
+          pcall(
+            vim.api.nvim_buf_set_extmark,
+            bufnr,
+            M.ns,
+            match.line - 1,
+            match.match_start - 1,
+            { priority = 500, end_col = match.match_end - 1, hl_group = group }
+          )
+        end
+      end
+
+      -- local us = (vim.uv.hrtime() - t) / 1000
+      -- print(string.format('lines update took: %s us from line %d to %d', us, from_line, to_line))
+    end)
+  )
+end
+
+M.hex_color_groups = {}
+
+--- @param hex_color string
+--- @return string
+function M.compute_hex_color_group(hex_color)
+  local hex = hex_color:lower():sub(2)
+  local group_name = string.format('OklchColorPickerHexColor_%s', hex)
+
+  if M.hex_color_groups[group_name] then
+    return group_name
+  end
+
+  local opposite = M.compute_opposite_color(hex)
+  vim.api.nvim_set_hl(0, group_name, { fg = opposite, bg = hex_color })
+
+  M.hex_color_groups[group_name] = true
+
+  return group_name
+end
+
+--- @param hex string
+--- @return string
+function M.compute_opposite_color(hex)
+  local r = tonumber(hex:sub(1, 2), 16) / 255
+  local g = tonumber(hex:sub(3, 4), 16) / 255
+  local b = tonumber(hex:sub(5, 6), 16) / 255
+  return (0.299 * r + 0.587 * g + 0.114 * b) < 0.5 and '#ffffff' or '#000000'
+end
+
+--- @param delimiter string
+--- @param text string
+--- @return string[]
+local function strsplit(delimiter, text)
+  local list = {}
+  local pos = 1
+
+  while 1 do
+    local first, last = text:find(delimiter, pos)
+    if first then
+      table.insert(list, text:sub(pos, first - 1))
+      pos = last + 1
+    else
+      table.insert(list, text:sub(pos))
+      break
+    end
+  end
+  return list
+end
+
+--- @type { read: fun(number): (string|nil), write: fun(string)}|nil
+local connected = nil
+
+--- @type integer
+M.request_counter = 0
+
+--- @param matches {color: string, color_format: string, hex: string|nil|}[]
+--- @return string|nil
+function M.add_hex_colors(matches)
+  if not connected then
+    M.connect_pipe_throttled()
+    return nil
+  end
+
+  -- local t = vim.uv.hrtime()
+
+  M.request_counter = (M.request_counter + 1) % 1000
+  local c = M.request_counter
+  local parts = {}
+  for _, match in ipairs(matches) do
+    table.insert(parts, (match.color_format or 'auto') .. ';' .. match.color)
+  end
+  connected.write(string.format('%d:%s\n', c, table.concat(parts, '¿¿')))
+
+  local result = connected.read(c)
+  if not result then
+    return nil
+  end
+
+  local hexes = strsplit('¿¿', result)
+
+  for i, hex in ipairs(hexes) do
+    if hex:find '^ERR' then
+      matches[i].hex = nil
+    else
+      -- Remove alpha if it's there
+      if #hex == 9 then
+        hex = hex:sub(1, -3)
+      end
+      matches[i].hex = hex
+    end
+  end
+
+  -- local us = (vim.uv.hrtime() - t) / 1000
+  -- print('color fetch took: ' .. us .. ' us')
+end
+
+local daemon_started = false
+
+function M.start_daemon()
+  if daemon_started then
+    return
+  end
+
+  daemon_started = true
+
+  local exec
+  if vim.fn.executable(utils.executable()) == 1 then
+    exec = utils.executable()
+  else
+    exec = utils.get_path() .. utils.executable()
+  end
+
+  local cmd = exec .. ' --as-parser-daemon >outfile 2>&1 & disown'
+
+  vim.system({ 'sh', '-c', cmd }, {
+    detach = true,
+  }, function(res)
+    if res.code ~= 0 then
+      utils.log('App failed and exited with code ' .. res.code, vim.log.levels.ERROR)
+    end
+    utils.log('App exited successfully with code ' .. vim.inspect(res.code), vim.log.levels.DEBUG)
+  end)
+  utils.log('Daemon spawned', vim.log.levels.DEBUG)
+end
+
+local timeout = 200 * 1000 * 1000 -- 200 ms
+local read_timeout = 10 * 1000 * 1000 -- 10 ms
+
+local last_connect_try = 0
+local connect_try_cooldown = 5 * 1000 * 1000 * 1000 -- 5 secs
+
+function M.connect_pipe_throttled()
+  while last_connect_try + connect_try_cooldown > vim.uv.hrtime() do
+    return
+  end
+  last_connect_try = vim.uv.hrtime()
+  M.connect_pipe()
+end
+
+--- @param start_time number|nil
+function M.connect_pipe(start_time)
+  if not start_time then
+    start_time = vim.loop.hrtime()
+    daemon_started = false
+  end
+
+  if vim.uv.hrtime() - start_time > timeout then
+    utils.log('timed out', vim.log.levels.ERROR)
+    return
+  end
+
+  pipe = vim.uv.new_pipe(true)
+
+  local on_connect = function(connect_err)
+    local retry = function(err)
+      utils.log("couldn't connect: " .. err, vim.log.levels.DEBUG)
+
+      pipe:close()
+
+      M.start_daemon()
+
+      vim.defer_fn(function()
+        M.connect_pipe(start_time)
+      end, 10)
+    end
+
+    if connect_err then
+      retry(connect_err)
+      return
+    end
+
+    local verified = nil
+    pipe:write('test\n', function(err)
+      verified = not err
+    end)
+
+    while verified == nil do
+      vim.uv.run 'nowait'
+    end
+
+    if not verified then
+      retry 'broken pipe'
+      return
+    end
+
+    utils.log('connected', vim.log.levels.DEBUG)
+
+    local read_result = {}
+    local read_total = ''
+    local on_read = function(err, data)
+      if data then
+        read_total = read_total .. data
+        local i1 = read_total:find '\n'
+        while i1 do
+          local part = read_total:sub(1, i1 - 1)
+          read_total = read_total:sub(i1 + 1)
+          local number, text = part:match '(%d+):(.*)'
+          if number then
+            read_result[tonumber(number)] = text
+          end
+          i1 = read_total:find '\n'
+        end
+      elseif err then
+        utils.log('receive error: ' .. err, vim.log.levels.ERROR)
+      end
+    end
+
+    pipe:read_start(on_read)
+
+    connected = {
+      read = function(number)
+        local nkey = number
+        local t = vim.uv.hrtime()
+        while read_result[nkey] == nil and vim.uv.hrtime() - t < read_timeout do
+          vim.uv.run 'nowait'
+        end
+        local res = read_result[nkey]
+        read_result[nkey] = nil
+        -- local us = (vim.uv.hrtime() - t) / 1000
+        -- print('read took: ' .. us .. ' us')
+        return res
+      end,
+      write = function(data)
+        pipe:write(data, function(err)
+          if err then
+            if err == 'EPIPE' then
+              utils.log('daemon was closed for some reason', vim.log.levels.INFO)
+            else
+              utils.log('send error: ' .. err, vim.log.levels.ERROR)
+            end
+          end
+        end)
+      end,
+    }
+
+    vim.schedule(function()
+      for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_loaded(bufnr) then
+          M.on_buf_enter(bufnr, true)
+        end
+      end
+    end)
+  end
+
+  local _, err_name, err_message = pipe:connect(pipe_name, on_connect)
+  if err_name then
+    utils.log('failed to start pipe: ' .. err_name .. ' ' .. err_message, vim.log.levels.ERROR)
+  end
+end
+
+return M
