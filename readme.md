@@ -9,7 +9,7 @@
 ## Features
 
 - Choose a color from your buffer and edit it in a graphical editor
-- Adds fast async color highlighting to regular and custom colors
+- Fast async color highlighting to regular and custom colors
 - Supports many color formats:
   - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`)
   - Other common CSS formats (`rgb(..)`, `hsl(..)`, `oklch(..)`)
