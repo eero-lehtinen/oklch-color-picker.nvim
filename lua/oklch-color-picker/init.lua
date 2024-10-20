@@ -150,14 +150,18 @@ local function start_app()
     end
   end
 
-  local path = utils.get_path()
-  local cmd = { utils.executable(), pending_edit.color }
+  local exec = utils.executable_full_path()
+  if exec == nil then
+    return
+  end
+
+  local cmd = { exec, pending_edit.color }
   if pending_edit.color_format then
     table.insert(cmd, '--format')
     table.insert(cmd, pending_edit.color_format)
   end
 
-  vim.system(cmd, { env = { PATH = path }, stdout = stdout, stderr = stderr }, function(res)
+  vim.system(cmd, { stdout = stdout, stderr = stderr }, function(res)
     if res.code ~= 0 then
       utils.log('App failed and exited with code ' .. res.code, vim.log.levels.DEBUG)
     end

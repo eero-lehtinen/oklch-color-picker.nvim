@@ -351,11 +351,9 @@ function M.start_daemon()
 
   M.daemon_started = true
 
-  local exec
-  if vim.fn.executable(utils.executable()) == 1 then
-    exec = utils.executable()
-  else
-    exec = utils.get_path() .. utils.executable()
+  local exec = utils.executable_full_path()
+  if exec == nil then
+    return
   end
 
   local cmd = exec .. ' --as-parser-daemon >/dev/null 2>&1 & disown'
@@ -394,7 +392,7 @@ function M.connect_pipe(start_time)
   end
 
   if vim.uv.hrtime() - start_time > timeout then
-    utils.log('timed out', vim.log.levels.ERROR)
+    utils.log('Connection timed out', vim.log.levels.ERROR)
     return
   end
 
@@ -452,7 +450,7 @@ function M.connect_pipe(start_time)
         end
       elseif err then
         if err ~= 'ECONNRESET' then
-          utils.log('receive error: ' .. err, vim.log.levels.ERROR)
+          utils.log('Receive error: ' .. err, vim.log.levels.ERROR)
           vim.schedule(function()
             M.connected = nil
             M.pipe:close()
@@ -480,9 +478,9 @@ function M.connect_pipe(start_time)
         M.pipe:write(data, function(err)
           if err then
             if err == 'EPIPE' then
-              utils.log('daemon was closed for some reason', vim.log.levels.INFO)
+              utils.log('Daemon was closed for some reason', vim.log.levels.INFO)
             else
-              utils.log('send error: ' .. err, vim.log.levels.ERROR)
+              utils.log('Send error: ' .. err, vim.log.levels.ERROR)
             end
             vim.schedule(function()
               M.connected = nil
@@ -498,7 +496,7 @@ function M.connect_pipe(start_time)
 
   local _, err_name, err_message = M.pipe:connect(pipe_name, on_connect)
   if err_name then
-    utils.log('failed to start pipe: ' .. err_name .. ' ' .. err_message, vim.log.levels.ERROR)
+    utils.log('Failed to start pipe: ' .. err_name .. ' ' .. err_message, vim.log.levels.ERROR)
   end
 end
 
