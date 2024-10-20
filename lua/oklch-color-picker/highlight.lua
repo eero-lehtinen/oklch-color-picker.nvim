@@ -19,17 +19,24 @@ function M.setup(config, patterns)
   M.config = config
   M.patterns = patterns
 
-  if not config.enabled then
+  if not M.config.enabled then
     return
   end
 
   M.ns = vim.api.nvim_create_namespace 'OklchColorPickerNamespace'
   M.gr = vim.api.nvim_create_augroup('OklchColorPicker', {})
 
+  -- set to false for enable to work
+  M.config.enabled = false
   M.enable()
 end
 
 function M.disable()
+  if not M.config.enabled then
+    return
+  end
+  M.config.enabled = false
+
   M.bufs = {}
   vim.api.nvim_clear_autocmds { group = M.gr }
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
@@ -40,6 +47,11 @@ function M.disable()
 end
 
 function M.enable()
+  if M.config.enabled then
+    return
+  end
+  M.config.enabled = true
+
   if not M.connected then
     M.connect_pipe_throttled()
   else
@@ -51,6 +63,14 @@ function M.enable()
       M.on_buf_enter(data.buf, false)
     end,
   })
+end
+
+function M.toggle()
+  if M.config.enabled then
+    M.disable()
+  else
+    M.enable()
+  end
 end
 
 function M.on_connected()

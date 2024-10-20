@@ -114,6 +114,7 @@ Highlighting can be controlled at runtime:
 ```lua
 require("oklch-color-picker.highlight").disable()
 require("oklch-color-picker.highlight").enable()
+require("oklch-color-picker.highlight").toggle()
 ```
 
 ### Color Formats
@@ -137,4 +138,3 @@ The patterns should contain two empty groups `()` to designate the replacement r
 - [uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim)
 - [ziontee113/color-picker.nvim](https://github.com/ziontee113/color-picker.nvim)
 - [My previous attempt (oklch-color-picker-0.nvim)](https://github.com/eero-lehtinen/oklch-color-picker-0.nvim)
-
