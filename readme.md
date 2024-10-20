@@ -9,7 +9,7 @@
 ## Features
 
 - Choose a color from your buffer and edit it in a graphical editor
-- Fast async color highlighting to regular and custom colors
+- Fast async color highlighting for regular and custom colors
 - Supports many color formats:
   - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`)
   - Other common CSS formats (`rgb(..)`, `hsl(..)`, `oklch(..)`)
@@ -96,13 +96,13 @@ Define your own patterns:
       -- (Optional) Filetypes to apply the pattern to. Must be a table.
       ft = { 'glsl' },
       -- The list of patterns.
-      'vec3%(().*()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
-      'vec4%(().*()%)',
+      'vec3%(()[%d.,%s]+()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
+      'vec4%(()[%d.,%s]+()%)',
     },
     rust_color = {
       ft = { 'rust' },
-      'MyColor::rgb%(().*()%)',
-      'Srgba::new%(().*()%)',
+      'MyColor::rgb%(()[%d.,%s]+()%)',
+      'Srgba::new%(()[%d.,%s]+()%)',
     },
     -- You can add as many patterns as you want.
   }
@@ -122,7 +122,7 @@ The patterns used are normal lua patterns. Css color are mostly already supporte
 
 The default `numbers_in_brackets` should already handle most needs. It matches any number of digits, dots and commas inside brackets. The numbers are validated by the picker application so the pattern doesn't need to specify exact number matching. You can still create your own patterns if you have linear colors that can't be auto detected or if your type names clash with css patterns.
 
-The patterns should contain two empty groups `()` to designate the replacement range. E.g. `vec3%(().*()%)` will find `.1,.2,.2` from within the text `vec3(.1,.2,.3)`. Remember to escape literal brackets `(` with `%`.
+The patterns should contain two empty groups `()` to designate the replacement range. E.g. `vec3%(()[%d.,%s]+()%)` will find `.1,.2,.2` from within the text `vec3(.1,.2,.3)`. `[%d.,%s]+` means one or more digits, dots, commas or whitespace characters. Remember to escape literal brackets like this: `%(`.
 
 ## Other similar plugins
 
