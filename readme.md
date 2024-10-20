@@ -127,5 +127,7 @@ The patterns should contain two empty groups `()` to designate the replacement r
 ## Other similar plugins
 
 - [KabbAmine/vCoolor.vim](https://github.com/KabbAmine/vCoolor.vim)
+- [uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim)
 - [ziontee113/color-picker.nvim](https://github.com/ziontee113/color-picker.nvim)
 - [My previous attempt (oklch-color-picker-0.nvim)](https://github.com/eero-lehtinen/oklch-color-picker-0.nvim)
+
