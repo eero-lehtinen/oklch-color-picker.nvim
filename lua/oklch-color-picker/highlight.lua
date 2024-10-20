@@ -331,7 +331,7 @@ function M.start_daemon()
     exec = utils.get_path() .. utils.executable()
   end
 
-  local cmd = exec .. ' --as-parser-daemon >outfile 2>&1 & disown'
+  local cmd = exec .. ' --as-parser-daemon >/dev/null 2>&1 & disown'
 
   vim.system({ 'sh', '-c', cmd }, {
     detach = true,
