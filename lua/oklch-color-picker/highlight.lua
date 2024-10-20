@@ -167,6 +167,13 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
 
       local ft = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
 
+      -- ignore very long lines
+      for i, line in ipairs(lines) do
+        if string.len(line) > 2000 then
+          lines[i] = ''
+        end
+      end
+
       local matches = {}
       for _, pattern_list in ipairs(M.patterns) do
         if pattern_list.ft(ft) then
