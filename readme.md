@@ -3,7 +3,7 @@
 <p align="center">Sometimes the resolution of a cli just isn't enough</p>
 
 <p align="center" width="100%"> 
-  <img src="https://github.com/user-attachments/assets/62ed2fb8-fc71-4c7a-9b60-ad7768aabbce" alt="screenshot">
+  <img src="https://github.com/user-attachments/assets/d5a38ffc-0b1b-4af6-a229-5f5963b9a616" alt="screenshot">
 </p>
 
 ## Features
@@ -41,7 +41,7 @@ You can either include the `build = 'download.lua'` line to download the picker 
 
 ## Demo
 
-https://github.com/user-attachments/assets/32538f9d-2c49-4729-96a9-3022ce3c851f
+https://github.com/user-attachments/assets/a6df331c-10dc-4e50-8f89-bc4ab191de57
 
 ## Default Options
 
