@@ -138,11 +138,11 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
 
   if buf_data.pending_changes == nil then
     buf_data.pending_changes = {
-      from_line = math.max(from_line, vim.fn.line 'w0'),
+      from_line = math.max(from_line, vim.fn.line 'w0' - 1),
       to_line = math.min(to_line, vim.fn.line 'w$'),
     }
   else
-    buf_data.pending_changes.from_line = math.max(math.min(buf_data.pending_changes.from_line, from_line), vim.fn.line 'w0')
+    buf_data.pending_changes.from_line = math.max(math.min(buf_data.pending_changes.from_line, from_line), vim.fn.line 'w0' - 1)
     buf_data.pending_changes.to_line = math.min(math.max(buf_data.pending_changes.to_line, to_line), vim.fn.line 'w$')
   end
 
