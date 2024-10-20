@@ -11,7 +11,7 @@ local pipe_n = 'oklch-color-picker.sock'
 local pipe_name = utils.is_windows() and '\\\\.\\pipe\\' .. pipe_n or '/tmp/' .. pipe_n
 
 --- @type uv_pipe_t|nil
-local pipe = nil
+M.pipe = nil
 
 --- @param config { enabled: boolean, delay: number }
 --- @param patterns oklch.FinalPatternList[]
@@ -23,17 +23,44 @@ function M.setup(config, patterns)
     return
   end
 
-  M.connect_pipe_throttled()
-
   M.ns = vim.api.nvim_create_namespace 'OklchColorPickerNamespace'
   M.gr = vim.api.nvim_create_augroup('OklchColorPicker', {})
 
+  M.enable()
+end
+
+function M.disable()
+  M.bufs = {}
+  vim.api.nvim_clear_autocmds { group = M.gr }
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(bufnr) then
+      pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, 0, -1)
+    end
+  end
+end
+
+function M.enable()
+  if not M.connected then
+    M.connect_pipe_throttled()
+  else
+    M.on_connected()
+  end
   vim.api.nvim_create_autocmd('BufEnter', {
     group = M.gr,
     callback = function(data)
       M.on_buf_enter(data.buf, false)
     end,
   })
+end
+
+function M.on_connected()
+  vim.schedule(function()
+    for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_loaded(bufnr) then
+        M.on_buf_enter(bufnr, true)
+      end
+    end
+  end)
 end
 
 --- @type { [integer]: { pending_changes: { from_line: integer, to_line: integer }|nil } }
@@ -43,9 +70,18 @@ M.ns = nil
 --- @type integer
 M.gr = nil
 
+--- Unattaching is very annoying, so just make sure we never attach twice
+--- @type { [integer]: boolean}
+M.buf_attached = {}
+
 --- @param bufnr number
 --- @param force_update boolean
 function M.on_buf_enter(bufnr, force_update)
+  local buftype = vim.api.nvim_get_option_value('buftype', { buf = bufnr })
+  if buftype ~= '' then
+    return
+  end
+
   if M.bufs[bufnr] then
     if force_update or M.bufs[bufnr].pending_changes then
       M.update(bufnr)
@@ -59,17 +95,21 @@ function M.on_buf_enter(bufnr, force_update)
 
   M.update(bufnr)
 
-  vim.api.nvim_buf_attach(bufnr, false, {
-    on_lines = function(_, _, _, from_line, _, to_line)
-      M.update_lines(bufnr, from_line, to_line)
-    end,
-    on_reload = function()
-      M.update(bufnr)
-    end,
-    on_detach = function()
-      M.bufs[bufnr] = nil
-    end,
-  })
+  if M.buf_attached[bufnr] == nil then
+    vim.api.nvim_buf_attach(bufnr, false, {
+      on_lines = function(_, _, _, from_line, _, to_line)
+        M.update_lines(bufnr, from_line, to_line)
+      end,
+      on_reload = function()
+        M.update(bufnr)
+      end,
+      on_detach = function()
+        M.bufs[bufnr] = nil
+        M.buf_attached[bufnr] = nil
+      end,
+    })
+    M.buf_attached[bufnr] = true
+  end
 
   vim.api.nvim_create_autocmd('WinScrolled', {
     group = M.gr,
@@ -125,7 +165,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
       local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
       pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, from_line, to_line)
 
-      local ft = vim.bo['filetype']
+      local ft = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
 
       local matches = {}
       for _, pattern_list in ipairs(M.patterns) do
@@ -218,28 +258,8 @@ function M.compute_opposite_color(hex)
   return (0.299 * r + 0.587 * g + 0.114 * b) < 0.5 and '#ffffff' or '#000000'
 end
 
---- @param delimiter string
---- @param text string
---- @return string[]
-local function strsplit(delimiter, text)
-  local list = {}
-  local pos = 1
-
-  while 1 do
-    local first, last = text:find(delimiter, pos)
-    if first then
-      table.insert(list, text:sub(pos, first - 1))
-      pos = last + 1
-    else
-      table.insert(list, text:sub(pos))
-      break
-    end
-  end
-  return list
-end
-
 --- @type { read: fun(number): (string|nil), write: fun(string)}|nil
-local connected = nil
+M.connected = nil
 
 --- @type integer
 M.request_counter = 0
@@ -247,7 +267,7 @@ M.request_counter = 0
 --- @param matches {[integer]: {color: string, color_format: string, hex: string|nil|}}
 --- @return string|nil
 function M.add_hex_colors(matches)
-  if not connected then
+  if not M.connected then
     M.connect_pipe_throttled()
     return nil
   end
@@ -264,14 +284,14 @@ function M.add_hex_colors(matches)
     end
     table.insert(line_iter_order, line_n)
   end
-  connected.write(string.format('%d:%s\n', c, table.concat(parts, '¿¿')))
+  M.connected.write(string.format('%d:%s\n', c, table.concat(parts, '¿¿')))
 
-  local result = connected.read(c)
+  local result = M.connected.read(c)
   if not result then
     return nil
   end
 
-  local hexes = strsplit('¿¿', result)
+  local hexes = vim.split(result, '¿¿')
 
   local hex_i = 1
 
@@ -295,14 +315,14 @@ function M.add_hex_colors(matches)
   -- print('color fetch took: ' .. us .. ' us')
 end
 
-local daemon_started = false
+M.daemon_started = false
 
 function M.start_daemon()
-  if daemon_started then
+  if M.daemon_started then
     return
   end
 
-  daemon_started = true
+  M.daemon_started = true
 
   local exec
   if vim.fn.executable(utils.executable()) == 1 then
@@ -331,9 +351,10 @@ local last_connect_try = 0
 local connect_try_cooldown = 5 * 1000 * 1000 * 1000 -- 5 secs
 
 function M.connect_pipe_throttled()
-  while last_connect_try + connect_try_cooldown > vim.uv.hrtime() do
+  if last_connect_try + connect_try_cooldown > vim.uv.hrtime() then
     return
   end
+  utils.log('trying to connect', vim.log.levels.DEBUG)
   last_connect_try = vim.uv.hrtime()
   M.connect_pipe()
 end
@@ -342,7 +363,7 @@ end
 function M.connect_pipe(start_time)
   if not start_time then
     start_time = vim.loop.hrtime()
-    daemon_started = false
+    M.daemon_started = false
   end
 
   if vim.uv.hrtime() - start_time > timeout then
@@ -350,19 +371,20 @@ function M.connect_pipe(start_time)
     return
   end
 
-  pipe = vim.uv.new_pipe(true)
+  if M.pipe ~= nil and not M.pipe:is_closing() then
+    M.pipe:close()
+  end
+  M.pipe = vim.uv.new_pipe(true)
 
   local on_connect = function(connect_err)
     local retry = function(err)
       utils.log("couldn't connect: " .. err, vim.log.levels.DEBUG)
 
-      pipe:close()
-
       M.start_daemon()
 
       vim.defer_fn(function()
         M.connect_pipe(start_time)
-      end, 10)
+      end, 20)
     end
 
     if connect_err then
@@ -371,7 +393,7 @@ function M.connect_pipe(start_time)
     end
 
     local verified = nil
-    pipe:write('test\n', function(err)
+    M.pipe:write('test\n', function(err)
       verified = not err
     end)
 
@@ -402,13 +424,19 @@ function M.connect_pipe(start_time)
           i1 = read_total:find '\n'
         end
       elseif err then
-        utils.log('receive error: ' .. err, vim.log.levels.ERROR)
+        if err ~= 'ECONNRESET' then
+          utils.log('receive error: ' .. err, vim.log.levels.ERROR)
+          vim.schedule(function()
+            M.connected = nil
+            M.pipe:close()
+          end)
+        end
       end
     end
 
-    pipe:read_start(on_read)
+    M.pipe:read_start(on_read)
 
-    connected = {
+    M.connected = {
       read = function(number)
         local nkey = number
         local t = vim.uv.hrtime()
@@ -422,28 +450,26 @@ function M.connect_pipe(start_time)
         return res
       end,
       write = function(data)
-        pipe:write(data, function(err)
+        M.pipe:write(data, function(err)
           if err then
             if err == 'EPIPE' then
               utils.log('daemon was closed for some reason', vim.log.levels.INFO)
             else
               utils.log('send error: ' .. err, vim.log.levels.ERROR)
             end
+            vim.schedule(function()
+              M.connected = nil
+              M.pipe:close()
+            end)
           end
         end)
       end,
     }
 
-    vim.schedule(function()
-      for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-        if vim.api.nvim_buf_is_loaded(bufnr) then
-          M.on_buf_enter(bufnr, true)
-        end
-      end
-    end)
+    M.on_connected()
   end
 
-  local _, err_name, err_message = pipe:connect(pipe_name, on_connect)
+  local _, err_name, err_message = M.pipe:connect(pipe_name, on_connect)
   if err_name then
     utils.log('failed to start pipe: ' .. err_name .. ' ' .. err_message, vim.log.levels.ERROR)
   end

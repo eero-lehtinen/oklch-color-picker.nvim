@@ -109,6 +109,13 @@ Define your own patterns:
 }
 ```
 
+Highlighting can be controlled at runtime:
+
+```lua
+require("oklch-color-picker.highlight").disable()
+require("oklch-color-picker.highlight").enable()
+```
+
 ### Color Formats
 
 The picker application supports the following formats: (`hex`, `rgb`, `oklch`, `hsl`, `raw_rgb`, `raw_rgb_float`, `raw_rgb_linear`, `raw_oklch`).

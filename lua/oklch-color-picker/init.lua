@@ -187,7 +187,7 @@ function M.pick_under_cursor(force_color_format)
 
   local bufnr = vim.api.nvim_get_current_buf()
   local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
-  local ft = vim.bo['filetype']
+  local ft = vim.api.nvim_get_option_value('filetype', { buf = 0 })
 
   local res = find_color(line, col, ft)
 
