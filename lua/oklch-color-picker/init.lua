@@ -38,7 +38,7 @@ local default_config = {
 ---@type oklch.Config
 M.config = {}
 
----@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: string[]|nil, [number]: string,  }
+---@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: (fun(string): boolean), [number]: string,  }
 
 --- @type oklch.FinalPatternList[]
 M.final_patterns = {}
@@ -53,14 +53,29 @@ function M.setup(config)
   end, {})
 
   for key, pattern_list in pairs(M.config.patterns) do
-    table.insert(M.final_patterns, {
-      name = key,
-      priority = pattern_list.priority or 0,
-      format = pattern_list.format,
-      ft = pattern_list.ft,
-    })
-    for i, pattern in ipairs(pattern_list) do
-      M.final_patterns[#M.final_patterns][i] = '()' .. pattern .. '()'
+    if pattern_list[1] ~= nil then
+      local ft = function()
+        return true
+      end
+      if pattern_list.ft ~= nil and next(pattern_list.ft) ~= nil then
+        local ft_map = {}
+        for _, f in ipairs(pattern_list.ft) do
+          ft_map[f] = true
+        end
+        ft = function(filetype)
+          return ft_map[filetype] == true
+        end
+      end
+
+      table.insert(M.final_patterns, {
+        name = key,
+        priority = pattern_list.priority or 0,
+        format = pattern_list.format,
+        ft = ft,
+      })
+      for i, pattern in ipairs(pattern_list) do
+        M.final_patterns[#M.final_patterns][i] = '()' .. pattern .. '()'
+      end
     end
   end
 
@@ -156,7 +171,7 @@ end
 --- @return { pos: [number, number], color: string, color_format: string|nil }| nil
 local function find_color(line, cursor_col, ft)
   for _, pattern_list in ipairs(M.final_patterns) do
-    if pattern_list and (not pattern_list.ft or (ft and vim.tbl_contains(pattern_list.ft, ft))) then
+    if pattern_list.ft(ft) then
       for i, pattern in ipairs(pattern_list) do
         for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
           if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then

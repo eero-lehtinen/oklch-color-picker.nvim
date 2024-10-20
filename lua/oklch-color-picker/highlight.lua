@@ -169,7 +169,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
 
       local matches = {}
       for _, pattern_list in ipairs(M.patterns) do
-        if pattern_list and (not pattern_list.ft or (ft and vim.tbl_contains(pattern_list.ft, ft))) then
+        if pattern_list.ft(ft) then
           for j, pattern in ipairs(pattern_list) do
             for i, line in ipairs(lines) do
               for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
