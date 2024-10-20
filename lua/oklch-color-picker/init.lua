@@ -29,7 +29,7 @@ local default_config = {
     ---@type boolean
     enabled = true,
     ---@type number async delay in ms
-    delay = 120,
+    delay = 60,
   },
   ---@type integer
   log_level = vim.log.levels.INFO,

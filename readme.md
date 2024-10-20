@@ -65,7 +65,7 @@ local default_config = {
   },
   highlight = {
     enabled = true,
-    delay = 120,
+    delay = 60,
   },
   log_level = vim.log.levels.INFO,
 }
