@@ -83,7 +83,10 @@ function M.on_connected()
   end)
 end
 
---- @type { [integer]: { pending_changes: { from_line: integer, to_line: integer }|nil } }
+---@class BufData
+---@field pending_changes { from_line: integer, to_line: integer }|nil
+
+--- @type { [integer]: BufData }
 M.bufs = {}
 --- @type integer
 M.ns = nil
@@ -183,7 +186,6 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
       buf_data.pending_changes = nil
 
       local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
-      pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, from_line, to_line)
 
       local ft = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
 
@@ -233,22 +235,9 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
 
       if next(matches) ~= nil then
         M.add_hex_colors(matches)
-        for line_n, line_matches in pairs(matches) do
-          for _, match in ipairs(line_matches) do
-            if match.hex then
-              local group = M.compute_hex_color_group(match.hex)
-              pcall(
-                vim.api.nvim_buf_set_extmark,
-                bufnr,
-                M.ns,
-                line_n - 1,
-                match.match_start - 1,
-                { priority = 500, end_col = match.match_end - 1, hl_group = group }
-              )
-            end
-          end
-        end
       end
+
+      M.apply_extmarks(bufnr, from_line, to_line, matches)
 
       -- local us = (vim.uv.hrtime() - t) / 1000
       -- print(string.format('lines update took: %s us from line %d to %d', us, from_line, to_line))
@@ -258,20 +247,40 @@ end)
 
 M.hex_color_groups = {}
 
+function M.apply_extmarks(bufnr, from_line, to_line, matches)
+  pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, from_line, to_line)
+  for line_n, line_matches in pairs(matches) do
+    for _, match in ipairs(line_matches) do
+      if match.hex then
+        local group = M.compute_hex_color_group(match.hex)
+        pcall(
+          vim.api.nvim_buf_set_extmark,
+          bufnr,
+          M.ns,
+          line_n - 1,
+          match.match_start - 1,
+          { priority = 500, end_col = match.match_end - 1, hl_group = group, undo_restore = false }
+        )
+      end
+    end
+  end
+end
+
 --- @param hex_color string
 --- @return string
 function M.compute_hex_color_group(hex_color)
+  local cached_group_name = M.hex_color_groups[hex_color]
+  if cached_group_name ~= nil then
+    return cached_group_name
+  end
+
   local hex = hex_color:lower():sub(2)
   local group_name = string.format('OklchColorPickerHexColor_%s', hex)
-
-  if M.hex_color_groups[group_name] then
-    return group_name
-  end
 
   local opposite = M.compute_opposite_color(hex)
   vim.api.nvim_set_hl(0, group_name, { fg = opposite, bg = hex_color })
 
-  M.hex_color_groups[group_name] = true
+  M.hex_color_groups[hex_color] = group_name
 
   return group_name
 end
