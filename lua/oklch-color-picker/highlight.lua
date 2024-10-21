@@ -285,7 +285,7 @@ function M.compute_opposite_color(hex)
   return (0.299 * r + 0.587 * g + 0.114 * b) < 0.5 and '#ffffff' or '#000000'
 end
 
---- @type { read: fun(number): (string|nil), write: fun(string)}|nil
+--- @type { read: fun(num: number): (string|nil), write: fun(r: string[])}|nil
 M.connected = nil
 
 --- @type integer
@@ -311,14 +311,16 @@ function M.add_hex_colors(matches)
     end
     table.insert(line_iter_order, line_n)
   end
-  M.connected.write(string.format('%d:%s\n', c, table.concat(parts, '¿¿')))
+  local request = { c .. ':', table.concat(parts, '§§'), '\n' }
+
+  M.connected.write(request)
 
   local result = M.connected.read(c)
   if not result then
     return nil
   end
 
-  local hexes = vim.split(result, '¿¿')
+  local hexes = vim.split(result, '§§')
 
   local hex_i = 1
 
