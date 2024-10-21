@@ -16,9 +16,11 @@ local default_config = {
     },
     css = {
       priority = -1,
-      '()rgb%(.+%)()',
-      '()oklch%(.+%)()',
-      '()hsl%(.+%)()',
+      -- commas are not allowed in modern css colors
+      -- so use [^,] to differentiate from `numbers_in_brackets`
+      '()rgb%([^,]+%)()',
+      '()oklch%([^,]+%)()',
+      '()hsl%([^,]+%)()',
     },
     numbers_in_brackets = {
       priority = -10,
