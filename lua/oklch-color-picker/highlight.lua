@@ -245,8 +245,6 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
   )
 end)
 
-M.hex_color_groups = {}
-
 function M.apply_extmarks(bufnr, from_line, to_line, matches)
   pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, from_line, to_line)
   for line_n, line_matches in pairs(matches) do
@@ -266,6 +264,8 @@ function M.apply_extmarks(bufnr, from_line, to_line, matches)
   end
 end
 
+M.hex_color_groups = {}
+
 --- @param hex_color string
 --- @return string
 function M.compute_hex_color_group(hex_color)
@@ -277,21 +277,49 @@ function M.compute_hex_color_group(hex_color)
   local hex = hex_color:lower():sub(2)
   local group_name = string.format('OklchColorPickerHexColor_%s', hex)
 
-  local opposite = M.compute_opposite_color(hex)
-  vim.api.nvim_set_hl(0, group_name, { fg = opposite, bg = hex_color })
+  local fg = (M.oklab_lightness(hex) < 0.5) and '#ffffff' or '#000000'
+  vim.api.nvim_set_hl(0, group_name, { fg = fg, bg = hex_color })
 
   M.hex_color_groups[hex_color] = group_name
 
   return group_name
 end
 
+function M.to_linear(c)
+  if c <= 0.03928 then
+    return c / 12.92
+  else
+    return math.pow((c + 0.055) / 1.055, 2.4)
+  end
+end
+
+function M.cbrt(c)
+  return math.pow(c, 1 / 3)
+end
+
+local k_1 = 0.206
+local k_2 = 0.03
+local k_3 = (1. + k_1) / (1. + k_2)
+
+--- Perceptual lightness estimate
+--- https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab
 --- @param hex string
---- @return string
-function M.compute_opposite_color(hex)
+--- @return number
+function M.oklab_lightness(hex)
   local r = tonumber(hex:sub(1, 2), 16) / 255
   local g = tonumber(hex:sub(3, 4), 16) / 255
   local b = tonumber(hex:sub(5, 6), 16) / 255
-  return (0.299 * r + 0.587 * g + 0.114 * b) < 0.5 and '#ffffff' or '#000000'
+  local lr = M.to_linear(r)
+  local lg = M.to_linear(g)
+  local lb = M.to_linear(b)
+  local l = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb
+  local m = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb
+  local s = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb
+  local l_ = M.cbrt(l)
+  local m_ = M.cbrt(m)
+  local s_ = M.cbrt(s)
+  local ll = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
+  return 0.5 * (k_3 * ll - k_1 + math.sqrt((k_3 * ll - k_1) * (k_3 * ll - k_1) + 4 * k_2 * k_3 * ll))
 end
 
 --- @type { read: fun(num: number): (string|nil), write: fun(r: string[])}|nil
