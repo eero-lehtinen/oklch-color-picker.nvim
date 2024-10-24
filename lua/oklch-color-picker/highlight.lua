@@ -408,7 +408,7 @@ function M.start_daemon()
   utils.log('Daemon spawned', vim.log.levels.DEBUG)
 end
 
-local timeout = 200 * 1000 * 1000 -- 200 ms
+local timeout = 2 * 1000 * 1000 * 1000 -- 2 sec
 local read_timeout = 10 * 1000 * 1000 -- 10 ms
 
 local last_connect_try = 0
@@ -448,7 +448,7 @@ function M.connect_pipe(start_time)
 
       vim.defer_fn(function()
         M.connect_pipe(start_time)
-      end, 20)
+      end, 40)
     end
 
     if connect_err then
