@@ -395,11 +395,14 @@ function M.start_daemon()
     return
   end
 
-  local cmd = exec .. ' --as-parser-daemon >/dev/null 2>&1 & disown'
+  local cmd
+  if utils.is_windows() then
+    cmd = { 'powershell', '-WindowStyle', 'Hidden', '-Command', exec .. ' --as-parser-daemon' }
+  else
+    cmd = { 'sh', '-c', exec .. ' --as-parser-daemon >/dev/null 2>&1 & disown' }
+  end
 
-  vim.system({ 'sh', '-c', cmd }, {
-    detach = true,
-  }, function(res)
+  vim.system(cmd, { detach = true }, function(res)
     if res.code ~= 0 then
       utils.log('App failed and exited with code ' .. res.code, vim.log.levels.ERROR)
     end
