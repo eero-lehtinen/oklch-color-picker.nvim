@@ -1,0 +1,180 @@
+*oklch-color-picker.nvim.txt*   For NVIM v0.8.0   Last change: 2024 October 25
+
+==============================================================================
+Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
+
+  - Features                                |oklch-color-picker.nvim-features|
+  - Installation                        |oklch-color-picker.nvim-installation|
+  - Demo                                        |oklch-color-picker.nvim-demo|
+  - Default Options                  |oklch-color-picker.nvim-default-options|
+  - Configuration                      |oklch-color-picker.nvim-configuration|
+  - Other similar plugins      |oklch-color-picker.nvim-other-similar-plugins|
+oklch-color-picker.nvimSometimes the resolution of a cli just isn’t enough
+FEATURES                                    *oklch-color-picker.nvim-features*
+
+- Choose a color from your buffer and edit it in a graphical editor
+- Fast async color highlighting for regular and custom colors
+- Supports many color formats:
+    - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`)
+    - Other common CSS formats (`rgb(..)`, `hsl(..)`, `oklch(..)`)
+    - Any number in brackets can be detected as a color (e.g. `vec3(0.5, 0.5, 0.5)` or `vec4(0.5, 0.5, 0.5, 1.0)`)
+    - You can also define your own formats to have more control
+- The picker application <https://github.com/eero-lehtinen/oklch-color-picker> uses a perceptual colorspace (Oklch) for intuitive editing
+    - Consists of lightness, chroma and hue
+    - Motivation: An article by the Oklab creator <https://bottosson.github.io/posts/oklab/>
+    - Oklch uses the same theory as Oklab, but uses parameters that are easier to understand
+    - Lr estimate is used instead of L as specified in another article by the same guy <https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab>
+
+
+INSTALLATION                            *oklch-color-picker.nvim-installation*
+
+lazy.nvim <https://github.com/folke/lazy.nvim>
+
+>lua
+    {
+      'eero-lehtinen/oklch-color-picker.nvim',
+      build = 'download.lua',
+      config = function()
+        require('oklch-color-picker').setup {}
+        -- One handed keymaps recommended, you will be using the mouse
+        vim.keymap.set('n', '<leader>v', '<cmd>ColorPickOklch<cr>')
+      end,
+    },
+<
+
+You can either include the `build = 'download.lua'` line to download the picker
+automatically or download it yourself from the picker application repository
+<https://github.com/eero-lehtinen/oklch-color-picker> (it’s open source too
+in a different repo!) and put it in your PATH. The picker is a standalone
+⚡Rust⚡ application with ⚡blazing fast⚡ performance and startup time.
+
+
+DEMO                                            *oklch-color-picker.nvim-demo*
+
+
+https://github.com/user-attachments/assets/a6df331c-10dc-4e50-8f89-bc4ab191de57
+
+
+DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
+
+>lua
+    local default_config = {
+      patterns = {
+        hex = {
+          priority = -1,
+          '()#%x%x%x+()%f[%W]',
+        },
+        css = {
+          priority = -1,
+          -- commas are not allowed in modern css colors
+          -- so use [^,] to differentiate from `numbers_in_brackets`
+          '()rgb%([^,]+%)()',
+          '()oklch%([^,]+%)()',
+          '()hsl%([^,]+%)()',
+        },
+        numbers_in_brackets = {
+          priority = -10,
+          -- allows any digits, dots, commas or whitespace within brackets
+          '%(()[%d.,%s]+()%)',
+        },
+      },
+      highlight = {
+        enabled = true,
+        delay = 60,
+      },
+      log_level = vim.log.levels.INFO,
+    }
+<
+
+
+CONFIGURATION                          *oklch-color-picker.nvim-configuration*
+
+Disable default patterns by setting an empty table:
+
+>lua
+    {
+      patterns = {
+        css = {}
+      }
+    }
+<
+
+Define your own patterns:
+
+>lua
+    {
+      patterns = {
+        glsl_vec_linear = {
+          -- (Optional) Higher priority patterns are tried first. Defaults to 0.
+          priority = 5,
+          -- (Optional) Color format for the picker. Auto detect by default.
+          format = 'raw_rgb_linear',
+          -- (Optional) Filetypes to apply the pattern to. Must be a table.
+          ft = { 'glsl' },
+          -- The list of patterns.
+          'vec3%(()[%d.,%s]+()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
+          'vec4%(()[%d.,%s]+()%)',
+        },
+        rust_color = {
+          ft = { 'rust' },
+          'MyColor::rgb%(()[%d.,%s]+()%)',
+          'Srgba::new%(()[%d.,%s]+()%)',
+        },
+        -- You can add as many patterns as you want.
+      }
+    }
+<
+
+Highlighting can be controlled at runtime:
+
+>lua
+    require("oklch-color-picker.highlight").disable()
+    require("oklch-color-picker.highlight").enable()
+    require("oklch-color-picker.highlight").toggle()
+<
+
+
+COLOR FORMATS ~
+
+The picker application supports the following formats: (`hex`, `rgb`, `oklch`,
+`hsl`, `raw_rgb`, `raw_rgb_float`, `raw_rgb_linear`, `raw_oklch`). Most of
+these are auto detected. The non-raw formats are used in css and easily auto
+detected because the colors are surrounded by `rgb()` etc.
+
+The raw formats are just lists of numbers separated by commas that can be used
+with any programming language. The picker auto detection assumes raw formats to
+be either integer `0-255` or float `0.0-1.0` srgb colors (formats `raw_rgb` or
+`raw_rgb_float`). For `raw_rgb_linear` or `raw_oklch` values you have to
+specify the format manually. Note that the picker accepts colors with and
+without alpha (3 or 4 numbers separated by commas).
+
+
+PATTERNS ~
+
+The patterns used are normal lua patterns. Css color are mostly already
+supported, so you should probably only add raw color formats to better support
+the languages you use.
+
+The default `numbers_in_brackets` should already handle most needs. It matches
+any number of digits, dots and commas inside brackets. The numbers are
+validated by the picker application so the pattern doesn’t need to specify
+exact number matching. You can still create your own patterns if you have
+linear colors that can’t be auto detected or if your type names clash with
+css patterns.
+
+The patterns should contain two empty groups `()` to designate the replacement
+range. E.g. `vec3%(()[%d.,%s]+()%)` will find `.1,.2,.2` from within the text
+`vec3(.1,.2,.3)`. `[%d.,%s]+` means one or more digits, dots, commas or
+whitespace characters. Remember to escape literal brackets like this: `%(`.
+
+
+OTHER SIMILAR PLUGINS          *oklch-color-picker.nvim-other-similar-plugins*
+
+- KabbAmine/vCoolor.vim <https://github.com/KabbAmine/vCoolor.vim>
+- uga-rosa/ccc.nvim <https://github.com/uga-rosa/ccc.nvim>
+- ziontee113/color-picker.nvim <https://github.com/ziontee113/color-picker.nvim>
+- My previous attempt (oklch-color-picker-0.nvim) <https://github.com/eero-lehtinen/oklch-color-picker-0.nvim>
+
+Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
+
+vim:tw=78:ts=8:noet:ft=help:norl:
