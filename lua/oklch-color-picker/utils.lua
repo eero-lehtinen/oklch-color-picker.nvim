@@ -65,7 +65,7 @@ end
 M.executable_warned = false
 
 ---@return string|nil
-function M.executable_full_path()
+function M.executable_full_path(nowarn)
   if vim.fn.executable(M.executable()) == 1 then
     return M.executable()
   else
@@ -73,7 +73,7 @@ function M.executable_full_path()
     if vim.fn.executable(exec) == 1 then
       return exec
     end
-    if not M.executable_warned then
+    if not M.executable_warned and not nowarn then
       M.executable_warned = true
       M.log("Executable 'oklch-color-picker' not found. Please download it.", vim.log.levels.ERROR)
     end

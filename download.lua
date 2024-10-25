@@ -25,6 +25,15 @@ local function download_picker_program()
     return
   end
 
+  local executable = utils.executable_full_path(true)
+  if executable ~= nil then
+    local res = vim.system({ executable, '--version' }):wait()
+    if res.code == 0 and res.stdout:find(version) then
+      log_status 'Correct version already installed. Stopping...'
+      return
+    end
+  end
+
   local archive_basename = 'oklch-color-picker-' .. version .. '-' .. platform
   local archive = archive_basename .. archive_ext
 
