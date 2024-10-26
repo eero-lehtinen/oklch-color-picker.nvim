@@ -8,18 +8,15 @@
 
 ## Features
 
-- Choose a color from your buffer and edit it in a graphical editor
-- Fast async color highlighting for regular and custom colors
-- Supports many color formats:
-  - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`)
-  - Other common CSS formats (`rgb(..)`, `hsl(..)`, `oklch(..)`)
-  - Any number in brackets can be detected as a color (e.g. `vec3(0.5, 0.5, 0.5)` or `vec4(0.5, 0.5, 0.5, 1.0)`)
-  - You can also define your own formats to have more control
-- [The picker application](https://github.com/eero-lehtinen/oklch-color-picker) uses a perceptual colorspace (Oklch) for intuitive editing
-  - Consists of lightness, chroma and hue
-  - Motivation: [An article by the Oklab creator](https://bottosson.github.io/posts/oklab/)
-  - Oklch uses the same theory as Oklab, but uses parameters that are easier to understand
-  - L<sub>r</sub> estimate is used instead of L as specified in [another article by the same guy](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab)
+- Select and edit buffer colors in a graphical editor
+- Fast async color highlighting
+- Supports multiple formats:
+  - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`), CSS (`rgb(..)`, `hsl(..)`, `oklch(..)`)
+  - Can recognize any numbers in brackets as a color (e.g., `vec3(0.5, 0.5, 0.5)`)
+  - Custom formats can be defined
+- Integrated [Oklch color picker](https://github.com/eero-lehtinen/oklch-color-picker) for perceptual color editing:
+  - Uses lightness, chroma, and hue for intuitive adjustments
+  - Based on [Oklab](https://bottosson.github.io/posts/oklab/) theory, using L<sub>r</sub> as [an improved lightness estimate](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab) 
 
 ## Installation
 
