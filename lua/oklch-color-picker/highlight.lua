@@ -274,7 +274,7 @@ function M.compute_hex_color_group(hex_color)
     return cached_group_name
   end
 
-  local hex = hex_color:lower():sub(2)
+  local hex = hex_color:sub(2)
   local group_name = string.format('OklchColorPickerHexColor_%s', hex)
 
   local fg = (M.oklab_lightness(hex) < 0.5) and '#ffffff' or '#000000'
@@ -367,10 +367,6 @@ function M.add_hex_colors(matches)
       if hex:find '^ERR' then
         match.hex = nil
       else
-        -- Remove alpha if it's there
-        if #hex == 9 then
-          hex = hex:sub(1, -3)
-        end
         match.hex = hex
       end
       hex_i = hex_i + 1
