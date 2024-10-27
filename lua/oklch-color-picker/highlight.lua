@@ -306,9 +306,10 @@ local k_3 = (1. + k_1) / (1. + k_2)
 --- @param hex string
 --- @return number
 function M.oklab_lightness(hex)
-  local r = tonumber(hex:sub(1, 2), 16) / 255
-  local g = tonumber(hex:sub(3, 4), 16) / 255
-  local b = tonumber(hex:sub(5, 6), 16) / 255
+  local number = tonumber(hex, 16)
+  local r = bit.rshift(number, 16) / 255
+  local g = bit.band(bit.rshift(number, 8), 0xff) / 255
+  local b = bit.band(number, 0xff) / 255
   local lr = M.to_linear(r)
   local lg = M.to_linear(g)
   local lb = M.to_linear(b)
