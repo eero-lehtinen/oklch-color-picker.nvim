@@ -63,15 +63,21 @@ function M.executable()
 end
 
 M.executable_warned = false
+M.exec = nil
 
 ---@return string|nil
 function M.executable_full_path(nowarn)
+  if M.exec then
+    return M.exec
+  end
   if vim.fn.executable(M.executable()) == 1 then
-    return M.executable()
+    M.exec = M.executable()
+    return M.exec
   else
     local exec = M.get_path() .. M.executable()
     if vim.fn.executable(exec) == 1 then
-      return exec
+      M.exec = exec
+      return M.exec
     end
     if not M.executable_warned and not nowarn then
       M.executable_warned = true
@@ -79,6 +85,19 @@ function M.executable_full_path(nowarn)
     end
     return nil
   end
+end
+
+---@return string|nil
+function M.get_app_version()
+  local exec = M.executable_full_path(true)
+  if not exec then
+    return nil
+  end
+  local res = vim.system({ exec, '--version' }):wait()
+  if res.code == 0 then
+    return res.stdout
+  end
+  return nil
 end
 
 --- @type string|nil
