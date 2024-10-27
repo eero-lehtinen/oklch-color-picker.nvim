@@ -16,7 +16,7 @@
   - Custom formats can be defined
 - Integrated [color picker](https://github.com/eero-lehtinen/oklch-color-picker) using the perceptual Oklch color space:
   - Consists of lightness, chroma, and hue for intuitive adjustments
-  - Based on [Oklab](https://bottosson.github.io/posts/oklab/) theory, using L<sub>r</sub> as [an improved lightness estimate](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab) 
+  - Based on [Oklab](https://bottosson.github.io/posts/oklab/) theory, using L<sub>r</sub> as [an improved lightness estimate](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab)
 
 ## Installation
 
@@ -131,6 +131,14 @@ The patterns used are normal lua patterns. Css color are mostly already supporte
 The default `numbers_in_brackets` should already handle most needs. It matches any number of digits, dots and commas inside brackets. The numbers are validated by the picker application so the pattern doesn't need to specify exact number matching. You can still create your own patterns if you have linear colors that can't be auto detected or if your type names clash with css patterns.
 
 The patterns should contain two empty groups `()` to designate the replacement range. E.g. `vec3%(()[%d.,%s]+()%)` will find `.1,.2,.2` from within the text `vec3(.1,.2,.3)`. `[%d.,%s]+` means one or more digits, dots, commas or whitespace characters. Remember to escape literal brackets like this: `%(`.
+
+## Why is the highlighting async and just how fast is it?
+
+I don't like how an insignificant feature like color highlighting can hog CPU resources and cause lag, so this plugin tries to make it fast and unnoticeable. The highlighting is done on a timer after edits to give the immediate CPU time to features you actually care about like Treesitter or LSP. Then after the timer delay has passed, the colors are searched and highlights applied. You can also set the delay to 0 to make highlighting instant.
+
+When you open a new buffer or scroll the view, a whole screen update is done. With my AMD Ryzen 7 5800X3D, this takes around 0.5 ms on a 65 rows by 120 cols window, full of text and 10 hex colors. When the window is filled with 1000 hex colors, the update takes 3 ms, almost half of which is unavoidable Nvim extmark updating overhead.
+
+When editing, only the changed lines are updated. In the common case, when inserting on a line with no colors, the update takes less than 0.05 ms. When inserting on a line with a few colors, the update takes 0.2 ms.
 
 ## Other similar plugins
 

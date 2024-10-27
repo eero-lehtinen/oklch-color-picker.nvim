@@ -246,6 +246,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
 end)
 
 function M.apply_extmarks(bufnr, from_line, to_line, matches)
+  -- local t = vim.uv.hrtime()
   pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, from_line, to_line)
   for line_n, line_matches in pairs(matches) do
     for _, match in ipairs(line_matches) do
@@ -262,6 +263,8 @@ function M.apply_extmarks(bufnr, from_line, to_line, matches)
       end
     end
   end
+  -- local us = (vim.uv.hrtime() - t) / 1000
+  -- print(string.format('extmark update took: %s us from line %d to %d', us, from_line, to_line))
 end
 
 M.hex_color_groups = {}
