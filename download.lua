@@ -25,7 +25,7 @@ local function download_picker_program()
     return
   end
 
-  local app_version = utils.get_app_version()
+  local app_version = utils.get_app_version ~= nil and utils.get_app_version()
   if app_version ~= nil and app_version:find(version) then
     log_status 'Correct version already installed. Stopping...'
     return
