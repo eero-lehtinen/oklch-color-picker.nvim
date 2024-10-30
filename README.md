@@ -8,13 +8,13 @@
 
 ## Features
 
-- Select and edit buffer colors in a graphical editor
+- Select and edit buffer colors in a graphical picker
 - Fast async color highlighting
 - Supports multiple formats:
   - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`), CSS (`rgb(..)`, `hsl(..)`, `oklch(..)`)
   - Can recognize any numbers in brackets as a color (e.g., `vec3(0.5, 0.5, 0.5)`)
   - Custom formats can be defined
-- Integrated [color picker](https://github.com/eero-lehtinen/oklch-color-picker) using the perceptual Oklch color space:
+- Integrated graphical [color picker](https://github.com/eero-lehtinen/oklch-color-picker) using the perceptual Oklch color space:
   - Consists of lightness, chroma, and hue for intuitive adjustments
   - Based on [Oklab](https://bottosson.github.io/posts/oklab/) theory, using L<sub>r</sub> as [an improved lightness estimate](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab)
 
