@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*   For NVIM v0.10.0  Last change: 2024 October 27
+*oklch-color-picker.nvim.txt*   For NVIM v0.10.0  Last change: 2024 October 30
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -13,13 +13,13 @@ Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
 oklch-color-picker.nvimSometimes the resolution of a cli just isn’t enough
 FEATURES                                    *oklch-color-picker.nvim-features*
 
-- Select and edit buffer colors in a graphical editor
+- Select and edit buffer colors in a graphical picker
 - Fast async color highlighting
 - Supports multiple formats:
     - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`), CSS (`rgb(..)`, `hsl(..)`, `oklch(..)`)
     - Can recognize any numbers in brackets as a color (e.g., `vec3(0.5, 0.5, 0.5)`)
     - Custom formats can be defined
-- Integrated color picker <https://github.com/eero-lehtinen/oklch-color-picker> using the perceptual Oklch color space:
+- Integrated graphical color picker <https://github.com/eero-lehtinen/oklch-color-picker> using the perceptual Oklch color space:
     - Consists of lightness, chroma, and hue for intuitive adjustments
     - Based on Oklab <https://bottosson.github.io/posts/oklab/> theory, using Lr as an improved lightness estimate <https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab>
 
