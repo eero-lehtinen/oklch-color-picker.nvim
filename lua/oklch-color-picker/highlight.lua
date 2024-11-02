@@ -369,22 +369,16 @@ function M.add_hex_colors(matches)
     return nil
   end
 
-  local hexes = {}
-  for hex in result:gmatch '[^§]+' do
-    table.insert(hexes, hex)
-  end
-
-  local hex_i = 1
+  local next_hex = result:gmatch '[^§]+'
 
   for _, line_n in ipairs(line_iter_order) do
     for _, match in ipairs(matches[line_n]) do
-      local hex = hexes[hex_i]
+      local hex = next_hex()
       if hex:find '^ERR' then
         match.hex = nil
       else
         match.hex = hex
       end
-      hex_i = hex_i + 1
     end
   end
 
