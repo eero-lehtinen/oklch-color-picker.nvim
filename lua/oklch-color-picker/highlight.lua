@@ -120,8 +120,16 @@ function M.on_buf_enter(bufnr, force_update)
 
   if M.buf_attached[bufnr] == nil then
     vim.api.nvim_buf_attach(bufnr, false, {
-      on_lines = function(_, _, _, from_line, _, to_line)
-        M.update_lines(bufnr, from_line, to_line)
+      on_lines = function(_, _, _, from_line, _, to_line, _)
+        if from_line == to_line then
+          -- We probably deleted something because the changed range is empty.
+          -- It's possible that we uncovered new unhighlighted colors from the bottom
+          -- of the view, so update the rest of the view.
+          M.update_lines(bufnr, from_line, 100000000)
+        else
+          -- Only update the changed range
+          M.update_lines(bufnr, from_line, to_line)
+        end
       end,
       on_reload = function()
         M.update(bufnr)
