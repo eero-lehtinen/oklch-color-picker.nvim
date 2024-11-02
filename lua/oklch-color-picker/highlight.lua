@@ -369,7 +369,10 @@ function M.add_hex_colors(matches)
     return nil
   end
 
-  local hexes = vim.split(result, '§§')
+  local hexes = {}
+  for hex in result:gmatch '[^§]+' do
+    table.insert(hexes, hex)
+  end
 
   local hex_i = 1
 
