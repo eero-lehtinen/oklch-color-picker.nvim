@@ -180,10 +180,12 @@ With my AMD Ryzen 7 5800X3D, this takes around 0.5 ms on a 65 rows by 120 cols
 window, full of text and 10 hex colors. In the stress test file
 <./stress_test.txt>, where the window is filled with ~1000 hex colors, the
 update takes 3 ms, almost half of which is unavoidable Nvim extmark updating
-overhead. When editing, only the changed lines are updated. In the common case,
-when inserting on a line with no colors, the update takes < 0.05 ms. Doing the
-same in the stress test file takes < 0.3 ms. Of course with async, it takes
-zero time immediately after inserting text.
+overhead.
+
+When editing, only the changed lines are updated. In the common case, when
+inserting on a line with no colors, the update takes < 0.05 ms. Doing the same
+in the stress test file takes < 0.3 ms. Of course with async, it takes zero
+time immediately after inserting text.
 
 brenoprata10/nvim-highlight-colors
 <https://github.com/brenoprata10/nvim-highlight-colors> in the stress test
