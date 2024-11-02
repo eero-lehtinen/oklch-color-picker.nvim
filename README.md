@@ -136,13 +136,27 @@ The patterns should contain two empty groups `()` to designate the replacement r
 
 I don't like how an insignificant feature like color highlighting can hog CPU resources and cause lag, so this plugin tries to make it fast and unnoticeable. The highlighting is done on a timer after edits to give the immediate CPU time to features you actually care about like Treesitter or LSP. Then after the timer delay has passed, the colors are searched and highlights applied. You can also set the delay to 0 to make highlighting instant.
 
-When you open a new buffer or scroll the view, a whole screen update is done. With my AMD Ryzen 7 5800X3D, this takes around 0.5 ms on a 65 rows by 120 cols window, full of text and 10 hex colors. When the window is filled with 1000 hex colors, the update takes 3 ms, almost half of which is unavoidable Nvim extmark updating overhead.
+When you open a new buffer or scroll the view, a whole screen update is done. With my AMD Ryzen 7 5800X3D, this takes around 0.5 ms on a 65 rows by 120 cols window, full of text and 10 hex colors. In [the stress test file](./stress_test.txt), where the window is filled with ~1000 hex colors, the update takes 3 ms, almost half of which is unavoidable Nvim extmark updating overhead. When editing, only the changed lines are updated. In the common case, when inserting on a line with no colors, the update takes < 0.05 ms. Doing the same in the stress test file takes < 0.3 ms. Of course with async, it takes zero time immediately after inserting text.
 
-When editing, only the changed lines are updated. In the common case, when inserting on a line with no colors, the update takes less than 0.05 ms. When inserting on a line with a few colors, the update takes 0.2 ms.
+[brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) in the stress test takes 10 ms to do a full screen update. It doesn't do partial updates, so a full update is done every `InsertLeave` or `TextChanged` event.
+
+[uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) instead processes the whole file at startup, caches everything and then updates only changed lines. The whole stress test file takes 70 ms to process when opening the buffer, scrolling is free and changing a single line takes around 1 ms. `ccc.nvim` recognizes more color formats than this plugin, so this comparison is somewhat unfair.
+
+Measurements were done by manually adding `vim.uv.hrtime` logging to the update functions of each plugin.
+
+### Stress test results
+
+| Action | oklch-color-picker.nvim | nvim-highlight-colors | ccc.nvim |
+| :---------- | :----- | :---- | :---- |
+| Open buffer | 3 ms   | 10 ms | 70 ms |
+| Scroll      | 3 ms   | 10 ms | 0 ms  |
+| Insert      | 0.3 ms | 10 ms | 1 ms  |
 
 ## Other similar plugins
 
-- [KabbAmine/vCoolor.vim](https://github.com/KabbAmine/vCoolor.vim)
-- [uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim)
-- [ziontee113/color-picker.nvim](https://github.com/ziontee113/color-picker.nvim)
+- [KabbAmine/vCoolor.vim](https://github.com/KabbAmine/vCoolor.vim) (Graphical color picker)
+- [uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) (TUI color picker and highlighter)
+- [ziontee113/color-picker.nvim](https://github.com/ziontee113/color-picker.nvim) (TUI color picker)
+- [brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) (Color highlighter)
+- [echasnovski/mini.hipatterns](https://github.com/echasnovski/mini.hipatterns) (General async highlighter)
 - [My previous attempt (oklch-color-picker-0.nvim)](https://github.com/eero-lehtinen/oklch-color-picker-0.nvim)
