@@ -137,7 +137,7 @@ function M.download_parser(callback)
 
   local cwd = utils.get_path()
 
-  utils.log('Downloading parser', vim.log.levels.INFO)
+  utils.log('Downloading parser...', vim.log.levels.INFO)
 
   local out_lib = 'parser_lua_module' .. lib_ext
 
