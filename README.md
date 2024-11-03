@@ -141,7 +141,7 @@ When you open a new buffer or scroll the view, a whole screen update is done. Wi
 
 When editing, only the changed lines are updated. In the common case, when inserting on a line with no colors, the update takes < 0.02 ms. Doing the same in the stress test file takes 0.1 ms. Of course with async, it takes zero time immediately after inserting text.
 
-[brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) in the stress test takes 10 ms to do a full screen update. It doesn't do partial updates, so a full update is done every `InsertLeave` or `TextChanged` event. Css variables, named colors, and tailwind were disabled.
+[brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) in the stress test takes 10 ms to do a full screen update. It doesn't do partial updates, so a full update is done every `InsertLeave` or `TextChanged` event. CSS variables, named colors, and tailwind were disabled.
 
 [uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) instead processes the whole file at startup, then updates only changed lines. The whole stress test file takes 70 ms to process when opening the buffer, scrolling is free and changing a single line takes around 1 ms. `ccc.nvim` recognizes more color formats than this plugin, so this comparison is somewhat unfair.
 
