@@ -1,5 +1,6 @@
 local utils = require 'oklch-color-picker.utils'
 local highlight = require 'oklch-color-picker.highlight'
+local downloader = require 'oklch-color-picker.downloader'
 
 ---@class oklch
 local M = {}
@@ -35,6 +36,10 @@ local default_config = {
   },
   ---@type integer
   log_level = vim.log.levels.INFO,
+  ---@type boolean
+  --- Download Rust binaries automatically.
+  --- Note that you also need to download the dynamic library for highlighting to work.
+  auto_download = true,
 }
 
 ---@type oklch.Config
@@ -85,7 +90,17 @@ function M.setup(config)
     return a.priority > b.priority
   end)
 
-  highlight.setup(M.config.highlight, M.final_patterns)
+  if M.config.auto_download then
+    downloader.ensure_app_downloaded(function(err)
+      if err then
+        utils.log(err, vim.log.levels.ERROR)
+      else
+        highlight.setup(M.config.highlight, M.final_patterns, M.config.auto_download)
+      end
+    end)
+  else
+    highlight.setup(M.config.highlight, M.final_patterns, M.config.auto_download)
+  end
 end
 
 --- @alias oklch.PendingEdit { bufnr: number, changedtick: number, line_number: number, start: number, finish: number, color: string, color_format: string|nil }|nil
@@ -154,6 +169,7 @@ local function start_app()
 
   local exec = utils.executable_full_path()
   if exec == nil then
+    utils.log('Picker executable not found', vim.log.levels.ERROR)
     return
   end
 
