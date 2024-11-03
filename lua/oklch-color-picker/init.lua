@@ -25,6 +25,7 @@ local default_config = {
     },
     numbers_in_brackets = {
       priority = -10,
+      -- allows any digits, dots, commas or whitespace within brackets
       '%(()[%d.,%s]+()%)',
     },
   },
@@ -37,8 +38,7 @@ local default_config = {
   ---@type integer
   log_level = vim.log.levels.INFO,
   ---@type boolean
-  --- Download Rust binaries automatically.
-  --- Note that you also need to download the dynamic library for highlighting to work.
+  -- Download Rust binaries automatically.
   auto_download = true,
 }
 

@@ -68,6 +68,8 @@ local default_config = {
     delay = 60,
   },
   log_level = vim.log.levels.INFO,
+  -- Download Rust binaries automatically.
+  auto_download = true,
 }
 ```
 
