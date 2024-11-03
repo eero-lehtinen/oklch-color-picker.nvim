@@ -25,7 +25,6 @@
 ```lua
 {
   'eero-lehtinen/oklch-color-picker.nvim',
-  build = 'download.lua',
   config = function()
     require('oklch-color-picker').setup {}
     -- One handed keymaps recommended, you will be using the mouse
@@ -34,7 +33,7 @@
 },
 ```
 
-You can either include the `build = 'download.lua'` line to download the picker automatically or download it yourself from [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker) (it's open source too in a different repo!) and put it in your PATH. The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ performance and startup time.
+This plugin automatically downloads the picker application and a color parser library from the Releases page of [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker) (it's open source too in a different repo!). The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ performance and startup time.
 
 ## Demo
 
