@@ -44,16 +44,14 @@ function M.report_invalid_pattern(pattern_list_name, i, pattern)
   )
 end
 
----@return string
-function M.root_path()
-  local path = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h')
-  path = path:gsub('/[^/]-/[^/]-$', '')
-  return path
-end
-
 ---@return boolean
 function M.is_windows()
   return vim.loop.os_uname().sysname:find 'Windows' ~= nil
+end
+
+---@return boolean
+function M.is_macos()
+  return vim.loop.os_uname().sysname:find 'Darwin' ~= nil
 end
 
 ---@return string
@@ -62,11 +60,10 @@ function M.executable()
   return 'oklch-color-picker' .. executable_ext
 end
 
-M.executable_warned = false
 M.exec = nil
 
 ---@return string|nil
-function M.executable_full_path(nowarn)
+function M.executable_full_path()
   if M.exec then
     return M.exec
   end
@@ -74,30 +71,13 @@ function M.executable_full_path(nowarn)
     M.exec = M.executable()
     return M.exec
   else
-    local exec = M.get_path() .. M.executable()
+    local exec = M.get_path() .. '/' .. M.executable()
     if vim.fn.executable(exec) == 1 then
       M.exec = exec
       return M.exec
     end
-    if not M.executable_warned and not nowarn then
-      M.executable_warned = true
-      M.log("Executable 'oklch-color-picker' not found. Please download it.", vim.log.levels.ERROR)
-    end
     return nil
   end
-end
-
----@return string|nil
-function M.get_app_version()
-  local exec = M.executable_full_path(true)
-  if not exec then
-    return nil
-  end
-  local res = vim.system({ exec, '--version' }):wait()
-  if res.code == 0 then
-    return res.stdout
-  end
-  return nil
 end
 
 --- @type string|nil
@@ -108,8 +88,19 @@ function M.get_path()
   if path ~= nil then
     return path
   end
-  path = M.root_path() .. '/app/'
+  path = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h')
   return path
+end
+
+--- @return string
+function M.get_lib_extension()
+  if M.is_macos() then
+    return '.dylib'
+  end
+  if M.is_windows() then
+    return '.dll'
+  end
+  return '.so'
 end
 
 return M
