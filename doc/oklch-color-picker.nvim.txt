@@ -192,7 +192,7 @@ immediately after inserting text.
 brenoprata10/nvim-highlight-colors
 <https://github.com/brenoprata10/nvim-highlight-colors> in the stress test
 takes 10 ms to do a full screen update. It doesn’t do partial updates, so a
-full update is done every `InsertLeave` or `TextChanged` event. Css variables,
+full update is done every `InsertLeave` or `TextChanged` event. CSS variables,
 named colors, and tailwind were disabled.
 
 uga-rosa/ccc.nvim <https://github.com/uga-rosa/ccc.nvim> instead processes the
