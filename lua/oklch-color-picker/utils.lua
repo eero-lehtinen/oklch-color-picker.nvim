@@ -67,17 +67,12 @@ function M.executable_full_path()
   if M.exec then
     return M.exec
   end
-  if vim.fn.executable(M.executable()) == 1 then
-    M.exec = M.executable()
+  local exec = M.get_path() .. '/' .. M.executable()
+  if vim.fn.executable(exec) == 1 then
+    M.exec = exec
     return M.exec
-  else
-    local exec = M.get_path() .. '/' .. M.executable()
-    if vim.fn.executable(exec) == 1 then
-      M.exec = exec
-      return M.exec
-    end
-    return nil
   end
+  return nil
 end
 
 --- @type string|nil
