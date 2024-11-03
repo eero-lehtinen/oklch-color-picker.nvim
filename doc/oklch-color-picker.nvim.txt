@@ -81,6 +81,8 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
         delay = 60,
       },
       log_level = vim.log.levels.INFO,
+      -- Download Rust binaries automatically.
+      auto_download = true,
     }
 <
 
