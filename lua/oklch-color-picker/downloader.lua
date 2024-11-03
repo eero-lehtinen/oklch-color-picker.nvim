@@ -113,7 +113,7 @@ function M.download_app(callback)
         os.rename(cwd .. '/' .. archive_basename .. '/' .. utils.executable(), cwd .. '/' .. utils.executable())
         os.remove(cwd .. '/' .. archive_basename)
 
-        utils.log('Extraction success, binary in ' .. cwd .. '/app', vim.log.levels.DEBUG)
+        utils.log('Extraction success, binary in ' .. cwd, vim.log.levels.DEBUG)
         utils.log('Picker app downloaded', vim.log.levels.INFO)
         callback(nil)
       end)
