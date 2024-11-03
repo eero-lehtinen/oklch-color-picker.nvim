@@ -27,6 +27,7 @@ function M.setup(config, patterns, auto_download)
     end
     parser = require('oklch-color-picker.parser').get_parser()
     if parser == nil then
+      utils.log("Couldn't load parser library", vim.log.levels.ERROR)
       return
     end
 
