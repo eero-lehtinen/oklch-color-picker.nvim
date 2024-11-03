@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 02
+*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 03
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -184,9 +184,9 @@ overhead. The plugin caches extmarks, so seeing a color for the second time
 reduces overhead, resulting in a 3 ms update when scrolling.
 
 When editing, only the changed lines are updated. In the common case, when
-inserting on a line with no colors, the update takes < 0.05 ms. Doing the same
-in the stress test file takes < 0.3 ms. Of course with async, it takes zero
-time immediately after inserting text.
+inserting on a line with no colors, the update takes < 0.02 ms. Doing the same
+in the stress test file takes 0.1 ms. Of course with async, it takes zero time
+immediately after inserting text.
 
 brenoprata10/nvim-highlight-colors
 <https://github.com/brenoprata10/nvim-highlight-colors> in the stress test
@@ -206,11 +206,15 @@ functions of each plugin.
 
 STRESS TEST RESULTS ~
 
-  Action        oklch-color-picker.nvim   nvim-highlight-colors   ccc.nvim
-  ------------- ------------------------- ----------------------- ----------
-  Open buffer   5 ms                      10 ms                   70 ms
-  Scroll        3 ms                      10 ms                   0 ms
-  Insert        0.3 ms                    10 ms                   1 ms
+  -------------------------------------------------------------------------
+  Action       oklch-color-picker.nvim   nvim-highlight-colors   ccc.nvim
+  ------------ ------------------------- ----------------------- ----------
+  Open buffer  5 ms                      10 ms                   70 ms
+
+  Scroll       3 ms                      10 ms                   0 ms
+
+  Insert       0.1 ms                    10 ms                   1 ms
+  -------------------------------------------------------------------------
 
 OTHER SIMILAR PLUGINS          *oklch-color-picker.nvim-other-similar-plugins*
 
