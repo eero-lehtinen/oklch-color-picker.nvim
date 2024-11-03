@@ -1,6 +1,6 @@
 local utils = require 'oklch-color-picker.utils'
 
-package.cpath = package.cpath .. ';' .. utils.get_path() .. '?' .. utils.get_lib_extension()
+package.cpath = package.cpath .. ';' .. utils.get_path() .. '/?' .. utils.get_lib_extension()
 
 return {
   get_parser = function()
