@@ -73,7 +73,7 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
         numbers_in_brackets = {
           priority = -10,
           -- Allows any digits, dots, commas or whitespace within brackets.
-          '%(()[%d.,%s]-()%)',
+          '%(()[%d.,%s]+()%)',
         },
       },
       highlight = {
