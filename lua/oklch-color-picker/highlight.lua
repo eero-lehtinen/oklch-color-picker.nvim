@@ -91,8 +91,6 @@ function M.toggle()
   end
 end
 
-function M.on_connected() end
-
 ---@class BufData
 ---@field pending_changes { from_line: integer, to_line: integer }|nil
 
@@ -168,6 +166,8 @@ end
 
 M.pending_timer = vim.uv.new_timer()
 
+M.perf_logging = false
+
 --- @param bufnr integer
 --- @param from_line integer
 --- @param to_line integer
@@ -197,7 +197,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
         return
       end
 
-      -- local t = vim.uv.hrtime()
+      local t = vim.uv.hrtime()
 
       local from_line = buf_data.pending_changes.from_line --[[@as integer]]
       local to_line = buf_data.pending_changes.to_line --[[@as integer]]
@@ -253,8 +253,10 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
 
       M.apply_extmarks(bufnr, from_line, to_line, matches)
 
-      -- local us = (vim.uv.hrtime() - t) / 1000
-      -- print(string.format('lines update took: %s us from line %d to %d', us, from_line, to_line))
+      if M.perf_logging then
+        local us = (vim.uv.hrtime() - t) / 1000000
+        print(string.format('color highlighting took: %.3f ms, lines %d to %d', us, from_line, to_line))
+      end
     end)
   )
 end)

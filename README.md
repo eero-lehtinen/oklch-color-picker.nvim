@@ -146,7 +146,7 @@ When editing, only the changed lines are updated. In the common case, when inser
 
 [uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) instead processes the whole file at startup, then updates only changed lines. The whole stress test file takes 70 ms to process when opening the buffer, scrolling is free and changing a single line takes around 1 ms. `ccc.nvim` recognizes more color formats than this plugin, so this comparison is somewhat unfair.
 
-Measurements were done by manually adding `vim.uv.hrtime` logging to the update functions of each plugin.
+Measurements were done by manually adding `vim.uv.hrtime` logging to the update functions of each plugin. Check your own timings in this plugin by setting `require("oklch-color-picker.highlight").perf_logging = true`.
 
 ### Stress test results (2024-11-02)
 
