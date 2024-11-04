@@ -17,16 +17,17 @@ local default_config = {
     },
     css = {
       priority = -1,
-      -- Commas are not allowed in modern css colors
-      -- so use [^,] to differentiate from `numbers_in_brackets`.
-      '()rgb%([^,]+%)()',
-      '()oklch%([^,]+%)()',
-      '()hsl%([^,]+%)()',
+      -- Commas are not allowed in modern css colors so use [^,] to
+      -- differentiate from `numbers_in_brackets`. `-` is the same as `*`,
+      -- but matches the shortest possible sequence.
+      '()rgb%([^,]-%)()',
+      '()oklch%([^,]-%)()',
+      '()hsl%([^,]-%)()',
     },
     numbers_in_brackets = {
       priority = -10,
       -- Allows any digits, dots, commas or whitespace within brackets.
-      '%(()[%d.,%s]+()%)',
+      '%(()[%d.,%s]-()%)',
     },
   },
   highlight = {
