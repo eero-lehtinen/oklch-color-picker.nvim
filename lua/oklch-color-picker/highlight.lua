@@ -214,42 +214,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
         end
       end
 
-      local matches = {}
-      for _, pattern_list in ipairs(M.patterns) do
-        if pattern_list.ft(ft) then
-          for j, pattern in ipairs(pattern_list) do
-            for i, line in ipairs(lines) do
-              for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
-                if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
-                  utils.report_invalid_pattern(pattern_list.name, j, pattern)
-                  return
-                else
-                  local line_n = from_line + i
-                  if matches[line_n] == nil then
-                    matches[line_n] = {}
-                  end
-                  local has_space = true
-                  for _, match in ipairs(matches[line_n]) do
-                    if not (match.match_start > match_end or match.match_end < match_start) then
-                      has_space = false
-                      break
-                    end
-                  end
-
-                  if has_space then
-                    local color = line:sub(replace_start --[[@as number]], replace_end - 1)
-                    table.insert(matches[line_n], {
-                      match_start = match_start,
-                      match_end = match_end,
-                      hex = parser.color_to_hex(color, pattern_list.format),
-                    })
-                  end
-                end
-              end
-            end
-          end
-        end
-      end
+      local matches = M.find_matches(lines, from_line, ft)
 
       M.apply_extmarks(bufnr, from_line, to_line, matches)
 
@@ -260,6 +225,59 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
     end)
   )
 end)
+
+---@param lines string[]
+---@param from_line integer
+---@param ft string
+function M.find_matches(lines, from_line, ft)
+  local matches = {}
+
+  for _, pattern_list in ipairs(M.patterns) do
+    if pattern_list.ft(ft) then
+      for j, pattern in ipairs(pattern_list) do
+        for i, line in ipairs(lines) do
+          local start = 1
+          local match_start, match_end = line:find(pattern.cheap, start)
+
+          while match_start ~= nil do
+            local _, _, replace_start, replace_end = line:find(pattern.grouped, match_start)
+
+            if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
+              utils.report_invalid_pattern(pattern_list.name, j, pattern.grouped)
+              return nil
+            else
+              local line_n = from_line + i
+              if matches[line_n] == nil then
+                matches[line_n] = {}
+              end
+              local has_space = true
+              for _, match in ipairs(matches[line_n]) do
+                if not (match.match_start > match_end or match.match_end < match_start) then
+                  has_space = false
+                  break
+                end
+              end
+
+              if has_space then
+                local color = line:sub(replace_start --[[@as number]], replace_end - 1)
+                table.insert(matches[line_n], {
+                  match_start = match_start,
+                  match_end = match_end,
+                  hex = parser.color_to_hex(color, pattern_list.format),
+                })
+              end
+            end
+
+            start = match_end + 1
+            match_start, match_end, replace_start, replace_end = line:find(pattern.cheap, start)
+          end
+        end
+      end
+    end
+  end
+
+  return matches
+end
 
 function M.apply_extmarks(bufnr, from_line, to_line, matches)
   -- local t = vim.uv.hrtime()
@@ -274,7 +292,7 @@ function M.apply_extmarks(bufnr, from_line, to_line, matches)
           M.ns,
           line_n - 1,
           match.match_start - 1,
-          { priority = 500, end_col = match.match_end - 1, hl_group = group, undo_restore = false }
+          { priority = 500, end_col = match.match_end, hl_group = group, undo_restore = false }
         )
       end
     end

@@ -5,7 +5,7 @@ local downloader = require 'oklch-color-picker.downloader'
 ---@class oklch
 local M = {}
 
----@alias oklch.PatternList { priority: number|nil, format: string|nil, ft: string[]|nil, [number]: string,  }
+---@alias oklch.PatternList { priority: number|nil, format: string|nil, ft: string[]|nil, [number]: string }
 
 ---@class oklch.Config
 local default_config = {
@@ -46,7 +46,7 @@ local default_config = {
 ---@type oklch.Config
 M.config = {}
 
----@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: (fun(string): boolean), [number]: string,  }
+---@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: (fun(string): boolean), [number]: { cheap: string, grouped: string } }
 
 --- @type oklch.FinalPatternList[]
 M.final_patterns = {}
@@ -82,7 +82,14 @@ function M.setup(config)
         ft = ft,
       })
       for i, pattern in ipairs(pattern_list) do
-        M.final_patterns[#M.final_patterns][i] = '()' .. pattern .. '()'
+        M.final_patterns[#M.final_patterns][i] = {
+          -- Remove all groups to make scanning faster.
+          cheap = pattern:gsub('^%(%)', ''):gsub('[^%%]%(%)', function(s)
+            return s:sub(1, 1)
+          end),
+          -- Save normal pattern to find replacement positions.
+          grouped = pattern,
+        }
       end
     end
   end
@@ -196,9 +203,11 @@ local function find_color(line, cursor_col, ft)
   for _, pattern_list in ipairs(M.final_patterns) do
     if pattern_list.ft(ft) then
       for i, pattern in ipairs(pattern_list) do
-        for match_start, replace_start, replace_end, match_end in line:gmatch(pattern) do
+        local start = 1
+        local match_start, match_end, replace_start, replace_end = line:find(pattern.grouped, start)
+        while match_start ~= nil do
           if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
-            utils.report_invalid_pattern(pattern_list.name, i, pattern)
+            utils.report_invalid_pattern(pattern_list.name, i, pattern.grouped)
             return nil
           else
             if cursor_col >= match_start and cursor_col <= match_end - 1 then
@@ -209,6 +218,8 @@ local function find_color(line, cursor_col, ft)
               }
             end
           end
+          start = match_end + 1
+          match_start, match_end, replace_start, replace_end = line:find(pattern.grouped, start)
         end
       end
     end
