@@ -226,10 +226,17 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
   )
 end)
 
+---@class oklch.Match
+---@field match_start integer
+---@field match_end integer
+---@field hex string|nil
+
 ---@param lines string[]
 ---@param from_line integer
 ---@param ft string
+---@return { [integer]: oklch.Match[] }
 function M.find_matches(lines, from_line, ft)
+  ---@type { [integer]: oklch.Match[] }
   local matches = {}
 
   for _, pattern_list in ipairs(M.patterns) do
@@ -280,6 +287,10 @@ function M.find_matches(lines, from_line, ft)
   return matches
 end
 
+---@param bufnr integer
+---@param from_line integer
+---@param to_line integer
+---@param matches { [integer]: oklch.Match[] }
 function M.apply_extmarks(bufnr, from_line, to_line, matches)
   -- local t = vim.uv.hrtime()
   pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, from_line, to_line)
