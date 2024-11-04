@@ -60,7 +60,7 @@ local default_config = {
     numbers_in_brackets = {
       priority = -10,
       -- Allows any digits, dots, commas or whitespace within brackets.
-      '%(()[%d.,%s]-()%)',
+      '%(()[%d.,%s]+()%)',
     },
   },
   highlight = {
