@@ -242,34 +242,35 @@ function M.find_matches(lines, from_line, ft)
           while match_start ~= nil do
             local _, _, replace_start, replace_end = line:find(pattern.grouped, match_start)
 
-            if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
+            if type(replace_start) ~= 'number' or type(replace_end) ~= 'number' then
               utils.report_invalid_pattern(pattern_list.name, j, pattern.grouped)
-              return nil
-            else
-              local line_n = from_line + i
-              if matches[line_n] == nil then
-                matches[line_n] = {}
-              end
-              local has_space = true
-              for _, match in ipairs(matches[line_n]) do
-                if not (match.match_start > match_end or match.match_end < match_start) then
-                  has_space = false
-                  break
-                end
-              end
+              return {}
+            end
 
-              if has_space then
-                local color = line:sub(replace_start --[[@as number]], replace_end - 1)
-                table.insert(matches[line_n], {
-                  match_start = match_start,
-                  match_end = match_end,
-                  hex = parser.color_to_hex(color, pattern_list.format),
-                })
+            local line_n = from_line + i
+            if matches[line_n] == nil then
+              matches[line_n] = {}
+            end
+
+            local has_space = true
+            for _, match in ipairs(matches[line_n]) do
+              if not (match.match_start > match_end or match.match_end < match_start) then
+                has_space = false
+                break
               end
             end
 
+            if has_space then
+              local color = line:sub(replace_start --[[@as number]], replace_end - 1)
+              table.insert(matches[line_n], {
+                match_start = match_start,
+                match_end = match_end,
+                hex = parser.color_to_hex(color, pattern_list.format),
+              })
+            end
+
             start = match_end + 1
-            match_start, match_end, replace_start, replace_end = line:find(pattern.cheap, start)
+            match_start, match_end = line:find(pattern.cheap, start)
           end
         end
       end
