@@ -4,12 +4,17 @@ local parser
 
 local M = {}
 
---- @type oklch.FinalPatternList[]
+--- @class oklch.HightlightConfig
+--- @field enabled boolean
+--- @field edit_delay number async delay in ms
+--- @field scroll_delay number async delay in ms
+
 M.patterns = nil
---- @type { enabled: boolean, delay: number }
+
+---@type oklch.HightlightConfig
 M.config = nil
 
---- @param config { enabled: boolean, delay: number }
+--- @param config oklch.HightlightConfig
 --- @param patterns oklch.FinalPatternList[]
 --- @param auto_download boolean
 function M.setup(config, patterns, auto_download)
@@ -133,10 +138,10 @@ function M.on_buf_enter(bufnr, force_update)
           -- We probably deleted something because the changed range is empty.
           -- It's possible that we uncovered new unhighlighted colors from the bottom
           -- of the view, so update the rest of the view.
-          M.update_lines(bufnr, from_line, 100000000)
+          M.update_lines(bufnr, from_line, 100000000, false)
         else
           -- Only update the changed range
-          M.update_lines(bufnr, from_line, to_line)
+          M.update_lines(bufnr, from_line, to_line, false)
         end
       end,
       on_reload = function()
@@ -161,7 +166,7 @@ end
 
 --- @param bufnr integer
 function M.update(bufnr)
-  M.update_lines(bufnr, 0, 100000000)
+  M.update_lines(bufnr, 0, 100000000, true)
 end
 
 M.pending_timer = vim.uv.new_timer()
@@ -171,7 +176,8 @@ M.perf_logging = false
 --- @param bufnr integer
 --- @param from_line integer
 --- @param to_line integer
-M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
+--- @param scroll boolean
+M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
   local buf_data = M.bufs[bufnr]
   if buf_data == nil then
     return
@@ -187,9 +193,10 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line)
     buf_data.pending_changes.to_line = math.min(math.max(buf_data.pending_changes.to_line, to_line), vim.fn.line 'w$')
   end
 
+  local delay = scroll and M.config.scroll_delay or M.config.edit_delay
   M.pending_timer:stop()
   M.pending_timer:start(
-    M.config.delay,
+    delay,
     0,
     vim.schedule_wrap(function()
       local buf_data = M.bufs[bufnr]

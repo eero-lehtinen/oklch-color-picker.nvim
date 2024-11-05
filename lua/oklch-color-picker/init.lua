@@ -30,11 +30,11 @@ local default_config = {
       '%(()[%d.,%s]+()%)',
     },
   },
+  ---@type oklch.HightlightConfig
   highlight = {
-    ---@type boolean
     enabled = true,
-    ---@type number async delay in ms
-    delay = 60,
+    edit_delay = 60,
+    scroll_delay = 0,
   },
   ---@type integer
   log_level = vim.log.levels.INFO,

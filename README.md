@@ -65,7 +65,8 @@ local default_config = {
   },
   highlight = {
     enabled = true,
-    delay = 60,
+    edit_delay = 60,
+    scroll_delay = 0,
   },
   log_level = vim.log.levels.INFO,
   -- Download Rust binaries automatically.
