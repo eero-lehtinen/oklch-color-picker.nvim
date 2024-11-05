@@ -240,7 +240,7 @@ local function find_color(line, cursor_col, ft)
         local start = 1
         local match_start, match_end, replace_start, replace_end = line:find(pattern.grouped, start)
         while match_start ~= nil do
-          if cursor_col >= match_start and cursor_col <= match_end - 1 then
+          if cursor_col >= match_start and cursor_col <= match_end then
             return {
               pos = { replace_start, replace_end - 1 },
               color = line:sub(replace_start --[[@as number]], replace_end - 1),
