@@ -32,13 +32,19 @@ end
 --- @param pattern_list_name string
 --- @param i integer
 --- @param pattern string
-function M.report_invalid_pattern(pattern_list_name, i, pattern)
+--- @param details string
+function M.report_invalid_pattern(pattern_list_name, i, pattern, details)
   M.log(
     string.format(
-      "Pattern %s[%d] = '%s' is invalid. It should contain two empty '()' groups to designate the replacement range and no other groups. Remember to escape literal brackets: '%%(' and '%%)'",
+      [[
+Pattern %s[%d] = '%s' is invalid: %s
+
+The pattern should contain exactly two empty groups '()' to designate the replacement range and no other groups. Remember to escape literal parentheses: '%%(' and '%%)'
+]],
       pattern_list_name,
       i,
-      pattern
+      pattern,
+      details
     ),
     vim.log.levels.ERROR
   )

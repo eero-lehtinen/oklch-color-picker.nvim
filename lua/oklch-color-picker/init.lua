@@ -81,15 +81,20 @@ function M.setup(config)
         format = pattern_list.format,
         ft = ft,
       })
-      for i, pattern in ipairs(pattern_list) do
-        M.final_patterns[#M.final_patterns][i] = {
-          -- Remove all groups to make scanning faster.
-          cheap = pattern:gsub('^%(%)', ''):gsub('[^%%]%(%)', function(s)
-            return s:sub(1, 1)
-          end),
-          -- Save normal pattern to find replacement positions.
-          grouped = pattern,
-        }
+      local i = 1
+      for j, pattern in ipairs(pattern_list) do
+        local err, result = M.validate_and_remove_groups(pattern)
+        if err then
+          utils.report_invalid_pattern(key, j, pattern, err)
+        else
+          M.final_patterns[#M.final_patterns][i] = {
+            -- Remove all groups to make scanning faster.
+            cheap = assert(result),
+            -- Save normal pattern to find replacement positions.
+            grouped = pattern,
+          }
+          i = i + 1
+        end
       end
     end
   end
@@ -109,6 +114,32 @@ function M.setup(config)
   else
     highlight.setup(M.config.highlight, M.final_patterns, M.config.auto_download)
   end
+end
+
+---@param pattern string
+---@return string|nil error
+---@return string|nil result
+function M.validate_and_remove_groups(pattern)
+  local tmp = vim.fn.substitute(pattern, [[\(%\)\@<!()]], '', '')
+  if tmp == pattern then
+    return 'Contains zero empty groups.'
+  end
+  local tmp2 = vim.fn.substitute(tmp, [[\(%\)\@<!()]], '', '')
+  if tmp2 == tmp then
+    return 'Contains only one empty group.'
+  end
+
+  local match = vim.fn.match(tmp2, [=[\(%\)\@<!\[()\]]=])
+
+  if match ~= -1 then
+    return 'Contains unescaped parentheses in addition to the two empty groups.'
+  end
+
+  if tmp2 == '' then
+    return 'Pattern is empty.'
+  end
+
+  return nil, tmp2
 end
 
 --- @alias oklch.PendingEdit { bufnr: number, changedtick: number, line_number: number, start: number, finish: number, color: string, color_format: string|nil }|nil
@@ -202,21 +233,16 @@ end
 local function find_color(line, cursor_col, ft)
   for _, pattern_list in ipairs(M.final_patterns) do
     if pattern_list.ft(ft) then
-      for i, pattern in ipairs(pattern_list) do
+      for _, pattern in ipairs(pattern_list) do
         local start = 1
         local match_start, match_end, replace_start, replace_end = line:find(pattern.grouped, start)
         while match_start ~= nil do
-          if type(match_start) ~= 'number' or type(replace_start) ~= 'number' or type(replace_end) ~= 'number' or type(match_end) ~= 'number' then
-            utils.report_invalid_pattern(pattern_list.name, i, pattern.grouped)
-            return nil
-          else
-            if cursor_col >= match_start and cursor_col <= match_end - 1 then
-              return {
-                pos = { replace_start, replace_end - 1 },
-                color = line:sub(replace_start --[[@as number]], replace_end - 1),
-                color_format = pattern_list.format,
-              }
-            end
+          if cursor_col >= match_start and cursor_col <= match_end - 1 then
+            return {
+              pos = { replace_start, replace_end - 1 },
+              color = line:sub(replace_start --[[@as number]], replace_end - 1),
+              color_format = pattern_list.format,
+            }
           end
           start = match_end + 1
           match_start, match_end, replace_start, replace_end = line:find(pattern.grouped, start)

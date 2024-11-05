@@ -249,11 +249,6 @@ function M.find_matches(lines, from_line, ft)
           while match_start ~= nil do
             local _, _, replace_start, replace_end = line:find(pattern.grouped, match_start)
 
-            if type(replace_start) ~= 'number' or type(replace_end) ~= 'number' then
-              utils.report_invalid_pattern(pattern_list.name, j, pattern.grouped)
-              return {}
-            end
-
             local line_n = from_line + i
             if matches[line_n] == nil then
               matches[line_n] = {}
