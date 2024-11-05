@@ -116,30 +116,33 @@ function M.setup(config)
   end
 end
 
+local empty_group_re = vim.regex [[\(%\)\@<!()]]
+local unescaped_paren_re = vim.regex [=[\(%\)\@<!\[()\]]=]
+
 ---@param pattern string
 ---@return string|nil error
 ---@return string|nil result
 function M.validate_and_remove_groups(pattern)
-  local tmp = vim.fn.substitute(pattern, [[\(%\)\@<!()]], '', '')
-  if tmp == pattern then
+  local m1, m2 = empty_group_re:match_str(pattern)
+  if not m1 then
     return 'Contains zero empty groups.'
   end
-  local tmp2 = vim.fn.substitute(tmp, [[\(%\)\@<!()]], '', '')
-  if tmp2 == tmp then
+  pattern = pattern:sub(1, m1) .. pattern:sub(m2 + 1)
+  local m1, m2 = empty_group_re:match_str(pattern)
+  if not m1 then
     return 'Contains only one empty group.'
   end
+  pattern = pattern:sub(1, m1) .. pattern:sub(m2 + 1)
 
-  local match = vim.fn.match(tmp2, [=[\(%\)\@<!\[()\]]=])
-
-  if match ~= -1 then
+  if unescaped_paren_re:match_str(pattern) then
     return 'Contains unescaped parentheses in addition to the two empty groups.'
   end
 
-  if tmp2 == '' then
+  if pattern == '' then
     return 'Pattern is empty.'
   end
 
-  return nil, tmp2
+  return nil, pattern
 end
 
 --- @alias oklch.PendingEdit { bufnr: number, changedtick: number, line_number: number, start: number, finish: number, color: string, color_format: string|nil }|nil
