@@ -144,7 +144,7 @@ When editing, only the changed lines are updated. In the common case, when inser
 
 [brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) in the stress test takes 10 ms to do a full screen update. It doesn't do partial updates, so a full update is done every `InsertLeave` or `TextChanged` event. CSS variables, named colors, and tailwind were disabled in testing.
 
-[uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) instead processes the whole file at startup, then updates only changed lines. The whole stress test file takes 52 ms to process when opening the buffer, scrolling is free and inserting in a single line takes around 0.9 ms. `Hwb`, `Lab`, and `Oklab` formats (that `oklch-color-picker.nvim` doesn't support) were disabled to make the measurements more fair.
+[uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) instead processes the whole file at startup, then updates only changed lines. The whole stress test file takes 50 ms to process when opening the buffer, scrolling is free and inserting in a single line takes around 0.9 ms. `Hwb`, `Lch`, `Lab`, and `Oklab` formats (that `oklch-color-picker.nvim` doesn't support) were disabled to make the measurements more fair.
 
 Measurements were done by manually adding `vim.uv.hrtime` logging to the update functions of each plugin. Check your own timings in this plugin by setting `require("oklch-color-picker.highlight").perf_logging = true`.
 
@@ -152,7 +152,7 @@ Measurements were done by manually adding `vim.uv.hrtime` logging to the update 
 
 | Action      | oklch-color-picker.nvim | nvim-highlight-colors | ccc.nvim |
 | :---------- | :---------------------- | :-------------------- | :------- |
-| Open buffer | 4 ms                    | 10 ms                 | 52 ms    |
+| Open buffer | 4 ms                    | 10 ms                 | 50 ms    |
 | Scroll      | 2.5 ms                  | 10 ms                 | 0 ms     |
 | Insert      | < 0.1 ms                | 10 ms                 | 0.9 ms   |
 
