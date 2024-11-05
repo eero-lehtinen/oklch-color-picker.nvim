@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 04
+*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 05
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -63,7 +63,7 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
         },
         css = {
           priority = -1,
-          -- Commas are not allowed in modern css colors so use [^,] to
+          -- Commas are not allowed in modern CSS colors so use [^,] to
           -- differentiate from `numbers_in_brackets`. `-` is the same as `*`,
           -- but matches the shortest possible sequence.
           '()rgb%([^,]-%)()',
@@ -138,7 +138,7 @@ COLOR FORMATS ~
 
 The picker application supports the following formats: (`hex`, `rgb`, `oklch`,
 `hsl`, `raw_rgb`, `raw_rgb_float`, `raw_rgb_linear`, `raw_oklch`). Most of
-these are auto detected. The non-raw formats are used in css and easily auto
+these are auto detected. The non-raw formats are used in CSS and easily auto
 detected because the colors are surrounded by `rgb()` etc.
 
 The raw formats are just lists of numbers separated by commas that can be used
@@ -151,7 +151,7 @@ without alpha (3 or 4 numbers separated by commas).
 
 PATTERNS ~
 
-The patterns used are normal lua patterns. Css color are mostly already
+The patterns used are normal lua patterns. CSS colors are mostly already
 supported, so you should probably only add raw color formats to better support
 the languages you use.
 
@@ -160,7 +160,7 @@ any number of digits, dots and commas inside brackets. The numbers are
 validated by the picker application so the pattern doesn’t need to specify
 exact number matching. You can still create your own patterns if you have
 linear colors that can’t be auto detected or if your type names clash with
-css patterns.
+CSS patterns.
 
 The patterns should contain two empty groups `()` to designate the replacement
 range. E.g. `vec3%(()[%d.,%s]+()%)` will find `.1,.2,.2` from within the text
@@ -198,25 +198,26 @@ named colors, and tailwind were disabled in testing.
 
 uga-rosa/ccc.nvim <https://github.com/uga-rosa/ccc.nvim> instead processes the
 whole file at startup, then updates only changed lines. The whole stress test
-file takes 70 ms to process when opening the buffer, scrolling is free and
-inserting in a single line takes around 1.2 ms. `ccc.nvim` recognizes more
-color formats than this plugin, so this comparison is somewhat unfair.
+file takes 52 ms to process when opening the buffer, scrolling is free and
+inserting in a single line takes around 0.9 ms. `Hwb`, `Lab`, and `Oklab`
+formats (that `oklch-color-picker.nvim` doesn’t support) were disabled to
+make the measurements more fair.
 
 Measurements were done by manually adding `vim.uv.hrtime` logging to the update
 functions of each plugin. Check your own timings in this plugin by setting
 `require("oklch-color-picker.highlight").perf_logging = true`.
 
 
-STRESS TEST RESULTS (2024-11-02) ~
+STRESS TEST RESULTS (2024-11-05) ~
 
   -------------------------------------------------------------------------
   Action       oklch-color-picker.nvim   nvim-highlight-colors   ccc.nvim
   ------------ ------------------------- ----------------------- ----------
-  Open buffer  4 ms                      10 ms                   70 ms
+  Open buffer  4 ms                      10 ms                   52 ms
 
   Scroll       2.5 ms                    10 ms                   0 ms
 
-  Insert       < 0.1 ms                  10 ms                   1.2 ms
+  Insert       < 0.1 ms                  10 ms                   0.9 ms
   -------------------------------------------------------------------------
 
 OTHER SIMILAR PLUGINS          *oklch-color-picker.nvim-other-similar-plugins*
