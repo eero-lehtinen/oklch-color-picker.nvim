@@ -13,7 +13,7 @@ local default_config = {
   patterns = {
     hex = {
       priority = -1,
-      '()#%x%x%x+()%f[%W]',
+      '()#%x%x%x+%f[%W]()',
     },
     css = {
       priority = -1,
@@ -46,7 +46,7 @@ local default_config = {
 ---@type oklch.Config
 M.config = {}
 
----@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: (fun(string): boolean), [number]: { cheap: string, grouped: string } }
+---@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: (fun(string): boolean), [number]: { cheap: string, grouped: string, simple_groups: boolean } }
 
 --- @type oklch.FinalPatternList[]
 M.final_patterns = {}
@@ -83,13 +83,14 @@ function M.setup(config)
       })
       local i = 1
       for j, pattern in ipairs(pattern_list) do
-        local err, result = M.validate_and_remove_groups(pattern)
+        local err, result, result2 = M.validate_and_remove_groups(pattern)
         if err then
           utils.report_invalid_pattern(key, j, pattern, err)
         else
           M.final_patterns[#M.final_patterns][i] = {
             -- Remove all groups to make scanning faster.
             cheap = assert(result),
+            simple_groups = result2 --[[@as boolean]],
             -- Save normal pattern to find replacement positions.
             grouped = pattern,
           }
@@ -122,17 +123,18 @@ local unescaped_paren_re = vim.regex [=[\(%\)\@<!\[()\]]=]
 ---@param pattern string
 ---@return string|nil error
 ---@return string|nil result
+---@return boolean|nil simple_groups
 function M.validate_and_remove_groups(pattern)
   local m1, m2 = empty_group_re:match_str(pattern)
   if not m1 then
     return 'Contains zero empty groups.'
   end
   pattern = pattern:sub(1, m1) .. pattern:sub(m2 + 1)
-  local m1, m2 = empty_group_re:match_str(pattern)
-  if not m1 then
+  local m3, m4 = empty_group_re:match_str(pattern)
+  if not m3 then
     return 'Contains only one empty group.'
   end
-  pattern = pattern:sub(1, m1) .. pattern:sub(m2 + 1)
+  pattern = pattern:sub(1, m3) .. pattern:sub(m4 + 1)
 
   if unescaped_paren_re:match_str(pattern) then
     return 'Contains unescaped parentheses in addition to the two empty groups.'
@@ -142,7 +144,9 @@ function M.validate_and_remove_groups(pattern)
     return 'Pattern is empty.'
   end
 
-  return nil, pattern
+  local simple_groups = m1 == 0 and m4 == string.len(pattern) + 2
+
+  return nil, pattern, simple_groups
 end
 
 --- @alias oklch.PendingEdit { bufnr: number, changedtick: number, line_number: number, start: number, finish: number, color: string, color_format: string|nil }|nil

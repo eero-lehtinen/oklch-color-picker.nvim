@@ -1,6 +1,10 @@
 local utils = require 'oklch-color-picker.utils'
 local downloader = require 'oklch-color-picker.downloader'
-local parser
+local color_to_hex
+
+local find, sub, format = string.find, string.sub, string.format
+local insert = table.insert
+local nvim_buf_add_highlight, nvim_set_hl = vim.api.nvim_buf_add_highlight, vim.api.nvim_set_hl
 
 local M = {}
 
@@ -13,6 +17,8 @@ M.patterns = nil
 
 ---@type oklch.HightlightConfig
 M.config = nil
+
+local ns
 
 --- @param config oklch.HightlightConfig
 --- @param patterns oklch.FinalPatternList[]
@@ -30,13 +36,14 @@ function M.setup(config, patterns, auto_download)
       utils.log(err, vim.log.levels.ERROR)
       return
     end
-    parser = require('oklch-color-picker.parser').get_parser()
+    local parser = require('oklch-color-picker.parser').get_parser()
     if parser == nil then
       utils.log("Couldn't load parser library", vim.log.levels.ERROR)
       return
     end
+    color_to_hex = parser.color_to_hex
 
-    M.ns = vim.api.nvim_create_namespace 'OklchColorPickerNamespace'
+    ns = vim.api.nvim_create_namespace 'OklchColorPickerNamespace'
     M.gr = vim.api.nvim_create_augroup('OklchColorPicker', {})
 
     -- set to false for enable to work
@@ -61,13 +68,13 @@ function M.disable()
   vim.api.nvim_clear_autocmds { group = M.gr }
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_loaded(bufnr) then
-      pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, 0, -1)
+      pcall(vim.api.nvim_buf_clear_namespace, bufnr, ns, 0, -1)
     end
   end
 end
 
 function M.enable()
-  if not parser or not M.config or M.config.enabled then
+  if not color_to_hex or not M.config or M.config.enabled then
     return
   end
   M.config.enabled = true
@@ -101,8 +108,6 @@ end
 
 --- @type { [integer]: BufData }
 M.bufs = {}
---- @type integer
-M.ns = nil
 --- @type integer
 M.gr = nil
 
@@ -221,131 +226,29 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
         end
       end
 
-      local matches = M.find_matches(lines, from_line, ft)
-
-      M.apply_extmarks(bufnr, from_line, to_line, matches)
+      M.highlight_lines(bufnr, lines, from_line, to_line, ft)
 
       if M.perf_logging then
         local us = (vim.uv.hrtime() - t) / 1000000
-        print(string.format('color highlighting took: %.3f ms, lines %d to %d', us, from_line, to_line))
+        print(format('color highlighting took: %.3f ms, lines %d to %d', us, from_line, to_line))
       end
     end)
   )
 end)
 
----@class oklch.Match
----@field match_start integer
----@field match_end integer
----@field hex string|nil
+local pow, sqrt = math.pow, math.sqrt
+local rshift, band = bit.rshift, bit.band
 
----@param lines string[]
----@param from_line integer
----@param ft string
----@return { [integer]: oklch.Match[] }
-function M.find_matches(lines, from_line, ft)
-  ---@type { [integer]: oklch.Match[] }
-  local matches = {}
-
-  for _, pattern_list in ipairs(M.patterns) do
-    if pattern_list.ft(ft) then
-      for j, pattern in ipairs(pattern_list) do
-        for i, line in ipairs(lines) do
-          local start = 1
-          local match_start, match_end = line:find(pattern.cheap, start)
-
-          while match_start ~= nil do
-            local _, _, replace_start, replace_end = line:find(pattern.grouped, match_start)
-
-            local line_n = from_line + i
-            if matches[line_n] == nil then
-              matches[line_n] = {}
-            end
-
-            local has_space = true
-            for _, match in ipairs(matches[line_n]) do
-              if not (match.match_start > match_end or match.match_end < match_start) then
-                has_space = false
-                break
-              end
-            end
-
-            if has_space then
-              local color = line:sub(replace_start --[[@as number]], replace_end - 1)
-              table.insert(matches[line_n], {
-                match_start = match_start,
-                match_end = match_end,
-                hex = parser.color_to_hex(color, pattern_list.format),
-              })
-            end
-
-            start = match_end + 1
-            match_start, match_end = line:find(pattern.cheap, start)
-          end
-        end
-      end
-    end
-  end
-
-  return matches
-end
-
----@param bufnr integer
----@param from_line integer
----@param to_line integer
----@param matches { [integer]: oklch.Match[] }
-function M.apply_extmarks(bufnr, from_line, to_line, matches)
-  -- local t = vim.uv.hrtime()
-  pcall(vim.api.nvim_buf_clear_namespace, bufnr, M.ns, from_line, to_line)
-  for line_n, line_matches in pairs(matches) do
-    for _, match in ipairs(line_matches) do
-      if match.hex then
-        local group = M.compute_hex_color_group(match.hex)
-        pcall(
-          vim.api.nvim_buf_set_extmark,
-          bufnr,
-          M.ns,
-          line_n - 1,
-          match.match_start - 1,
-          { priority = 500, end_col = match.match_end, hl_group = group, undo_restore = false }
-        )
-      end
-    end
-  end
-  -- local us = (vim.uv.hrtime() - t) / 1000
-  -- print(string.format('extmark update took: %s us from line %d to %d', us, from_line, to_line))
-end
-
-M.hex_color_groups = {}
-
---- @param hex_color string
---- @return string
-function M.compute_hex_color_group(hex_color)
-  local cached_group_name = M.hex_color_groups[hex_color]
-  if cached_group_name ~= nil then
-    return cached_group_name
-  end
-
-  local hex = hex_color:sub(2)
-  local group_name = string.format('OklchColorPickerHexColor_%s', hex)
-
-  local fg = (M.oklab_lightness(hex) < 0.5) and '#ffffff' or '#000000'
-  vim.api.nvim_set_hl(0, group_name, { fg = fg, bg = hex_color })
-
-  M.hex_color_groups[hex_color] = group_name
-
-  return group_name
-end
-
-function M.to_linear(c)
+local function to_linear(c)
   if c <= 0.03928 then
     return c / 12.92
   else
-    return math.pow((c + 0.055) / 1.055, 2.4)
+    return pow((c + 0.055) / 1.055, 2.4)
   end
 end
 
-function M.cbrt(c)
-  return math.pow(c, 1 / 3)
+local function cbrt(c)
+  return pow(c, 1 / 3)
 end
 
 local k_1 = 0.206
@@ -356,22 +259,101 @@ local k_3 = (1. + k_1) / (1. + k_2)
 --- https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab
 --- @param hex string
 --- @return number
-function M.oklab_lightness(hex)
+local function oklab_lightness(hex)
   local number = tonumber(hex, 16)
-  local r = bit.rshift(number, 16) / 255
-  local g = bit.band(bit.rshift(number, 8), 0xff) / 255
-  local b = bit.band(number, 0xff) / 255
-  local lr = M.to_linear(r)
-  local lg = M.to_linear(g)
-  local lb = M.to_linear(b)
+  local r = rshift(number, 16) / 255
+  local g = band(rshift(number, 8), 0xff) / 255
+  local b = band(number, 0xff) / 255
+  local lr = to_linear(r)
+  local lg = to_linear(g)
+  local lb = to_linear(b)
   local l = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb
   local m = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb
   local s = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb
-  local l_ = M.cbrt(l)
-  local m_ = M.cbrt(m)
-  local s_ = M.cbrt(s)
+  local l_ = cbrt(l)
+  local m_ = cbrt(m)
+  local s_ = cbrt(s)
   local ll = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
-  return 0.5 * (k_3 * ll - k_1 + math.sqrt((k_3 * ll - k_1) * (k_3 * ll - k_1) + 4 * k_2 * k_3 * ll))
+  return 0.5 * (k_3 * ll - k_1 + sqrt((k_3 * ll - k_1) * (k_3 * ll - k_1) + 4 * k_2 * k_3 * ll))
+end
+
+local hex_color_groups = {}
+
+--- @param hex_color string
+--- @return string
+local function compute_hex_color_group(hex_color)
+  local cached_group_name = hex_color_groups[hex_color]
+  if cached_group_name ~= nil then
+    return cached_group_name
+  end
+
+  local hex = sub(hex_color, 2)
+  local group_name = format('OklchColorPickerHexColor_%s', hex)
+
+  local fg = (oklab_lightness(hex) < 0.5) and 'White' or 'Black'
+  nvim_set_hl(0, group_name, { fg = fg, bg = hex_color })
+
+  hex_color_groups[hex_color] = group_name
+
+  return group_name
+end
+
+---@param bufnr integer
+---@param lines string[]
+---@param from_line integer
+---@param to_line integer
+---@param ft string
+function M.highlight_lines(bufnr, lines, from_line, to_line, ft)
+  vim.api.nvim_buf_clear_namespace(bufnr, ns, from_line, to_line)
+
+  local matches = {}
+  for i = from_line - 1, to_line + 1 do
+    matches[i] = {}
+  end
+
+  for _, pattern_list in ipairs(M.patterns) do
+    if pattern_list.ft(ft) then
+      for _, pattern in ipairs(pattern_list) do
+        for i, line in ipairs(lines) do
+          local line_n = from_line + i - 1
+          local start = 1
+          local match_start, match_end = find(line, pattern.cheap, start)
+
+          while match_start ~= nil do
+            local replace_start, replace_end
+            if pattern.simple_groups then
+              replace_start, replace_end = match_start, match_end
+            else
+              _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
+              replace_end = replace_end - 1
+            end
+
+            local has_space = true
+            for _, match in ipairs(matches[line_n]) do
+              if not (match[1] > match_end or match[2] < match_start) then
+                has_space = false
+                break
+              end
+            end
+
+            if has_space then
+              local color = sub(line, replace_start --[[@as number]], replace_end)
+              local hex = color_to_hex(color, pattern_list.format)
+
+              if hex then
+                local group = compute_hex_color_group(hex)
+                nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
+              end
+              insert(matches[line_n], { match_start, match_end })
+            end
+
+            start = match_end + 1
+            match_start, match_end = find(line, pattern.cheap, start)
+          end
+        end
+      end
+    end
+  end
 end
 
 return M
