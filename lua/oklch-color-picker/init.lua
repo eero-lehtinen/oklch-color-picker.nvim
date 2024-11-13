@@ -61,7 +61,7 @@ function M.setup(config)
   end, {})
 
   for key, pattern_list in pairs(M.config.patterns) do
-    if pattern_list[1] ~= nil then
+    if pattern_list and pattern_list[1] ~= nil then
       local ft = function()
         return true
       end

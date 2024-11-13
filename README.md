@@ -76,12 +76,12 @@ local default_config = {
 
 ## Configuration
 
-Disable default patterns by setting an empty table:
+Disable default patterns by setting them to false:
 
 ```lua
 {
   patterns = {
-    css = {}
+    numbers_in_brackets = false
   }
 }
 ```
