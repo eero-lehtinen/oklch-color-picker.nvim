@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 05
+*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 13
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -59,7 +59,7 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
       patterns = {
         hex = {
           priority = -1,
-          '()#%x%x%x+()%f[%W]',
+          '()#%x%x%x+%f[%W]()',
         },
         css = {
           priority = -1,
@@ -184,7 +184,7 @@ window, full of text and 10 hex colors. In the stress test file
 <./stress_test.txt>, where the window is filled with ~1000 hex colors, the
 initial update takes 4 ms, half of which is unavoidable Nvim extmark updating
 overhead. The plugin caches extmarks, so seeing a color for the second time
-reduces overhead, resulting in a 2.5 ms update when scrolling back and forth.
+reduces overhead, resulting in a 2 ms update when scrolling back and forth.
 
 When editing, only the changed lines are updated. In the common case, when
 inserting on a line with no colors, the update takes < 0.01 ms (line being 120
@@ -216,7 +216,7 @@ STRESS TEST RESULTS (2024-11-05) ~
   ------------ ------------------------- ----------------------- ----------
   Open buffer  4 ms                      10 ms                   50 ms
 
-  Scroll       2.5 ms                    10 ms                   0 ms
+  Scroll       2 ms                      10 ms                   0 ms
 
   Insert       < 0.1 ms                  10 ms                   0.9 ms
   -------------------------------------------------------------------------
