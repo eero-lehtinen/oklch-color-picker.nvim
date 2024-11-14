@@ -50,12 +50,12 @@ local default_config = {
     },
     css = {
       priority = -1,
-      -- Commas are not allowed in modern CSS colors so use [^,] to
-      -- differentiate from `numbers_in_brackets`. `-` is the same as `*`,
-      -- but matches the shortest possible sequence.
-      '()rgb%([^,]-%)()',
-      '()oklch%([^,]-%)()',
-      '()hsl%([^,]-%)()',
+      -- Rgb and Hsl support modern and legacy formats:
+      -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
+      -- `-` is the same as `*`, but matches the shortest possible sequence.
+      '()rgba?%(.-%)()',
+      '()hsla?%(.-%)()',
+      '()oklch%(.-%)()',
     },
     numbers_in_brackets = {
       priority = -10,
