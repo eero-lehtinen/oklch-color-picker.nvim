@@ -139,7 +139,7 @@ The patterns should contain two empty groups `()` to designate the replacement r
 
 I don't like how an insignificant feature like color highlighting can hog CPU resources and cause lag, so this plugin tries to make it fast and unnoticeable. The highlighting is done on a timer after edits to give the immediate CPU time to features you actually care about like Treesitter or LSP. Then after the timer delay has passed, the colors are searched and highlights applied. You can also set the delay to 0 to make highlighting instant.
 
-When you open a new buffer or scroll the view, a whole screen update is done. With my AMD Ryzen 7 5800X3D, this takes around 0.3 ms on a 65 rows by 120 cols window, full of text and 10 hex colors. In [the stress test file](./stress_test.txt), where the window is filled with ~1000 hex colors, the initial update takes 4 ms, more than half of which is unavoidable Nvim extmark (highlight) creation and assignment overhead. The plugin caches created extmarks, so seeing a color for the second time reduces overhead, resulting in a 2 ms update when scrolling back and forth. Still, more than half of this time is taken by clearing and reassigning extmarks. The rest is spent searching and parsing colors.
+When you open a new buffer or scroll the view, a whole screen update is done. With my AMD Ryzen 7 5800X3D, this takes around 0.3 ms on a 65 rows by 120 cols window, full of text and 10 hex colors. In [the stress test file](./stress_test.txt), where the window is filled with ~1000 hex colors, the initial update takes 4 ms, more than half of which is unavoidable Nvim extmark (highlight) creation and assignment overhead. This plugin caches lines, so unchanged lines take almost no time to process. This results in a full screen update taking about 0.01 ms when scrolling back and forth on the same lines.
 
 When editing, only the changed lines are updated. In the common case, when inserting on a line with no colors, the update takes < 0.01 ms (line being 120 chars wide). Doing the same in the stress test file takes < 0.1 ms. Of course with async, it takes zero time immediately after inserting text.
 
@@ -156,10 +156,8 @@ Measurements were done by manually adding `vim.uv.hrtime` logging to the update 
 | Action      | oklch-color-picker.nvim | nvim-colorizer.lua | ccc.nvim | nvim-highlight-colors |
 | :---------- | :---------------------- | :----------------- | :------- | :-------------------- |
 | Open buffer | 4 ms                    | 4 ms               | 50 ms    | 10 ms                 |
-| Scroll      | 2 ms                    | 0.3 ms             | 0 ms     | 10 ms                 |
-| Insert      | < 0.1 ms                | < 0.1 ms           | 0.9 ms   | 10 ms                 |
-
-We can see that `oklch-color-picker.nvim` has respectable performance. Still, `nvim-colorizer.lua` is about as fast at searching and parsing but utilizes a cache, gaining speed when seeing previous colors again. `ccc.nvim` is slower but also the most feature complete.
+| Scroll      | 0.01 ms                 | 0.3 ms             | 0 ms     | 10 ms                 |
+| Insert      | 0.1 ms                  | 0.1 ms             | 0.9 ms   | 10 ms                 |
 
 ## Other similar plugins
 

@@ -3,8 +3,7 @@ local downloader = require 'oklch-color-picker.downloader'
 local color_to_hex
 
 local find, sub, format = string.find, string.sub, string.format
-local insert = table.insert
-local nvim_buf_add_highlight, nvim_set_hl = vim.api.nvim_buf_add_highlight, vim.api.nvim_set_hl
+local nvim_buf_clear_namespace, nvim_buf_add_highlight, nvim_set_hl = vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_add_highlight, vim.api.nvim_set_hl
 
 local M = {}
 
@@ -105,6 +104,7 @@ end
 
 ---@class BufData
 ---@field pending_changes { from_line: integer, to_line: integer }|nil
+---@field line_cache table<integer, string|nil>
 
 --- @type { [integer]: BufData }
 M.bufs = {}
@@ -132,6 +132,7 @@ function M.on_buf_enter(bufnr, force_update)
 
   M.bufs[bufnr] = {
     pending_changes = nil,
+    line_cache = {},
   }
 
   M.update(bufnr)
@@ -198,42 +199,44 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     buf_data.pending_changes.to_line = math.min(math.max(buf_data.pending_changes.to_line, to_line), vim.fn.line 'w$')
   end
 
+  local process_update = function()
+    local buf_data = M.bufs[bufnr]
+    if buf_data == nil or buf_data.pending_changes == nil then
+      return
+    end
+
+    local t = vim.uv.hrtime()
+
+    local from_line = buf_data.pending_changes.from_line --[[@as integer]]
+    local to_line = buf_data.pending_changes.to_line --[[@as integer]]
+    buf_data.pending_changes = nil
+
+    local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
+
+    local ft = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+
+    -- ignore very long lines
+    for i, line in ipairs(lines) do
+      if string.len(line) > 4000 then
+        lines[i] = ''
+      end
+    end
+
+    M.highlight_lines(bufnr, lines, from_line, ft)
+
+    if M.perf_logging then
+      local ms = (vim.uv.hrtime() - t) / 1000000
+      print(format('color highlighting took: %.3f ms, lines %d to %d', ms, from_line, to_line))
+    end
+  end
+
   local delay = scroll and M.config.scroll_delay or M.config.edit_delay
   M.pending_timer:stop()
-  M.pending_timer:start(
-    delay,
-    0,
-    vim.schedule_wrap(function()
-      local buf_data = M.bufs[bufnr]
-      if buf_data == nil or buf_data.pending_changes == nil then
-        return
-      end
-
-      local t = vim.uv.hrtime()
-
-      local from_line = buf_data.pending_changes.from_line --[[@as integer]]
-      local to_line = buf_data.pending_changes.to_line --[[@as integer]]
-      buf_data.pending_changes = nil
-
-      local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
-
-      local ft = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
-
-      -- ignore very long lines
-      for i, line in ipairs(lines) do
-        if string.len(line) > 2000 then
-          lines[i] = ''
-        end
-      end
-
-      M.highlight_lines(bufnr, lines, from_line, to_line, ft)
-
-      if M.perf_logging then
-        local ms = (vim.uv.hrtime() - t) / 1000000
-        print(format('color highlighting took: %.3f ms, lines %d to %d', ms, from_line, to_line))
-      end
-    end)
-  )
+  if delay > 0 then
+    M.pending_timer:start(delay, 0, vim.schedule_wrap(process_update))
+  else
+    process_update()
+  end
 end)
 
 local pow, sqrt = math.pow, math.sqrt
@@ -303,60 +306,72 @@ local line_matches = {}
 ---@param bufnr integer
 ---@param lines string[]
 ---@param from_line integer
----@param to_line integer
 ---@param ft string
-function M.highlight_lines(bufnr, lines, from_line, to_line, ft)
-  vim.api.nvim_buf_clear_namespace(bufnr, ns, from_line, to_line)
-
+function M.highlight_lines(bufnr, lines, from_line, ft)
   local patterns = M.patterns
+  local line_cache = M.bufs[bufnr].line_cache
 
   for i, line in ipairs(lines) do
-    for j = 1, #line_matches do
-      line_matches[j] = nil
-    end
-    local match_idx = 1
-    for _, pattern_list in ipairs(patterns) do
-      if pattern_list.ft(ft) then
-        for _, pattern in ipairs(pattern_list) do
-          local start = 1
-          local match_start, match_end = find(line, pattern.cheap, start)
+    local line_n = from_line + i - 1 -- zero based index
 
-          while match_start ~= nil do
-            local replace_start, replace_end
-            if pattern.simple_groups then
-              replace_start, replace_end = match_start, match_end
-            else
-              _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
-              replace_end = replace_end - 1
-            end
+    if line_cache[line_n + 1] ~= line then
+      line_cache[line_n + 1] = line
 
-            local has_space = true
-            for _, match in ipairs(line_matches) do
-              if not (match[1] > match_end or match[2] < match_start) then
-                has_space = false
-                break
+      nvim_buf_clear_namespace(bufnr, ns, line_n, line_n + 1)
+
+      for j = 1, #line_matches do
+        line_matches[j] = nil
+      end
+      local match_idx = 1
+
+      for _, pattern_list in ipairs(patterns) do
+        if pattern_list.ft(ft) then
+          for _, pattern in ipairs(pattern_list) do
+            local start = 1
+            local match_start, match_end = find(line, pattern.cheap, start)
+
+            while match_start ~= nil do
+              local replace_start, replace_end
+              if pattern.simple_groups then
+                replace_start, replace_end = match_start, match_end
+              else
+                _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
+                replace_end = replace_end - 1
               end
-            end
 
-            if has_space then
-              local color = sub(line, replace_start --[[@as number]], replace_end)
-              local hex = color_to_hex(color, pattern_list.format)
-
-              if hex then
-                local line_n = from_line + i - 1
-                local group = compute_hex_color_group(hex)
-                nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
+              local has_space = true
+              for _, match in ipairs(line_matches) do
+                if not (match[1] > match_end or match[2] < match_start) then
+                  has_space = false
+                  break
+                end
               end
-              line_matches[match_idx] = { match_start, match_end }
-              match_idx = match_idx + 1
-            end
 
-            start = match_end + 1
-            match_start, match_end = find(line, pattern.cheap, start)
+              if has_space then
+                local color = sub(line, replace_start --[[@as number]], replace_end)
+                local hex = color_to_hex(color, pattern_list.format)
+
+                if hex then
+                  local group = compute_hex_color_group(hex)
+                  nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
+                end
+                line_matches[match_idx] = { match_start, match_end }
+                match_idx = match_idx + 1
+              end
+
+              start = match_end + 1
+              match_start, match_end = find(line, pattern.cheap, start)
+            end
           end
         end
       end
     end
+  end
+
+  -- Clean up unused lines from cache
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  for i = line_count + 1, #line_cache do
+    line_cache[i] = nil
   end
 end
 
