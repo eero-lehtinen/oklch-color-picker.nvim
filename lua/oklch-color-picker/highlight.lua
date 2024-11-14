@@ -229,8 +229,8 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
       M.highlight_lines(bufnr, lines, from_line, to_line, ft)
 
       if M.perf_logging then
-        local us = (vim.uv.hrtime() - t) / 1000000
-        print(format('color highlighting took: %.3f ms, lines %d to %d', us, from_line, to_line))
+        local ms = (vim.uv.hrtime() - t) / 1000000
+        print(format('color highlighting took: %.3f ms, lines %d to %d', ms, from_line, to_line))
       end
     end)
   )
@@ -298,6 +298,8 @@ local function compute_hex_color_group(hex_color)
   return group_name
 end
 
+local line_matches = {}
+
 ---@param bufnr integer
 ---@param lines string[]
 ---@param from_line integer
@@ -306,16 +308,16 @@ end
 function M.highlight_lines(bufnr, lines, from_line, to_line, ft)
   vim.api.nvim_buf_clear_namespace(bufnr, ns, from_line, to_line)
 
-  local matches = {}
-  for i = from_line - 1, to_line + 1 do
-    matches[i] = {}
-  end
+  local patterns = M.patterns
 
-  for _, pattern_list in ipairs(M.patterns) do
-    if pattern_list.ft(ft) then
-      for _, pattern in ipairs(pattern_list) do
-        for i, line in ipairs(lines) do
-          local line_n = from_line + i - 1
+  for i, line in ipairs(lines) do
+    for j = 1, #line_matches do
+      line_matches[j] = nil
+    end
+    local match_idx = 1
+    for _, pattern_list in ipairs(patterns) do
+      if pattern_list.ft(ft) then
+        for _, pattern in ipairs(pattern_list) do
           local start = 1
           local match_start, match_end = find(line, pattern.cheap, start)
 
@@ -329,7 +331,7 @@ function M.highlight_lines(bufnr, lines, from_line, to_line, ft)
             end
 
             local has_space = true
-            for _, match in ipairs(matches[line_n]) do
+            for _, match in ipairs(line_matches) do
               if not (match[1] > match_end or match[2] < match_start) then
                 has_space = false
                 break
@@ -341,10 +343,12 @@ function M.highlight_lines(bufnr, lines, from_line, to_line, ft)
               local hex = color_to_hex(color, pattern_list.format)
 
               if hex then
+                local line_n = from_line + i - 1
                 local group = compute_hex_color_group(hex)
                 nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
               end
-              insert(matches[line_n], { match_start, match_end })
+              line_matches[match_idx] = { match_start, match_end }
+              match_idx = match_idx + 1
             end
 
             start = match_end + 1
