@@ -177,7 +177,7 @@ to features you actually care about like Treesitter or LSP. Then after the
 timer delay has passed, the colors are searched and highlights applied. You can
 also set the delay to 0 to make highlighting instant.
 
-When you open a new buffer or scroll the view, a whole screen update is done.
+When you open a new buffer or scroll the view, visible lines are processed.
 With my AMD Ryzen 7 5800X3D, this takes around 0.3 ms on a 65 rows by 120 cols
 window, full of text and 10 hex colors. In the stress test file
 <./stress_test.txt>, where the window is filled with ~1000 hex colors, the
