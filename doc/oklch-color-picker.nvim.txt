@@ -182,11 +182,9 @@ With my AMD Ryzen 7 5800X3D, this takes around 0.3 ms on a 65 rows by 120 cols
 window, full of text and 10 hex colors. In the stress test file
 <./stress_test.txt>, where the window is filled with ~1000 hex colors, the
 initial update takes 4 ms, more than half of which is unavoidable Nvim extmark
-(highlight) creation and assignment overhead. The plugin caches created
-extmarks, so seeing a color for the second time reduces overhead, resulting in
-a 2 ms update when scrolling back and forth. Still, more than half of this time
-is taken by clearing and reassigning extmarks. The rest is spent searching and
-parsing colors.
+(highlight) creation and assignment overhead. This plugin caches lines, so
+unchanged lines take almost no time to process. This results in a full screen
+update taking about 0.01 ms when scrolling back and forth on the same lines.
 
 When editing, only the changed lines are updated. In the common case, when
 inserting on a line with no colors, the update takes < 0.01 ms (line being 120
@@ -226,15 +224,10 @@ STRESS TEST RESULTS (2024-11-14) ~
   Open      4 ms                      4 ms                 50 ms      10 ms
   buffer                                                              
 
-  Scroll    2 ms                      0.3 ms               0 ms       10 ms
+  Scroll    0.01 ms                   0.3 ms               0 ms       10 ms
 
-  Insert    < 0.1 ms                  < 0.1 ms             0.9 ms     10 ms
+  Insert    0.1 ms                    0.1 ms               0.9 ms     10 ms
   -------------------------------------------------------------------------------------------
-We can see that `oklch-color-picker.nvim` has respectable performance. Still,
-`nvim-colorizer.lua` is about as fast at searching and parsing but utilizes a
-cache, gaining speed when seeing previous colors again. `ccc.nvim` is slower
-but also the most feature complete.
-
 
 OTHER SIMILAR PLUGINS          *oklch-color-picker.nvim-other-similar-plugins*
 
