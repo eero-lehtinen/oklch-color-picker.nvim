@@ -106,8 +106,7 @@ end
 
 ---@class BufData
 ---@field pending_updates { from_line: integer, to_line: integer }|nil
----@field line_cache table<integer, string|nil>
----@field invalidate { from_line: integer, to_line: integer }|nil
+---@field prev_win_pos table<integer>
 
 --- @type { [integer]: BufData }
 M.bufs = {}
@@ -134,9 +133,7 @@ function M.on_buf_enter(bufnr, force_update)
   end
 
   M.bufs[bufnr] = {
-    pending_updates = nil,
-    line_cache = {},
-    invalidate = nil,
+    prev_win_pos = { 0, 0 },
   }
 
   M.update(bufnr)
@@ -148,34 +145,18 @@ function M.on_buf_enter(bufnr, force_update)
           -- We deleted some lines.
           -- It's possible that we uncovered new unhighlighted colors from the bottom
           -- of the view, so update the rest of the view.
-          -- We could move the cache up here, but it could be an expensive operation on massive files.
           M.update_lines(bufnr, start_row, 100000000, false)
         else
-          -- Invalidate added lines as it's impossible for them to already have correct highlights.
-          -- We could technically move the cache down, but that could be a fairly expensive operation
-          -- and can't be done asynchronously.
-          local buf_data = M.bufs[bufnr]
-          if buf_data then
-            local invalidate = {
-              from_line = start_row + 1,
-              to_line = start_row + new_end_row + 1,
-            }
-            if buf_data.invalidate == nil then
-              buf_data.invalidate = invalidate
-            else
-              buf_data.invalidate.from_line = min(buf_data.invalidate.from_line, invalidate.from_line)
-              buf_data.invalidate.to_line = max(buf_data.invalidate.to_line, invalidate.to_line)
-            end
-          end
           M.update_lines(bufnr, start_row, start_row + new_end_row + 1, false)
         end
       end,
       on_reload = function()
-        M.force_update(bufnr)
+        M.update(bufnr)
       end,
       on_detach = function()
         M.bufs[bufnr] = nil
         M.buf_attached[bufnr] = nil
+        vim.api.nvim_clear_autocmds { buffer = bufnr, group = M.gr }
       end,
     })
     M.buf_attached[bufnr] = true
@@ -185,23 +166,32 @@ function M.on_buf_enter(bufnr, force_update)
     group = M.gr,
     buffer = bufnr,
     callback = function(data)
-      M.update(data.buf)
+      local buf_data = M.bufs[bufnr]
+      if buf_data == nil then
+        return
+      end
+
+      local top = vim.fn.line 'w0' - 1
+      local bottom = vim.fn.line 'w$'
+      if bottom > buf_data.prev_win_pos[2] then
+        -- scrolled down
+        M.update_lines(data.buf, buf_data.prev_win_pos[2], 1e9)
+      elseif bottom <= buf_data.prev_win_pos[1] then
+        -- large jump up
+        M.update_lines(data.buf, 0, 1e9)
+      else
+        -- scrolled up
+        M.update_lines(data.buf, 0, buf_data.prev_win_pos[1] + 1)
+      end
+      buf_data.prev_win_pos[1] = top
+      buf_data.prev_win_pos[2] = bottom
     end,
   })
 end
 
 --- @param bufnr integer
 function M.update(bufnr)
-  M.update_lines(bufnr, 0, 100000000, true)
-end
-
---- @param bufnr integer
-function M.force_update(bufnr)
-  local buf_data = M.bufs[bufnr]
-  if buf_data then
-    buf_data.line_cache = {}
-  end
-  M.update_lines(bufnr, 0, 100000000, true)
+  M.update_lines(bufnr, 0, 1e9, true)
 end
 
 M.pending_timer = vim.uv.new_timer()
@@ -239,17 +229,6 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     local from_line = buf_data.pending_updates.from_line --[[@as integer]]
     local to_line = buf_data.pending_updates.to_line --[[@as integer]]
     buf_data.pending_updates = nil
-
-    if buf_data.invalidate ~= nil then
-      if buf_data.invalidate.to_line - buf_data.invalidate.from_line > 120 then
-        buf_data.line_cache = {}
-      else
-        for i = buf_data.invalidate.from_line, buf_data.invalidate.to_line do
-          buf_data.line_cache[i] = nil
-        end
-      end
-      buf_data.invalidate = nil
-    end
 
     local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
 
@@ -346,59 +325,53 @@ local line_matches = {}
 ---@param ft string
 function M.highlight_lines(bufnr, lines, from_line, ft)
   local patterns = M.patterns
-  local line_cache = M.bufs[bufnr].line_cache
+
+  nvim_buf_clear_namespace(bufnr, ns, from_line, from_line + #lines)
 
   for i, line in ipairs(lines) do
-    local line_n = from_line + i - 1 -- zero based index
+    for j = 1, #line_matches do
+      line_matches[j] = nil
+    end
+    local match_idx = 1
 
-    if line_cache[line_n + 1] ~= line then
-      line_cache[line_n + 1] = line
+    for _, pattern_list in ipairs(patterns) do
+      if pattern_list.ft(ft) then
+        for _, pattern in ipairs(pattern_list) do
+          local start = 1
+          local match_start, match_end = find(line, pattern.cheap, start)
 
-      nvim_buf_clear_namespace(bufnr, ns, line_n, line_n + 1)
-
-      for j = 1, #line_matches do
-        line_matches[j] = nil
-      end
-      local match_idx = 1
-
-      for _, pattern_list in ipairs(patterns) do
-        if pattern_list.ft(ft) then
-          for _, pattern in ipairs(pattern_list) do
-            local start = 1
-            local match_start, match_end = find(line, pattern.cheap, start)
-
-            while match_start ~= nil do
-              local replace_start, replace_end
-              if pattern.simple_groups then
-                replace_start, replace_end = match_start, match_end
-              else
-                _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
-                replace_end = replace_end - 1
-              end
-
-              local has_space = true
-              for _, match in ipairs(line_matches) do
-                if not (match[1] > match_end or match[2] < match_start) then
-                  has_space = false
-                  break
-                end
-              end
-
-              if has_space then
-                local color = sub(line, replace_start --[[@as number]], replace_end)
-                local hex = color_to_hex(color, pattern_list.format)
-
-                if hex then
-                  local group = compute_hex_color_group(hex)
-                  nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
-                end
-                line_matches[match_idx] = { match_start, match_end }
-                match_idx = match_idx + 1
-              end
-
-              start = match_end + 1
-              match_start, match_end = find(line, pattern.cheap, start)
+          while match_start ~= nil do
+            local replace_start, replace_end
+            if pattern.simple_groups then
+              replace_start, replace_end = match_start, match_end
+            else
+              _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
+              replace_end = replace_end - 1
             end
+
+            local has_space = true
+            for _, match in ipairs(line_matches) do
+              if not (match[1] > match_end or match[2] < match_start) then
+                has_space = false
+                break
+              end
+            end
+
+            if has_space then
+              local color = sub(line, replace_start --[[@as number]], replace_end)
+              local hex = color_to_hex(color, pattern_list.format)
+
+              if hex then
+                local group = compute_hex_color_group(hex)
+                local line_n = from_line + i - 1 -- zero based index
+                nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
+              end
+              line_matches[match_idx] = { match_start, match_end }
+              match_idx = match_idx + 1
+            end
+
+            start = match_end + 1
+            match_start, match_end = find(line, pattern.cheap, start)
           end
         end
       end
