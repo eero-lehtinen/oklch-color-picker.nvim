@@ -4,6 +4,8 @@ local color_to_hex
 
 local find, sub, format = string.find, string.sub, string.format
 local nvim_buf_clear_namespace, nvim_buf_add_highlight, nvim_set_hl = vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_add_highlight, vim.api.nvim_set_hl
+local pow, sqrt, min, max = math.pow, math.sqrt, math.min, math.max
+local rshift, band = bit.rshift, bit.band
 
 local M = {}
 
@@ -103,8 +105,9 @@ function M.toggle()
 end
 
 ---@class BufData
----@field pending_changes { from_line: integer, to_line: integer }|nil
+---@field pending_updates { from_line: integer, to_line: integer }|nil
 ---@field line_cache table<integer, string|nil>
+---@field invalidate { from_line: integer, to_line: integer }|nil
 
 --- @type { [integer]: BufData }
 M.bufs = {}
@@ -124,34 +127,51 @@ function M.on_buf_enter(bufnr, force_update)
   end
 
   if M.bufs[bufnr] then
-    if force_update or M.bufs[bufnr].pending_changes then
+    if force_update or M.bufs[bufnr].pending_updates then
       M.update(bufnr)
     end
     return
   end
 
   M.bufs[bufnr] = {
-    pending_changes = nil,
+    pending_updates = nil,
     line_cache = {},
+    invalidate = nil,
   }
 
   M.update(bufnr)
 
   if M.buf_attached[bufnr] == nil then
     vim.api.nvim_buf_attach(bufnr, false, {
-      on_lines = function(_, _, _, from_line, _, to_line, _)
-        if from_line == to_line then
-          -- We probably deleted something because the changed range is empty.
+      on_bytes = function(_, _, _, start_row, _, _, old_end_row, _, _, new_end_row, _, _)
+        if new_end_row < old_end_row then
+          -- We deleted some lines.
           -- It's possible that we uncovered new unhighlighted colors from the bottom
           -- of the view, so update the rest of the view.
-          M.update_lines(bufnr, from_line, 100000000, false)
+          -- We could move the cache up here, but it could be an expensive operation on massive files.
+          M.update_lines(bufnr, start_row, 100000000, false)
         else
-          -- Only update the changed range
-          M.update_lines(bufnr, from_line, to_line, false)
+          -- Invalidate added lines as it's impossible for them to already have correct highlights.
+          -- We could technically move the cache down, but that could be a fairly expensive operation
+          -- and can't be done asynchronously.
+          local buf_data = M.bufs[bufnr]
+          if buf_data then
+            local invalidate = {
+              from_line = start_row + 1,
+              to_line = start_row + new_end_row + 1,
+            }
+            if buf_data.invalidate == nil then
+              buf_data.invalidate = invalidate
+            else
+              buf_data.invalidate.from_line = min(buf_data.invalidate.from_line, invalidate.from_line)
+              buf_data.invalidate.to_line = max(buf_data.invalidate.to_line, invalidate.to_line)
+            end
+          end
+          M.update_lines(bufnr, start_row, start_row + new_end_row + 1, false)
         end
       end,
       on_reload = function()
-        M.update(bufnr)
+        M.force_update(bufnr)
       end,
       on_detach = function()
         M.bufs[bufnr] = nil
@@ -175,6 +195,15 @@ function M.update(bufnr)
   M.update_lines(bufnr, 0, 100000000, true)
 end
 
+--- @param bufnr integer
+function M.force_update(bufnr)
+  local buf_data = M.bufs[bufnr]
+  if buf_data then
+    buf_data.line_cache = {}
+  end
+  M.update_lines(bufnr, 0, 100000000, true)
+end
+
 M.pending_timer = vim.uv.new_timer()
 
 M.perf_logging = false
@@ -189,27 +218,34 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     return
   end
 
-  if buf_data.pending_changes == nil then
-    buf_data.pending_changes = {
-      from_line = math.max(from_line, vim.fn.line 'w0' - 1),
-      to_line = math.min(to_line, vim.fn.line 'w$'),
+  if buf_data.pending_updates == nil then
+    buf_data.pending_updates = {
+      from_line = max(from_line, vim.fn.line 'w0' - 1),
+      to_line = min(to_line, vim.fn.line 'w$'),
     }
   else
-    buf_data.pending_changes.from_line = math.max(math.min(buf_data.pending_changes.from_line, from_line), vim.fn.line 'w0' - 1)
-    buf_data.pending_changes.to_line = math.min(math.max(buf_data.pending_changes.to_line, to_line), vim.fn.line 'w$')
+    buf_data.pending_updates.from_line = max(min(buf_data.pending_updates.from_line, from_line), vim.fn.line 'w0' - 1)
+    buf_data.pending_updates.to_line = min(max(buf_data.pending_updates.to_line, to_line), vim.fn.line 'w$')
   end
 
   local process_update = function()
     local buf_data = M.bufs[bufnr]
-    if buf_data == nil or buf_data.pending_changes == nil then
+    if buf_data == nil or buf_data.pending_updates == nil then
       return
     end
 
     local t = vim.uv.hrtime()
 
-    local from_line = buf_data.pending_changes.from_line --[[@as integer]]
-    local to_line = buf_data.pending_changes.to_line --[[@as integer]]
-    buf_data.pending_changes = nil
+    local from_line = buf_data.pending_updates.from_line --[[@as integer]]
+    local to_line = buf_data.pending_updates.to_line --[[@as integer]]
+    buf_data.pending_updates = nil
+
+    if buf_data.invalidate ~= nil then
+      for i = buf_data.invalidate.from_line, buf_data.invalidate.to_line do
+        buf_data.line_cache[i] = ''
+      end
+      buf_data.invalidate = nil
+    end
 
     local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
 
@@ -238,9 +274,6 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     process_update()
   end
 end)
-
-local pow, sqrt = math.pow, math.sqrt
-local rshift, band = bit.rshift, bit.band
 
 local function to_linear(c)
   if c <= 0.03928 then
