@@ -171,8 +171,7 @@ function M.on_buf_enter(bufnr, force_update)
         return
       end
 
-      local top = vim.fn.line 'w0' - 1
-      local bottom = vim.fn.line 'w$'
+      local top, bottom = M.get_view(bufnr)
       if bottom > buf_data.prev_win_pos[2] then
         -- scrolled down
         M.update_lines(data.buf, buf_data.prev_win_pos[2], 1e9)
@@ -194,6 +193,17 @@ function M.update(bufnr)
   M.update_lines(bufnr, 0, 1e9, true)
 end
 
+local function get_view()
+  return { vim.fn.line 'w0' - 1, vim.fn.line 'w$' }
+end
+
+--- @param bufnr integer
+--- @return integer, integer
+function M.get_view(bufnr)
+  local v = vim.api.nvim_buf_call(bufnr, get_view)
+  return v[1], v[2]
+end
+
 M.pending_timer = vim.uv.new_timer()
 
 M.perf_logging = false
@@ -208,14 +218,15 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     return
   end
 
+  local top, bottom = M.get_view(bufnr)
   if buf_data.pending_updates == nil then
     buf_data.pending_updates = {
-      from_line = max(from_line, vim.fn.line 'w0' - 1),
-      to_line = min(to_line, vim.fn.line 'w$'),
+      from_line = max(from_line, top),
+      to_line = min(to_line, bottom),
     }
   else
-    buf_data.pending_updates.from_line = max(min(buf_data.pending_updates.from_line, from_line), vim.fn.line 'w0' - 1)
-    buf_data.pending_updates.to_line = min(max(buf_data.pending_updates.to_line, to_line), vim.fn.line 'w$')
+    buf_data.pending_updates.from_line = max(min(buf_data.pending_updates.from_line, from_line), top)
+    buf_data.pending_updates.to_line = min(max(buf_data.pending_updates.to_line, to_line), bottom)
   end
 
   local process_update = function()
