@@ -241,8 +241,12 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     buf_data.pending_updates = nil
 
     if buf_data.invalidate ~= nil then
-      for i = buf_data.invalidate.from_line, buf_data.invalidate.to_line do
-        buf_data.line_cache[i] = ''
+      if buf_data.invalidate.to_line - buf_data.invalidate.from_line > 150 then
+        buf_data.line_cache = {}
+      else
+        for i = buf_data.invalidate.from_line, buf_data.invalidate.to_line do
+          buf_data.line_cache[i] = ''
+        end
       end
       buf_data.invalidate = nil
     end
