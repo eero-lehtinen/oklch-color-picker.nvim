@@ -141,7 +141,7 @@ I don't like how an insignificant feature like color highlighting can hog CPU re
 
 When you open a new buffer, visible lines are processed. With my AMD Ryzen 7 5800X3D, this takes around 0.2 ms on a 65 rows by 120 cols window, full of text and 10 hex colors. In [the stress test file](./stress_test.txt), where the window is filled with ~1000 hex colors, the initial update takes 4 ms, more than half of which is unavoidable Nvim extmark (highlight) creation and assignment overhead.
 
-When scrolling, visible lines are processed but incrementally. I you scroll 10 lines down, only those lines are processed. This means that scrolling between 1 and 65 lines can take 0.1 -- 2 ms in the stress test file.
+When scrolling, visible lines are processed but incrementally. I you scroll 10 lines down, only those lines are processed. This means that scrolling between 1 and 65 lines can take 0.1 – 2 ms in the stress test file.
 
 When editing, only the changed lines are updated. In the common case, when changing text on a line with no colors, the update takes < 0.01 ms (line being 120 chars wide). Doing the same in the stress test file takes < 0.1 ms. Of course with async, it takes zero time immediately after inserting text.
 
@@ -158,7 +158,7 @@ Measurements were done by manually adding `vim.uv.hrtime` logging to the update 
 | Event       | oklch-color-picker.nvim | nvim-colorizer.lua | ccc.nvim | nvim-highlight-colors |
 | :---------- | :---------------------- | :----------------- | :------- | :-------------------- |
 | BufEnter    | 4 ms                    | 3 ms               | 50 ms    | 10 ms                 |
-| WinScrolled | 0.1 ms -- 2 ms          | 0.2 -- 2 ms        | n/a      | 10 ms                 |
+| WinScrolled | 0.1 ms – 2 ms           | 0.2 – 2 ms         | n/a      | 10 ms                 |
 | TextChanged | 0.1 ms                  | 0.2 ms             | 0.9 ms   | n/a                   |
 | InsertLeave | n/a                     | 2 ms               | n/a      | 10 ms                 |
 
