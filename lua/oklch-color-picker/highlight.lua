@@ -241,11 +241,11 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     buf_data.pending_updates = nil
 
     if buf_data.invalidate ~= nil then
-      if buf_data.invalidate.to_line - buf_data.invalidate.from_line > 150 then
+      if buf_data.invalidate.to_line - buf_data.invalidate.from_line > 120 then
         buf_data.line_cache = {}
       else
         for i = buf_data.invalidate.from_line, buf_data.invalidate.to_line do
-          buf_data.line_cache[i] = ''
+          buf_data.line_cache[i] = nil
         end
       end
       buf_data.invalidate = nil
@@ -403,12 +403,6 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
         end
       end
     end
-  end
-
-  -- Clean up unused lines from cache
-  local line_count = vim.api.nvim_buf_line_count(bufnr)
-  for i = line_count + 1, #line_cache do
-    line_cache[i] = nil
   end
 end
 
