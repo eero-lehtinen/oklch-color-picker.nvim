@@ -259,26 +259,18 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
 end)
 
 local function to_linear(c)
-  if c <= 0.03928 then
+  if c <= 0.04045 then
     return c / 12.92
   else
     return pow((c + 0.055) / 1.055, 2.4)
   end
 end
 
-local function cbrt(c)
-  return pow(c, 1 / 3)
-end
-
-local k_1 = 0.206
-local k_2 = 0.03
-local k_3 = (1. + k_1) / (1. + k_2)
-
---- Perceptual lightness estimate
---- https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab
+--- Follows W3C guidelines in choosing the better contrast foreground.
+--- https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
 --- @param hex string
---- @return number
-local function oklab_lightness(hex)
+--- @return boolean
+local function is_light(hex)
   local number = tonumber(hex, 16)
   local r = rshift(number, 16) / 255
   local g = band(rshift(number, 8), 0xff) / 255
@@ -286,14 +278,7 @@ local function oklab_lightness(hex)
   local lr = to_linear(r)
   local lg = to_linear(g)
   local lb = to_linear(b)
-  local l = 0.4122214708 * lr + 0.5363325363 * lg + 0.0514459929 * lb
-  local m = 0.2119034982 * lr + 0.6806995451 * lg + 0.1073969566 * lb
-  local s = 0.0883024619 * lr + 0.2817188376 * lg + 0.6299787005 * lb
-  local l_ = cbrt(l)
-  local m_ = cbrt(m)
-  local s_ = cbrt(s)
-  local ll = 0.2104542553 * l_ + 0.7936177850 * m_ - 0.0040720468 * s_
-  return 0.5 * (k_3 * ll - k_1 + sqrt((k_3 * ll - k_1) * (k_3 * ll - k_1) + 4 * k_2 * k_3 * ll))
+  return 0.2126 * lr + 0.7152 * lg + 0.0722 * lb > 0.179
 end
 
 local hex_color_groups = {}
@@ -309,7 +294,7 @@ local function compute_hex_color_group(hex_color)
   local hex = sub(hex_color, 2)
   local group_name = format('OklchColorPickerHexColor_%s', hex)
 
-  local fg = (oklab_lightness(hex) < 0.5) and 'White' or 'Black'
+  local fg = is_light(hex) and 'Black' or 'White'
   nvim_set_hl(0, group_name, { fg = fg, bg = hex_color })
 
   hex_color_groups[hex_color] = group_name
