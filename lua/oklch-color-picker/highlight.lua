@@ -106,7 +106,7 @@ end
 
 ---@class BufData
 ---@field pending_updates { from_line: integer, to_line: integer }|nil
----@field prev_win_pos table<integer>
+---@field prev_view { top: integer, bottom: integer }
 
 --- @type { [integer]: BufData }
 M.bufs = {}
@@ -133,7 +133,7 @@ function M.on_buf_enter(bufnr, force_update)
   end
 
   M.bufs[bufnr] = {
-    prev_win_pos = { 0, 0 },
+    prev_view = { top = 0, bottom = 0 },
   }
 
   M.update(bufnr)
@@ -145,7 +145,7 @@ function M.on_buf_enter(bufnr, force_update)
           -- We deleted some lines.
           -- It's possible that we uncovered new unhighlighted colors from the bottom
           -- of the view, so update the rest of the view.
-          M.update_lines(bufnr, start_row, 100000000, false)
+          M.update_lines(bufnr, start_row, 1e9, false)
         else
           M.update_lines(bufnr, start_row, start_row + new_end_row + 1, false)
         end
@@ -172,18 +172,18 @@ function M.on_buf_enter(bufnr, force_update)
       end
 
       local top, bottom = M.get_view(bufnr)
-      if bottom > buf_data.prev_win_pos[2] then
-        -- scrolled down
-        M.update_lines(data.buf, buf_data.prev_win_pos[2], 1e9)
-      elseif bottom <= buf_data.prev_win_pos[1] then
-        -- large jump up
-        M.update_lines(data.buf, 0, 1e9)
-      else
+      if top < buf_data.prev_view.top and bottom <= buf_data.prev_view.bottom then
         -- scrolled up
-        M.update_lines(data.buf, 0, buf_data.prev_win_pos[1] + 1)
+        M.update_lines(data.buf, 0, buf_data.prev_view.top + 1)
+      elseif bottom > buf_data.prev_view.bottom and top >= buf_data.prev_view.top then
+        -- scrolled down
+        M.update_lines(data.buf, buf_data.prev_view.bottom, 1e9)
+      else
+        -- large jump
+        M.update_lines(data.buf, 0, 1e9)
       end
-      buf_data.prev_win_pos[1] = top
-      buf_data.prev_win_pos[2] = bottom
+      buf_data.prev_view.top = top
+      buf_data.prev_view.bottom = bottom
     end,
   })
 end
@@ -194,7 +194,11 @@ function M.update(bufnr)
 end
 
 local function get_view()
-  return { vim.fn.line 'w0' - 1, vim.fn.line 'w$' }
+  return {
+    vim.fn.line 'w0' - 1,
+    -- return one extra line because it doesn't count it if it's wrapped
+    vim.fn.line 'w$' + 1,
+  }
 end
 
 --- @param bufnr integer
