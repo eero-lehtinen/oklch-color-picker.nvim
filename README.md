@@ -145,7 +145,7 @@ When scrolling, visible lines are processed but incrementally. I you scroll 10 l
 
 When editing, only the changed lines are updated. In the common case, when changing text on a line with no colors, the update takes < 0.01 ms (line being 120 chars wide). Doing the same in the stress test file takes < 0.1 ms. Of course with async, it takes zero time immediately after inserting text.
 
-[NvChad/nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua) uses the same strategy as this plugin and prcesses visible lines with incremental scrolling. When opening the stress test file, the update takes 3 ms, which is a bit faster than this plugin. Inserting in a line takes 0.2 ms, but it still does a full screen update when leaving insert mode. Only `hex`, `rgb`, and `hsl` features were enabled to make things more fair.
+[NvChad/nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua) uses the same strategy as this plugin and prcesses visible lines with incremental scrolling. When opening the stress test file, the update takes 3 ms. Inserting in a line takes 0.2 ms, but it still does a full screen update when leaving insert mode. Only `hex`, `rgb`, and `hsl` features were enabled to make things more fair.
 
 [uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) instead processes the whole file at startup, then updates only changed lines. The whole stress test file takes 50 ms to process when opening the buffer, scrolling is free and inserting in a single line takes around 0.9 ms. Only `hex`, `rgb`, `hsl` and `oklch` features were enabled.
 
@@ -157,7 +157,7 @@ Measurements were done by manually adding `vim.uv.hrtime` logging to the update 
 
 | Event       | oklch-color-picker.nvim | nvim-colorizer.lua | ccc.nvim | nvim-highlight-colors |
 | :---------- | :---------------------- | :----------------- | :------- | :-------------------- |
-| BufEnter    | 4 ms                    | 3 ms               | 50 ms    | 10 ms                 |
+| BufEnter    | 3 ms                    | 3 ms               | 50 ms    | 10 ms                 |
 | WinScrolled | 0.1 ms – 2 ms           | 0.2 – 2 ms         | n/a      | 10 ms                 |
 | TextChanged | 0.1 ms                  | 0.2 ms             | 0.9 ms   | n/a                   |
 | InsertLeave | n/a                     | 2 ms               | n/a      | 10 ms                 |

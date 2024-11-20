@@ -1,10 +1,12 @@
 local utils = require 'oklch-color-picker.utils'
 local downloader = require 'oklch-color-picker.downloader'
-local color_to_hex
+
+---@type fun(color: string, format: string|nil): number|nil
+local parse
 
 local find, sub, format = string.find, string.sub, string.format
 local nvim_buf_clear_namespace, nvim_buf_add_highlight, nvim_set_hl = vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_add_highlight, vim.api.nvim_set_hl
-local pow, sqrt, min, max = math.pow, math.sqrt, math.min, math.max
+local pow, min, max = math.pow, math.min, math.max
 local rshift, band = bit.rshift, bit.band
 
 local M = {}
@@ -42,7 +44,7 @@ function M.setup(config, patterns, auto_download)
       utils.log("Couldn't load parser library", vim.log.levels.ERROR)
       return
     end
-    color_to_hex = parser.color_to_hex
+    parse = parser.parse
 
     ns = vim.api.nvim_create_namespace 'OklchColorPickerNamespace'
     M.gr = vim.api.nvim_create_augroup('OklchColorPicker', {})
@@ -75,7 +77,7 @@ function M.disable()
 end
 
 function M.enable()
-  if not color_to_hex or not M.config or M.config.enabled then
+  if not parse or not M.config or M.config.enabled then
     return
   end
   M.config.enabled = true
@@ -280,39 +282,39 @@ local function to_linear(c)
     return pow((c + 0.055) / 1.055, 2.4)
   end
 end
+local linear_lookup = {}
+for i = 0, 255 do
+  linear_lookup[i] = to_linear(i / 255)
+end
 
 --- Follows W3C guidelines in choosing the better contrast foreground.
 --- https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
---- @param hex string
+--- @param rgb number
 --- @return boolean
-local function is_light(hex)
-  local number = tonumber(hex, 16)
-  local r = rshift(number, 16) / 255
-  local g = band(rshift(number, 8), 0xff) / 255
-  local b = band(number, 0xff) / 255
-  local lr = to_linear(r)
-  local lg = to_linear(g)
-  local lb = to_linear(b)
-  return 0.2126 * lr + 0.7152 * lg + 0.0722 * lb > 0.179
+local function is_light(rgb)
+  local r = rshift(rgb, 16)
+  local g = band(rshift(rgb, 8), 0xff)
+  local b = band(rgb, 0xff)
+  return 0.2126 * linear_lookup[r] + 0.7152 * linear_lookup[g] + 0.0722 * linear_lookup[b] > 0.179
 end
 
 local hex_color_groups = {}
 
---- @param hex_color string
+--- @param rgb number
 --- @return string
-local function compute_hex_color_group(hex_color)
-  local cached_group_name = hex_color_groups[hex_color]
+local function compute_color_group(rgb)
+  local cached_group_name = hex_color_groups[rgb]
   if cached_group_name ~= nil then
     return cached_group_name
   end
 
-  local hex = sub(hex_color, 2)
-  local group_name = format('OklchColorPickerHexColor_%s', hex)
+  local hex = format('#%06x', rgb)
+  local group_name = format('OCP_%s', sub(hex, 2))
 
-  local fg = is_light(hex) and 'Black' or 'White'
-  nvim_set_hl(0, group_name, { fg = fg, bg = hex_color })
+  local fg = is_light(rgb) and 'Black' or 'White'
+  nvim_set_hl(0, group_name, { fg = fg, bg = hex })
 
-  hex_color_groups[hex_color] = group_name
+  hex_color_groups[rgb] = group_name
 
   return group_name
 end
@@ -329,10 +331,7 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
   nvim_buf_clear_namespace(bufnr, ns, from_line, from_line + #lines)
 
   for i, line in ipairs(lines) do
-    for j = 1, #line_matches do
-      line_matches[j] = nil
-    end
-    local match_idx = 1
+    local match_idx = 0
 
     for _, pattern_list in ipairs(patterns) do
       if pattern_list.ft(ft) then
@@ -350,8 +349,9 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
             end
 
             local has_space = true
-            for _, match in ipairs(line_matches) do
-              if not (match[1] > match_end or match[2] < match_start) then
+            for m = 1, match_idx do
+              local match = line_matches[m]
+              if match[1] <= match_end and match[2] >= match_start then
                 has_space = false
                 break
               end
@@ -359,15 +359,15 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
 
             if has_space then
               local color = sub(line, replace_start --[[@as number]], replace_end)
-              local hex = color_to_hex(color, pattern_list.format)
+              local rgb = parse(color, pattern_list.format)
 
-              if hex then
-                local group = compute_hex_color_group(hex)
+              if rgb then
+                local group = compute_color_group(rgb)
                 local line_n = from_line + i - 1 -- zero based index
                 nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
               end
-              line_matches[match_idx] = { match_start, match_end }
               match_idx = match_idx + 1
+              line_matches[match_idx] = { match_start, match_end }
             end
 
             start = match_end + 1
