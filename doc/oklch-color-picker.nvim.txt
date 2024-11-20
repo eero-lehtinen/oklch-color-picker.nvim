@@ -180,13 +180,15 @@ also set the delay to 0 to make highlighting instant.
 When you open a new buffer, visible lines are processed. With my AMD Ryzen 7
 5800X3D, this takes around 0.2 ms on a 65 rows by 120 cols window, full of text
 and 10 hex colors. In the stress test file <./stress_test.txt>, where the
-window is filled with ~1000 hex colors, the initial update takes 4 ms, more
+window is filled with ~1000 hex colors, the initial update takes 3 ms, more
 than half of which is unavoidable Nvim extmark (highlight) creation and
 assignment overhead.
 
-When scrolling, visible lines are processed but incrementally. I you scroll 10
+When scrolling, visible lines are processed but incrementally. If you scroll 10
 lines down, only those lines are processed. This means that scrolling between 1
-and 65 lines can take 0.1 – 2 ms in the stress test file.
+and 65 lines can take 0.1 – 2 ms in the stress test file. Rehighlighting all
+visible lines takes 2 ms instead of the initial 3 ms because highlight groups
+are cached. Basically it’s faster to see a color for the second time.
 
 When editing, only the changed lines are updated. In the common case, when
 changing text on a line with no colors, the update takes < 0.01 ms (line being
@@ -194,7 +196,7 @@ changing text on a line with no colors, the update takes < 0.01 ms (line being
 course with async, it takes zero time immediately after inserting text.
 
 NvChad/nvim-colorizer.lua <https://github.com/NvChad/nvim-colorizer.lua> uses
-the same strategy as this plugin and prcesses visible lines with incremental
+the same strategy as this plugin and processes visible lines with incremental
 scrolling. When opening the stress test file, the update takes 3 ms. Inserting
 in a line takes 0.2 ms, but it still does a full screen update when leaving
 insert mode. Only `hex`, `rgb`, and `hsl` features were enabled to make things
@@ -218,7 +220,7 @@ functions of each plugin. Check your own timings in this plugin by setting
 `require("oklch-color-picker.highlight").perf_logging = true`.
 
 
-STRESS TEST RESULTS (2024-11-15) ~
+STRESS TEST RESULTS (2024-11-20) ~
 
   -----------------------------------------------------------------------------------------------
   Event         oklch-color-picker.nvim   nvim-colorizer.lua   ccc.nvim   nvim-highlight-colors
