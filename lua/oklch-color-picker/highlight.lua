@@ -340,14 +340,6 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
           local match_start, match_end = find(line, pattern.cheap, start)
 
           while match_start ~= nil do
-            local replace_start, replace_end
-            if pattern.simple_groups then
-              replace_start, replace_end = match_start, match_end
-            else
-              _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
-              replace_end = replace_end - 1
-            end
-
             local has_space = true
             for m = 1, match_idx do
               local match = line_matches[m]
@@ -358,6 +350,14 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
             end
 
             if has_space then
+              local replace_start, replace_end
+              if pattern.simple_groups then
+                replace_start, replace_end = match_start, match_end
+              else
+                _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
+                replace_end = replace_end - 1
+              end
+
               local color = sub(line, replace_start --[[@as number]], replace_end)
               local rgb = parse(color, pattern_list.format)
 
