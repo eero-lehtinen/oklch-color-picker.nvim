@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 15
+*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 20
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -195,10 +195,10 @@ course with async, it takes zero time immediately after inserting text.
 
 NvChad/nvim-colorizer.lua <https://github.com/NvChad/nvim-colorizer.lua> uses
 the same strategy as this plugin and prcesses visible lines with incremental
-scrolling. When opening the stress test file, the update takes 3 ms, which is a
-bit faster than this plugin. Inserting in a line takes 0.2 ms, but it still
-does a full screen update when leaving insert mode. Only `hex`, `rgb`, and
-`hsl` features were enabled to make things more fair.
+scrolling. When opening the stress test file, the update takes 3 ms. Inserting
+in a line takes 0.2 ms, but it still does a full screen update when leaving
+insert mode. Only `hex`, `rgb`, and `hsl` features were enabled to make things
+more fair.
 
 uga-rosa/ccc.nvim <https://github.com/uga-rosa/ccc.nvim> instead processes the
 whole file at startup, then updates only changed lines. The whole stress test
@@ -223,7 +223,7 @@ STRESS TEST RESULTS (2024-11-15) ~
   -----------------------------------------------------------------------------------------------
   Event         oklch-color-picker.nvim   nvim-colorizer.lua   ccc.nvim   nvim-highlight-colors
   ------------- ------------------------- -------------------- ---------- -----------------------
-  BufEnter      4 ms                      3 ms                 50 ms      10 ms
+  BufEnter      3 ms                      3 ms                 50 ms      10 ms
 
   WinScrolled   0.1 ms – 2 ms             0.2 – 2 ms           n/a        10 ms
 
