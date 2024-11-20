@@ -158,7 +158,7 @@ Measurements were done by manually adding `vim.uv.hrtime` logging to the update 
 | Event       | oklch-color-picker.nvim | nvim-colorizer.lua | ccc.nvim | nvim-highlight-colors |
 | :---------- | :---------------------- | :----------------- | :------- | :-------------------- |
 | BufEnter    | 3 ms                    | 3 ms               | 50 ms    | 10 ms                 |
-| WinScrolled | 0.1 ms – 2 ms           | 0.2 – 2 ms         | n/a      | 10 ms                 |
+| WinScrolled | 0.1 – 2 ms              | 0.2 – 2 ms         | n/a      | 10 ms                 |
 | TextChanged | 0.1 ms                  | 0.2 ms             | 0.9 ms   | n/a                   |
 | InsertLeave | n/a                     | 2 ms               | n/a      | 10 ms                 |
 
