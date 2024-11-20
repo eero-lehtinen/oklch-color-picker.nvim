@@ -92,7 +92,7 @@ function M.download_app(callback)
   utils.log('Downloading picker app...', vim.log.levels.INFO)
 
   vim.system(
-    { 'curl', '-o', archive, '-L', url },
+    { 'curl', '--fail', '-o', archive, '-L', url },
     { cwd = cwd },
     vim.schedule_wrap(function(out)
       if out.code ~= 0 then
@@ -144,7 +144,7 @@ function M.download_parser(callback)
   os.remove(cwd .. '/' .. out_lib)
 
   vim.system(
-    { 'curl', '-o', out_lib, '-L', url },
+    { 'curl', '--fail', '-o', out_lib, '-L', url },
     { cwd = cwd },
     vim.schedule_wrap(function(out)
       if out.code ~= 0 then
