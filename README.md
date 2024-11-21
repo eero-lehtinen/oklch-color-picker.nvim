@@ -11,7 +11,9 @@
 - Select and edit buffer colors in a graphical picker
 - Fast async color highlighting
 - Supports multiple formats:
-  - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`), CSS (`rgb(..)`, `hsl(..)`, `oklch(..)`)
+  - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`)
+  - CSS (`rgb(..)`, `hsl(..)`, `oklch(..)`)
+  - Hex literal (`0xRRGGBB`, `OxAARRGGBB`)
   - Can recognize any numbers in brackets as a color (e.g., `vec3(0.5, 0.5, 0.5)`)
   - Custom formats can be defined
 - Integrated graphical [color picker](https://github.com/eero-lehtinen/oklch-color-picker) using the perceptual Oklch color space:
@@ -56,6 +58,10 @@ local default_config = {
       '()rgba?%(.-%)()',
       '()hsla?%(.-%)()',
       '()oklch%(.-%)()',
+    },
+    hex_literal = {
+      priority = -1,
+      '()0x%x%x%x%x%x%x+%f[%W]()',
     },
     numbers_in_brackets = {
       priority = -10,
@@ -122,8 +128,8 @@ require("oklch-color-picker.highlight").toggle()
 
 ### Color Formats
 
-The picker application supports the following formats: (`hex`, `rgb`, `oklch`, `hsl`, `raw_rgb`, `raw_rgb_float`, `raw_rgb_linear`, `raw_oklch`).
-Most of these are auto detected. The non-raw formats are used in CSS and easily auto detected because the colors are surrounded by `rgb()` etc.
+The picker application supports the following formats: (`hex`, `rgb`, `oklch`, `hsl`, `hex_literal`, `raw_rgb`, `raw_rgb_float`, `raw_rgb_linear`, `raw_oklch`).
+Most of these are auto detected. E.g. CSS rgb values are detected because they are surrounded by `rgb()` and hex starts with `#`.
 
 The raw formats are just lists of numbers separated by commas that can be used with any programming language. The picker auto detection assumes raw formats to be either integer `0-255` or float `0.0-1.0` srgb colors (formats `raw_rgb` or `raw_rgb_float`). For `raw_rgb_linear` or `raw_oklch` values you have to specify the format manually. Note that the picker accepts colors with and without alpha (3 or 4 numbers separated by commas).
 
@@ -131,7 +137,7 @@ The raw formats are just lists of numbers separated by commas that can be used w
 
 The patterns used are normal lua patterns. CSS colors are mostly already supported, so you should probably only add raw color formats to better support the languages you use.
 
-The default `numbers_in_brackets` should already handle most needs. It matches any number of digits, dots and commas inside brackets. The numbers are validated by the picker application so the pattern doesn't need to specify exact number matching. You can still create your own patterns if you have linear colors that can't be auto detected.
+The default `numbers_in_brackets` should already handle most needs. It matches any number of digits, dots and commas inside brackets. The numbers are validated by the picker application so the pattern doesn't need to specify exact number matching. You can still create your own patterns if you have linear colors or your functions names clash with CSS.
 
 The patterns should contain two empty groups `()` to designate the replacement range. E.g. `vec3%(()[%d.,%s]+()%)` will find `.1,.2,.2` from within the text `vec3(.1,.2,.3)`. `[%d.,%s]+` means one or more digits, dots, commas or whitespace characters. Remember to escape literal brackets like this: `%(`.
 

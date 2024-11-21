@@ -24,6 +24,10 @@ local default_config = {
       '()hsla?%(.-%)()',
       '()oklch%(.-%)()',
     },
+    hex_literal = {
+      priority = -1,
+      '()0x%x%x%x%x%x%x+%f[%W]()',
+    },
     numbers_in_brackets = {
       priority = -10,
       -- Allows any digits, dots, commas or whitespace within brackets.
