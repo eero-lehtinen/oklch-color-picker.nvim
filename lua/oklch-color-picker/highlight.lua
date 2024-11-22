@@ -341,9 +341,8 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
 
           while match_start ~= nil do
             local has_space = true
-            for m = 1, match_idx do
-              local match = line_matches[m]
-              if match[1] <= match_end and match[2] >= match_start then
+            for m = 1, match_idx, 2 do
+              if line_matches[m] <= match_end and line_matches[m + 1] >= match_start then
                 has_space = false
                 break
               end
@@ -366,8 +365,9 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
                 local line_n = from_line + i - 1 -- zero based index
                 nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
               end
-              match_idx = match_idx + 1
-              line_matches[match_idx] = { match_start, match_end }
+              match_idx = match_idx + 2
+              line_matches[match_idx - 1] = match_start
+              line_matches[match_idx] = match_end
             end
 
             start = match_end + 1
