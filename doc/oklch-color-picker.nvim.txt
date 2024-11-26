@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 22
+*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 26
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -8,6 +8,7 @@ Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
   - Demo                                        |oklch-color-picker.nvim-demo|
   - Default Options                  |oklch-color-picker.nvim-default-options|
   - Configuration                      |oklch-color-picker.nvim-configuration|
+  - API & Commands                    |oklch-color-picker.nvim-api-&-commands|
   - Why is the highlighting async and just how fast is it?|oklch-color-picker.nvim-why-is-the-highlighting-async-and-just-how-fast-is-it?|
   - Other similar plugins      |oklch-color-picker.nvim-other-similar-plugins|
 oklch-color-picker.nvimSometimes the resolution of a cli just isn’t enough
@@ -36,7 +37,9 @@ lazy.nvim <https://github.com/folke/lazy.nvim>
       config = function()
         require('oklch-color-picker').setup {}
         -- One handed keymaps recommended, you will be using the mouse
-        vim.keymap.set('n', '<leader>v', '<cmd>ColorPickOklch<cr>')
+        vim.keymap.set('n', '<leader>v', function()
+          require('oklch-color-picker').pick_under_cursor()
+        end)
       end,
     },
 <
@@ -87,9 +90,10 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
         edit_delay = 60,
         scroll_delay = 0,
       },
-      log_level = vim.log.levels.INFO,
+      register_cmds = true,
       -- Download Rust binaries automatically.
       auto_download = true,
+      log_level = vim.log.levels.INFO,
     }
 <
 
@@ -132,13 +136,22 @@ Define your own patterns:
     }
 <
 
-Highlighting can be controlled at runtime:
+
+API & COMMANDS                        *oklch-color-picker.nvim-api-&-commands*
 
 >lua
+    -- Launch color picker for color under cursor:
+    require('oklch-color-picker').pick_under_cursor()
+    -- Force input format, useful for raw color types that can't be auto detected:
+    require('oklch-color-picker').pick_under_cursor("raw_oklch")
+    
+    -- Highlighting can be controlled at runtime:
     require("oklch-color-picker.highlight").disable()
     require("oklch-color-picker.highlight").enable()
     require("oklch-color-picker.highlight").toggle()
 <
+
+The command `:ColorPickOklch` can be used instead of `pick_under_cursor()`.
 
 
 COLOR FORMATS ~
