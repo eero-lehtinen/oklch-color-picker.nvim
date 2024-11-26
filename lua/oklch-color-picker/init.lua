@@ -40,11 +40,13 @@ local default_config = {
     edit_delay = 60,
     scroll_delay = 0,
   },
-  ---@type integer
-  log_level = vim.log.levels.INFO,
+  ---@type boolean
+  register_cmds = true,
   ---@type boolean
   -- Download Rust binaries automatically.
   auto_download = true,
+  ---@type integer
+  log_level = vim.log.levels.INFO,
 }
 
 ---@type oklch.Config
@@ -60,9 +62,11 @@ function M.setup(config)
   M.config = vim.tbl_deep_extend('force', default_config, config or {})
   utils.setup(M.config)
 
-  vim.api.nvim_create_user_command('ColorPickOklch', function()
-    M.pick_under_cursor()
-  end, {})
+  if M.config.register_cmds then
+    vim.api.nvim_create_user_command('ColorPickOklch', function()
+      M.pick_under_cursor()
+    end, { desc = 'Color pick text under cursor with the Oklch color picker' })
+  end
 
   for key, pattern_list in pairs(M.config.patterns) do
     if pattern_list and pattern_list[1] ~= nil then

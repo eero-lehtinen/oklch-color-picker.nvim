@@ -30,7 +30,9 @@
   config = function()
     require('oklch-color-picker').setup {}
     -- One handed keymaps recommended, you will be using the mouse
-    vim.keymap.set('n', '<leader>v', '<cmd>ColorPickOklch<cr>')
+    vim.keymap.set('n', '<leader>v', function()
+      require('oklch-color-picker').pick_under_cursor()
+    end)
   end,
 },
 ```
@@ -74,9 +76,10 @@ local default_config = {
     edit_delay = 60,
     scroll_delay = 0,
   },
-  log_level = vim.log.levels.INFO,
+  register_cmds = true,
   -- Download Rust binaries automatically.
   auto_download = true,
+  log_level = vim.log.levels.INFO,
 }
 ```
 
@@ -118,13 +121,21 @@ Define your own patterns:
 }
 ```
 
-Highlighting can be controlled at runtime:
+## API & Commands
 
 ```lua
+-- Launch color picker for color under cursor:
+require('oklch-color-picker').pick_under_cursor()
+-- Force input format, useful for raw color types that can't be auto detected:
+require('oklch-color-picker').pick_under_cursor("raw_oklch")
+
+-- Highlighting can be controlled at runtime:
 require("oklch-color-picker.highlight").disable()
 require("oklch-color-picker.highlight").enable()
 require("oklch-color-picker.highlight").toggle()
 ```
+
+The command `:ColorPickOklch` can be used instead of `pick_under_cursor()`.
 
 ### Color Formats
 
