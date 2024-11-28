@@ -62,28 +62,15 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
 >lua
     local default_config = {
       patterns = {
-        hex = {
-          priority = -1,
-          '()#%x%x%x+%f[%W]()',
-        },
-        css = {
-          priority = -1,
-          -- Rgb and Hsl support modern and legacy formats:
-          -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
-          -- `-` is the same as `*`, but matches the shortest possible sequence.
-          '()rgba?%(.-%)()',
-          '()hsla?%(.-%)()',
-          '()oklch%(.-%)()',
-        },
-        hex_literal = {
-          priority = -1,
-          '()0x%x%x%x%x%x%x+%f[%W]()',
-        },
-        numbers_in_brackets = {
-          priority = -10,
-          -- Allows any digits, dots, commas or whitespace within brackets.
-          '%(()[%d.,%s]+()%)',
-        },
+        hex = { priority = -1, '()#%x%x%x+%f[%W]()' },
+        hex_literal = { priority = -1, '()0x%x%x%x%x%x%x+%f[%W]()' },
+        -- Rgb and Hsl support modern and legacy formats:
+        -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
+        css_rgb = { priority = -1, '()rgba?%(.-%)()' },
+        css_hsl = { priority = -1, '()hsla?%(.-%)()' },
+        css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
+        -- Allows any digits, dots, commas or whitespace within brackets.
+        numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
       },
       highlight = {
         enabled = true,
@@ -115,23 +102,23 @@ Define your own patterns:
 >lua
     {
       patterns = {
+        -- Example with all properties:
         glsl_vec_linear = {
           -- (Optional) Higher priority patterns are tried first. Defaults to 0.
           priority = 5,
           -- (Optional) Color format for the picker. Auto detect by default.
-          format = 'raw_rgb_linear',
+          format = 'raw_rgb_float',
           -- (Optional) Filetypes to apply the pattern to. Must be a table.
           ft = { 'glsl' },
           -- The list of patterns.
           'vec3%(()[%d.,%s]+()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
           'vec4%(()[%d.,%s]+()%)',
         },
-        rust_color = {
-          ft = { 'rust' },
-          'MyColor::rgb%(()[%d.,%s]+()%)',
-          'Srgba::new%(()[%d.,%s]+()%)',
-        },
-        -- You can add as many patterns as you want.
+    
+        -- Replace default css patterns to match only modern formats:
+        -- (no "a" suffix in name or commas)
+        css_rgb = { priority = -1, '()rgb%([^,]-%)()' },
+        css_hsl = { priority = -1, '()hsl%([^,]-%)()' },
       }
     }
 <
