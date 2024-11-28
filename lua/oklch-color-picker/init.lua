@@ -26,7 +26,7 @@ local default_config = {
     css_rgb = { priority = -1, '()rgba?%(.-%)()' },
     css_hsl = { priority = -1, '()hsla?%(.-%)()' },
     css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
-    tailwind = { priority = -2, custom_parse = tailwind.custom_parse, '%f[%w][%l%-]+%-()%l+%-%d%d%d?()' },
+    tailwind = { priority = -2, custom_parse = tailwind.custom_parse, '%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()' },
     -- Allows any digits, dots, commas or whitespace within brackets.
     numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
   },

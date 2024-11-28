@@ -53,7 +53,7 @@ local default_config = {
     tailwind = {
       priority = -2,
       custom_parse = require('oklch-color-picker.tailwind').custom_parse,
-      '%f[%w][%l%-]+%-()%l+%-%d%d%d?()',
+      '%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()',
     },
     -- Allows any digits, dots, commas or whitespace within brackets.
     numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
