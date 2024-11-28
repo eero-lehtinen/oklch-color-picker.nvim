@@ -11,6 +11,8 @@ Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
   - Why is the highlighting async and just how fast is it?|oklch-color-picker.nvim-why-is-the-highlighting-async-and-just-how-fast-is-it?|
   - Other similar plugins      |oklch-color-picker.nvim-other-similar-plugins|
 oklch-color-picker.nvimSometimes the resolution of a cli just isn’t enough
+
+
 FEATURES                                    *oklch-color-picker.nvim-features*
 
 - Select and edit buffer colors in a graphical picker
