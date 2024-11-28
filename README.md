@@ -149,13 +149,13 @@ The patterns should contain two empty groups `()` to designate the replacement r
 
 I don't like how an insignificant feature like color highlighting can hog CPU resources and cause lag, so this plugin tries to make it fast and unnoticeable. The highlighting is done on a timer after edits to give the immediate CPU time to features you actually care about like Treesitter or LSP. Then after the timer delay has passed, the colors are searched and highlights applied. You can also set the delay to 0 to make highlighting instant.
 
-### Stress testing (2024-11-20)
+### Stress testing (2024-11-28)
 
 | Event       | oklch-color-picker.nvim | nvim-colorizer.lua | ccc.nvim | nvim-highlight-colors |
 | :---------- | :---------------------- | :----------------- | :------- | :-------------------- |
-| BufEnter    | 3 ms                    | 3 ms               | 50 ms    | 10 ms                 |
+| BufEnter    | 3 ms                    | 3 ms               | 60 ms    | 10 ms                 |
 | WinScrolled | 0.1 – 2 ms              | 0.1 – 2 ms         | n/a      | 10 ms                 |
-| TextChanged | 0.1 ms                  | 0.1 ms             | 0.9 ms   | n/a                   |
+| TextChanged | 0.1 ms                  | 0.1 ms             | 1.2 ms   | n/a                   |
 | InsertLeave | n/a                     | 2 ms               | n/a      | 10 ms                 |
 
 When you open a new buffer, visible lines are processed. With my AMD Ryzen 7 5800X3D, this takes around 0.2 ms on a 65 rows by 120 cols window, full of text and 10 hex colors. In [the stress test file](./stress_test.txt), where the window is filled with ~1000 hex colors, the initial update takes 3 ms, more than half of which is unavoidable Nvim extmark (highlight) creation and assignment overhead.
@@ -164,11 +164,11 @@ When scrolling, visible lines are processed but incrementally. If you scroll 10 
 
 When editing, only the changed lines are updated. In the common case, when changing text on a line with no colors, the update takes < 0.01 ms (line being 120 chars wide). Doing the same in the stress test file takes < 0.1 ms. Of course with async, it takes zero time immediately after inserting text.
 
-[NvChad/nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua) uses the same strategy as this plugin and processes visible lines with incremental scrolling. When opening the stress test file, the update takes 3 ms. Inserting in a line takes 0.1 ms, but it still does a full screen update when leaving insert mode. Only `hex`, `rgb`, and `hsl` features were enabled to make things more fair.
+[NvChad/nvim-colorizer.lua](https://github.com/NvChad/nvim-colorizer.lua) uses the same strategy as this plugin and processes visible lines with incremental scrolling. When opening the stress test file, the update takes 3 ms. Inserting in a line takes 0.1 ms, but it still does a full screen update when leaving insert mode. Features `RGB`, `RRGGBB`, `RRGGBBAA`, `AARRGGBB`, `rgb_fn`, `hsl_fn`, and `tailwind` were enabled.
 
-[uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) instead processes the whole file at startup, then updates only changed lines. The whole stress test file takes 50 ms to process when opening the buffer, scrolling is free and inserting in a single line takes around 0.9 ms. Only `hex`, `rgb`, `hsl` and `oklch` features were enabled.
+[uga-rosa/ccc.nvim](https://github.com/uga-rosa/ccc.nvim) instead processes the whole file at startup, then updates only changed lines. The whole stress test file takes 60 ms to process when opening the buffer, scrolling is free and inserting in a single line takes around 1.2 ms. Features `hex`, `hex_short`, `css_rgb`, `css_hsl` and `css_oklch` were enabled.
 
-[brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) in the stress test takes 10 ms to do a full screen update. It doesn't do partial updates, so a full update is done every `InsertLeave` or `WinScrolled` event. The code seems to include handlers for `TextChanged`, but those didn't work for some reason. Only `hex`, `rgb` and `hsl` features were enabled.
+[brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) in the stress test takes 10 ms to do a full screen update. It doesn't do partial updates, so a full update is done every `InsertLeave` or `WinScrolled` event. The code seems to include handlers for `TextChanged`, but those didn't work for some reason. Features `hex`, `short_hex`, `rgb`, `hsl`, and `tailwind` were enabled.
 
 Measurements were done by manually adding `vim.uv.hrtime` logging to the update functions of each plugin. Check your own timings in this plugin by setting `require("oklch-color-picker.highlight").perf_logging = true`.
 

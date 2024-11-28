@@ -249,7 +249,6 @@ local colors = {
 ---@param match string
 ---@return integer
 function M.custom_parse(match)
-  print(match)
   return colors[match]
 end
 
