@@ -19,6 +19,7 @@
 - Integrated graphical [color picker](https://github.com/eero-lehtinen/oklch-color-picker) using the perceptual Oklch color space:
   - Consists of lightness, chroma, and hue for intuitive adjustments
   - Based on [Oklab](https://bottosson.github.io/posts/oklab/) theory, using L<sub>r</sub> as [an improved lightness estimate](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab)
+  - Try the [web demo](https://oklch.eerolehtinen.fi)!
 
 ## Installation
 
@@ -38,10 +39,6 @@
 ```
 
 This plugin automatically downloads the picker application and a color parser library from the releases page of [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker) (it's open source too in a different repo!). The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ performance and startup time.
-
-## Demo
-
-https://github.com/user-attachments/assets/a6df331c-10dc-4e50-8f89-bc4ab191de57
 
 ## Default Options
 
