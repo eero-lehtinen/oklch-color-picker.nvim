@@ -358,7 +358,7 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
               end
 
               local color = sub(line, replace_start --[[@as number]], replace_end)
-              local rgb = parse(color, pattern_list.format)
+              local rgb = pattern_list.custom_parse and pattern_list.custom_parse(color) or parse(color, pattern_list.format)
 
               if rgb then
                 local group = compute_color_group(rgb)

@@ -1,11 +1,19 @@
 local utils = require 'oklch-color-picker.utils'
 local highlight = require 'oklch-color-picker.highlight'
 local downloader = require 'oklch-color-picker.downloader'
+local tailwind = require 'oklch-color-picker.tailwind'
+
+local lshift, band = bit.lshift, bit.band
 
 ---@class oklch
 local M = {}
 
----@alias oklch.PatternList { priority: number|nil, format: string|nil, ft: string[]|nil, [number]: string }
+--- Return a number with R, G, and B components combined into a single number 0xRRGGBB.
+--- (`require("oklch-color-picker").components_to_number` can help with this)
+--- Return nil for invalid colors.
+---@alias oklch.CustomParseFunc fun(match: string): number|nil
+
+---@alias oklch.PatternList { priority: number|nil, format: string|nil, ft: string[]|nil, custom_parse: oklch.CustomParseFunc|nil , [number]: string }
 
 ---@class oklch.Config
 local default_config = {
@@ -18,6 +26,7 @@ local default_config = {
     css_rgb = { priority = -1, '()rgba?%(.-%)()' },
     css_hsl = { priority = -1, '()hsla?%(.-%)()' },
     css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
+    tailwind = { priority = -2, custom_parse = tailwind.custom_parse, '%f[%w][%l%-]+%-()%l+%-%d%d%d?()' },
     -- Allows any digits, dots, commas or whitespace within brackets.
     numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
   },
@@ -39,7 +48,7 @@ local default_config = {
 ---@type oklch.Config
 M.config = {}
 
----@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: (fun(string): boolean), [number]: { cheap: string, grouped: string, simple_groups: boolean } }
+---@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: (fun(ft: string): boolean), custom_parse: oklch.CustomParseFunc|nil, [number]: { cheap: string, grouped: string, simple_groups: boolean } }
 
 --- @type oklch.FinalPatternList[]
 M.final_patterns = {}
@@ -75,6 +84,7 @@ function M.setup(config)
         priority = pattern_list.priority or 0,
         format = pattern_list.format,
         ft = ft,
+        custom_parse = pattern_list.custom_parse,
       })
       local i = 1
       for j, pattern in ipairs(pattern_list) do
@@ -230,7 +240,7 @@ end
 
 --- @param line string
 --- @param cursor_col number
---- @param ft string|nil
+--- @param ft string
 --- @return { pos: [number, number], color: string, color_format: string|nil }| nil
 local function find_color(line, cursor_col, ft)
   for _, pattern_list in ipairs(M.final_patterns) do
@@ -240,11 +250,24 @@ local function find_color(line, cursor_col, ft)
         local match_start, match_end, replace_start, replace_end = line:find(pattern.grouped, start)
         while match_start ~= nil do
           if cursor_col >= match_start and cursor_col <= match_end then
-            return {
-              pos = { replace_start, replace_end - 1 },
-              color = line:sub(replace_start --[[@as number]], replace_end - 1),
-              color_format = pattern_list.format,
-            }
+            local replace = line:sub(replace_start --[[@as number]], replace_end - 1)
+            local format = pattern_list.format
+            local color
+            if pattern_list.custom_parse then
+              local rgb = pattern_list.custom_parse(replace)
+              color = rgb and string.format('#%06x', rgb) or nil
+              format = nil
+            else
+              color = replace
+            end
+
+            if color then
+              return {
+                pos = { replace_start, replace_end - 1 },
+                color = color,
+                color_format = format,
+              }
+            end
           end
           start = match_end + 1
           match_start, match_end, replace_start, replace_end = line:find(pattern.grouped, start)
@@ -286,6 +309,16 @@ function M.pick_under_cursor(force_color_format)
   }
 
   start_app()
+end
+
+--- Combines r, g, b (0-255) integer values to a combined color 0xRRGGBB.
+--- Passing floats or numbers outside of 0-255 can result in weird outputs.
+---@param r integer
+---@param g integer
+---@param b integer
+---@return integer
+function M.components_to_number(r, g, b)
+  return band(lshift(r, 16), lshift(g, 8), b)
 end
 
 return M

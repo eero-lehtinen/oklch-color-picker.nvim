@@ -52,6 +52,11 @@ local default_config = {
     css_rgb = { priority = -1, '()rgba?%(.-%)()' },
     css_hsl = { priority = -1, '()hsla?%(.-%)()' },
     css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
+    tailwind = {
+      priority = -2,
+      custom_parse = require('oklch-color-picker.tailwind').custom_parse,
+      '%f[%w][%l%-]+%-()%l+%-%d%d%d?()',
+    },
     -- Allows any digits, dots, commas or whitespace within brackets.
     numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
   },
@@ -92,15 +97,21 @@ Define your own patterns:
       format = 'raw_rgb_float',
       -- (Optional) Filetypes to apply the pattern to. Must be a table.
       ft = { 'glsl' },
+      -- (Optional) Custom parser function for unsupported formats.
+      custom_parse = function(match)
+        -- Some parsing logic ...
+        return 0xFFFFFF
+      end
       -- The list of patterns.
+      -- Pattern reference at https://www.lua.org/manual/5.4/manual.html#6.4.1
       'vec3%(()[%d.,%s]+()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
       'vec4%(()[%d.,%s]+()%)',
     },
 
     -- Replace default css patterns to match only modern formats:
     -- (no "a" suffix in name or commas)
-    css_rgb = { priority = -1, '()rgb%([^,]-%)()' },
-    css_hsl = { priority = -1, '()hsl%([^,]-%)()' },
+    css_rgb = { '()rgb%([^,]-%)()' },
+    css_hsl = { '()hsl%([^,]-%)()' },
   }
 }
 ```
