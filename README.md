@@ -12,6 +12,7 @@
   - Hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`)
   - CSS (`rgb(..)`, `hsl(..)`, `oklch(..)`)
   - Hex literal (`0xRRGGBB`, `0xAARRGGBB`)
+  - Tailwind (e.g. `bg-red-800`)
   - Can recognize any numbers in brackets as a color (e.g., `vec3(0.5, 0.5, 0.5)`)
   - Custom formats can be defined
 - Integrated graphical [color picker](https://github.com/eero-lehtinen/oklch-color-picker) using the perceptual Oklch color space:
