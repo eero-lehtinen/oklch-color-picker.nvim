@@ -11,28 +11,15 @@ local M = {}
 local default_config = {
   ---@type { [string]: oklch.PatternList}
   patterns = {
-    hex = {
-      priority = -1,
-      '()#%x%x%x+%f[%W]()',
-    },
-    css = {
-      priority = -1,
-      -- Rgb and Hsl support modern and legacy formats:
-      -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
-      -- `-` is the same as `*`, but matches the shortest possible sequence.
-      '()rgba?%(.-%)()',
-      '()hsla?%(.-%)()',
-      '()oklch%(.-%)()',
-    },
-    hex_literal = {
-      priority = -1,
-      '()0x%x%x%x%x%x%x+%f[%W]()',
-    },
-    numbers_in_brackets = {
-      priority = -10,
-      -- Allows any digits, dots, commas or whitespace within brackets.
-      '%(()[%d.,%s]+()%)',
-    },
+    hex = { priority = -1, '()#%x%x%x+%f[%W]()' },
+    hex_literal = { priority = -1, '()0x%x%x%x%x%x%x+%f[%W]()' },
+    -- Rgb and Hsl support modern and legacy formats:
+    -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
+    css_rgb = { priority = -1, '()rgba?%(.-%)()' },
+    css_hsl = { priority = -1, '()hsla?%(.-%)()' },
+    css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
+    -- Allows any digits, dots, commas or whitespace within brackets.
+    numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
   },
   ---@type oklch.HightlightConfig
   highlight = {
