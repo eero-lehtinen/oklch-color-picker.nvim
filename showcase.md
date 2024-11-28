@@ -5,7 +5,7 @@
 #RRGGBB    #f59e0b
 #RRGGBBAA  #eab30877
 0xRRGGBB   0x84CC16
-0xAARRGGBB 0x7722c55e
+0xAARRGGBB 0x7722C55E
 css rgb    rgb(16 185 129)
 css hsl    hsl(173.41 0.8039 0.4)
 css oklch  oklch(0.7148 0.1257 215.22)
