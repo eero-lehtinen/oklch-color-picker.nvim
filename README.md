@@ -2,7 +2,7 @@
 
 <p align="center">Sometimes the resolution of a cli just isn't enough</p>
 
-<img src="https://github.com/user-attachments/assets/dd01524e-8fee-4f7d-9bcf-9a4f65ca1e67" alt="screenshot" width="100%">
+<img src="https://github.com/user-attachments/assets/f4e80185-0f61-4fe5-9f06-1f6dae0ec647" alt="screenshot" width="100%">
 
 ## Features
 
