@@ -1,9 +1,6 @@
 local utils = require 'oklch-color-picker.utils'
 local downloader = require 'oklch-color-picker.downloader'
 
----@type fun(color: string, format: string|nil): number|nil
-local parse
-
 local find, sub, format = string.find, string.sub, string.format
 local nvim_buf_clear_namespace, nvim_buf_add_highlight, nvim_set_hl = vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_add_highlight, vim.api.nvim_set_hl
 local pow, min, max = math.pow, math.min, math.max
@@ -15,6 +12,9 @@ local M = {}
 --- @field enabled boolean
 --- @field edit_delay number async delay in ms
 --- @field scroll_delay number async delay in ms
+
+---@type fun(color: string, format: string|nil): number|nil
+M.parse = nil
 
 M.patterns = nil
 
@@ -44,7 +44,7 @@ function M.setup(config, patterns, auto_download)
       utils.log("Couldn't load parser library", vim.log.levels.ERROR)
       return
     end
-    parse = parser.parse
+    M.parse = parser.parse
 
     ns = vim.api.nvim_create_namespace 'OklchColorPickerNamespace'
     M.gr = vim.api.nvim_create_augroup('OklchColorPicker', {})
@@ -77,7 +77,7 @@ function M.disable()
 end
 
 function M.enable()
-  if not parse or not M.config or M.config.enabled then
+  if not M.parse or not M.config or M.config.enabled then
     return
   end
   M.config.enabled = true
@@ -336,6 +336,7 @@ local line_matches = {}
 ---@param ft string
 function M.highlight_lines(bufnr, lines, from_line, ft)
   local patterns = M.patterns
+  local parse = M.parse
 
   nvim_buf_clear_namespace(bufnr, ns, from_line, from_line + #lines)
 
