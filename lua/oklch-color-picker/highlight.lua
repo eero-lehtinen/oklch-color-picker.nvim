@@ -235,45 +235,54 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     buf_data.pending_updates.to_line = min(max(buf_data.pending_updates.to_line, to_line), bottom)
   end
 
-  local process_update = function()
-    local buf_data = M.bufs[bufnr]
-    if buf_data == nil or buf_data.pending_updates == nil then
-      return
-    end
-
-    local t = vim.uv.hrtime()
-
-    local from_line = buf_data.pending_updates.from_line --[[@as integer]]
-    local to_line = buf_data.pending_updates.to_line --[[@as integer]]
-    buf_data.pending_updates = nil
-
-    local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
-
-    local ft = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
-
-    -- ignore very long lines
-    for i, line in ipairs(lines) do
-      if string.len(line) > 4000 then
-        lines[i] = ''
-      end
-    end
-
-    M.highlight_lines(bufnr, lines, from_line, ft)
-
-    if M.perf_logging then
-      local ms = (vim.uv.hrtime() - t) / 1000000
-      print(format('color highlighting took: %.3f ms, lines %d to %d', ms, from_line, to_line))
-    end
-  end
-
   local delay = scroll and M.config.scroll_delay or M.config.edit_delay
   M.pending_timer:stop()
-  if delay > 0 then
-    M.pending_timer:start(delay, 0, vim.schedule_wrap(process_update))
-  else
-    process_update()
+
+  if delay <= 0 then
+    M.process_update(bufnr)
+    return
   end
+
+  M.pending_timer:start(
+    delay,
+    0,
+    vim.schedule_wrap(function()
+      M.process_update(bufnr)
+    end)
+  )
 end)
+
+---@param bufnr integer
+function M.process_update(bufnr)
+  local buf_data = M.bufs[bufnr]
+  if buf_data == nil or buf_data.pending_updates == nil then
+    return
+  end
+
+  local t = vim.uv.hrtime()
+
+  local from_line = buf_data.pending_updates.from_line --[[@as integer]]
+  local to_line = buf_data.pending_updates.to_line --[[@as integer]]
+  buf_data.pending_updates = nil
+
+  local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
+
+  local ft = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+
+  -- ignore very long lines
+  for i, line in ipairs(lines) do
+    if string.len(line) > 4000 then
+      lines[i] = ''
+    end
+  end
+
+  M.highlight_lines(bufnr, lines, from_line, ft)
+
+  if M.perf_logging then
+    local ms = (vim.uv.hrtime() - t) / 1000000
+    print(format('color highlighting took: %.3f ms, lines %d to %d', ms, from_line, to_line))
+  end
+end
 
 local function to_linear(c)
   if c <= 0.04045 then
