@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 28
+*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 29
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -42,7 +42,7 @@ lazy.nvim <https://github.com/folke/lazy.nvim>
         -- One handed keymaps recommended, you will be using the mouse
         vim.keymap.set('n', '<leader>v', function()
           require('oklch-color-picker').pick_under_cursor()
-        end)
+        end, { desc = 'Color pick under cursor' })
       end,
     },
 <
