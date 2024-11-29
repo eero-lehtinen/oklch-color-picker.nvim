@@ -17,30 +17,42 @@ local M = {}
 
 ---@class oklch.Config
 local default_config = {
-  ---@type { [string]: oklch.PatternList}
-  patterns = {
-    hex = { priority = -1, '()#%x%x%x+%f[%W]()' },
-    hex_literal = { priority = -1, '()0x%x%x%x%x%x%x+%f[%W]()' },
-    -- Rgb and Hsl support modern and legacy formats:
-    -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
-    css_rgb = { priority = -1, '()rgba?%(.-%)()' },
-    css_hsl = { priority = -1, '()hsla?%(.-%)()' },
-    css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
-    tailwind = { priority = -2, custom_parse = tailwind.custom_parse, '%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()' },
-    -- Allows any digits, dots, commas or whitespace within brackets.
-    numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
-  },
+
   ---@type oklch.HightlightConfig
   highlight = {
     enabled = true,
     edit_delay = 60,
     scroll_delay = 0,
   },
+
+  ---@type { [string]: oklch.PatternList}
+  patterns = {
+    hex = { priority = -1, '()#%x%x%x+%f[%W]()' },
+    hex_literal = { priority = -1, '()0x%x%x%x%x%x%x+%f[%W]()' },
+
+    -- Rgb and Hsl support modern and legacy formats:
+    -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
+    css_rgb = { priority = -1, '()rgba?%(.-%)()' },
+    css_hsl = { priority = -1, '()hsla?%(.-%)()' },
+    css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
+
+    tailwind = {
+      priority = -2,
+      custom_parse = tailwind.custom_parse,
+      '%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()',
+    },
+
+    -- Allows any digits, dots, commas or whitespace within brackets.
+    numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
+  },
+
   ---@type boolean
   register_cmds = true,
+
   ---@type boolean
   -- Download Rust binaries automatically.
   auto_download = true,
+
   ---@type integer
   log_level = vim.log.levels.INFO,
 }

@@ -43,30 +43,38 @@ This plugin automatically downloads the picker application and a color parser li
 
 ```lua
 local default_config = {
-  patterns = {
-    hex = { priority = -1, '()#%x%x%x+%f[%W]()' },
-    hex_literal = { priority = -1, '()0x%x%x%x%x%x%x+%f[%W]()' },
-    -- Rgb and Hsl support modern and legacy formats:
-    -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
-    css_rgb = { priority = -1, '()rgba?%(.-%)()' },
-    css_hsl = { priority = -1, '()hsla?%(.-%)()' },
-    css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
-    tailwind = {
-      priority = -2,
-      custom_parse = require('oklch-color-picker.tailwind').custom_parse,
-      '%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()',
-    },
-    -- Allows any digits, dots, commas or whitespace within brackets.
-    numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
-  },
+
   highlight = {
     enabled = true,
     edit_delay = 60,
     scroll_delay = 0,
   },
+
+  patterns = {
+    hex = { priority = -1, '()#%x%x%x+%f[%W]()' },
+    hex_literal = { priority = -1, '()0x%x%x%x%x%x%x+%f[%W]()' },
+
+    -- Rgb and Hsl support modern and legacy formats:
+    -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
+    css_rgb = { priority = -1, '()rgba?%(.-%)()' },
+    css_hsl = { priority = -1, '()hsla?%(.-%)()' },
+    css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
+
+    tailwind = {
+      priority = -2,
+      custom_parse = require('oklch-color-picker.tailwind').custom_parse,
+      '%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()',
+    },
+
+    -- Allows any digits, dots, commas or whitespace within brackets.
+    numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
+  },
+
   register_cmds = true,
+
   -- Download Rust binaries automatically.
   auto_download = true,
+
   log_level = vim.log.levels.INFO,
 }
 ```
