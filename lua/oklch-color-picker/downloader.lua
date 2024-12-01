@@ -141,8 +141,6 @@ function M.download_parser(callback)
 
   local out_lib = 'parser_lua_module' .. lib_ext
 
-  os.remove(cwd .. '/' .. out_lib)
-
   vim.system(
     { 'curl', '--fail', '-o', out_lib, '-L', url },
     { cwd = cwd },
