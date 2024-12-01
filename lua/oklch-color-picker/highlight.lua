@@ -2,9 +2,10 @@ local utils = require 'oklch-color-picker.utils'
 local downloader = require 'oklch-color-picker.downloader'
 
 local find, sub, format = string.find, string.sub, string.format
-local nvim_buf_clear_namespace, nvim_buf_add_highlight, nvim_set_hl = vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_add_highlight, vim.api.nvim_set_hl
+local insert = table.insert
 local pow, min, max = math.pow, math.min, math.max
 local rshift, band = bit.rshift, bit.band
+local nvim_buf_clear_namespace, nvim_buf_add_highlight, nvim_set_hl = vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_add_highlight, vim.api.nvim_set_hl
 
 local M = {}
 
@@ -16,6 +17,7 @@ local M = {}
 ---@type fun(color: string, format: string|nil): number|nil
 M.parse = nil
 
+---@type oklch.FinalPatternList[]
 M.patterns = nil
 
 ---@type oklch.HightlightConfig
@@ -328,6 +330,26 @@ local function compute_color_group(rgb)
   return group_name
 end
 
+local ft_patterns_cache = {}
+
+---@param ft string
+---@return oklch.FinalPatternList[]
+function M.get_ft_patterns(ft)
+  local patterns = ft_patterns_cache[ft]
+  if patterns then
+    return patterns
+  end
+
+  patterns = {}
+  for _, pattern_list in ipairs(M.patterns) do
+    if pattern_list.ft(ft) then
+      insert(patterns, pattern_list)
+    end
+  end
+  ft_patterns_cache[ft] = patterns
+  return patterns
+end
+
 local line_matches = {}
 
 ---@param bufnr integer
@@ -335,7 +357,7 @@ local line_matches = {}
 ---@param from_line integer
 ---@param ft string
 function M.highlight_lines(bufnr, lines, from_line, ft)
-  local patterns = M.patterns
+  local patterns = M.get_ft_patterns(ft)
   local parse = M.parse
 
   nvim_buf_clear_namespace(bufnr, ns, from_line, from_line + #lines)
@@ -344,45 +366,43 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
     local match_idx = 0
 
     for _, pattern_list in ipairs(patterns) do
-      if pattern_list.ft(ft) then
-        for _, pattern in ipairs(pattern_list) do
-          local start = 1
-          local match_start, match_end = find(line, pattern.cheap, start)
+      for _, pattern in ipairs(pattern_list) do
+        local start = 1
+        local match_start, match_end = find(line, pattern.cheap, start)
 
-          while match_start ~= nil do
-            local has_space = true
-            for m = 1, match_idx, 2 do
-              if line_matches[m] <= match_end and line_matches[m + 1] >= match_start then
-                has_space = false
-                break
-              end
+        while match_start ~= nil do
+          local has_space = true
+          for m = 1, match_idx, 2 do
+            if line_matches[m] <= match_end and line_matches[m + 1] >= match_start then
+              has_space = false
+              break
             end
-
-            if has_space then
-              local replace_start, replace_end
-              if pattern.simple_groups then
-                replace_start, replace_end = match_start, match_end
-              else
-                _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
-                replace_end = replace_end - 1
-              end
-
-              local color = sub(line, replace_start --[[@as number]], replace_end)
-              local rgb = pattern_list.custom_parse and pattern_list.custom_parse(color) or parse(color, pattern_list.format)
-
-              if rgb then
-                local group = compute_color_group(rgb)
-                local line_n = from_line + i - 1 -- zero based index
-                nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
-              end
-              match_idx = match_idx + 2
-              line_matches[match_idx - 1] = match_start
-              line_matches[match_idx] = match_end
-            end
-
-            start = match_end + 1
-            match_start, match_end = find(line, pattern.cheap, start)
           end
+
+          if has_space then
+            local replace_start, replace_end
+            if pattern.simple_groups then
+              replace_start, replace_end = match_start, match_end
+            else
+              _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
+              replace_end = replace_end - 1
+            end
+
+            local color = sub(line, replace_start --[[@as number]], replace_end)
+            local rgb = pattern_list.custom_parse and pattern_list.custom_parse(color) or parse(color, pattern_list.format)
+
+            if rgb then
+              local group = compute_color_group(rgb)
+              local line_n = from_line + i - 1 -- zero based index
+              nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
+            end
+            match_idx = match_idx + 2
+            line_matches[match_idx - 1] = match_start
+            line_matches[match_idx] = match_end
+          end
+
+          start = match_end + 1
+          match_start, match_end = find(line, pattern.cheap, start)
         end
       end
     end
