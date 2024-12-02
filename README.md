@@ -41,7 +41,7 @@ This plugin automatically downloads the picker application and a color parser li
 
 ## Demo
 
-https://github.com/user-attachments/assets/51a26821-64c0-4a74-bbc8-e1f3219a81f6
+https://github.com/user-attachments/assets/822b5717-133d-4caf-a198-cbe3337bf87a
 
 ## Default Options
 
