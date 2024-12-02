@@ -39,6 +39,10 @@
 
 This plugin automatically downloads the picker application and a color parser library from the releases page of [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker) (it's open source too in a different repo!). The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ performance and startup time.
 
+## Demo
+
+https://github.com/user-attachments/assets/51a26821-64c0-4a74-bbc8-e1f3219a81f6
+
 ## Default Options
 
 ```lua
