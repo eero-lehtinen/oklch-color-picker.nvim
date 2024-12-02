@@ -1,10 +1,11 @@
-*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 November 29
+*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 December 02
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
 
   - Features                                |oklch-color-picker.nvim-features|
   - Installation                        |oklch-color-picker.nvim-installation|
+  - Demo                                        |oklch-color-picker.nvim-demo|
   - Default Options                  |oklch-color-picker.nvim-default-options|
   - Configuration                      |oklch-color-picker.nvim-configuration|
   - API & Commands                    |oklch-color-picker.nvim-api-&-commands|
@@ -52,6 +53,12 @@ library from the releases page of the picker application repository
 <https://github.com/eero-lehtinen/oklch-color-picker> (it’s open source too
 in a different repo!). The picker is a standalone ⚡Rust⚡ application with
 ⚡blazing fast⚡ performance and startup time.
+
+
+DEMO                                            *oklch-color-picker.nvim-demo*
+
+
+https://github.com/user-attachments/assets/51a26821-64c0-4a74-bbc8-e1f3219a81f6
 
 
 DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
