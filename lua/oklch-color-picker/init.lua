@@ -58,7 +58,7 @@ local default_config = {
 }
 
 ---@type oklch.Config
-M.config = {}
+M.config = nil
 
 ---@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: (fun(ft: string): boolean), custom_parse: oklch.CustomParseFunc|nil, [number]: { cheap: string, grouped: string, simple_groups: boolean } }
 
@@ -135,7 +135,9 @@ function M.setup(config)
 end
 
 local empty_group_re = vim.regex [[\(%\)\@<!()]]
+assert(empty_group_re)
 local unescaped_paren_re = vim.regex [=[\(%\)\@<!\[()\]]=]
+assert(unescaped_paren_re)
 
 ---@param pattern string
 ---@return string|nil error
