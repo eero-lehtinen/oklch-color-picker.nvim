@@ -27,7 +27,8 @@ local default_config = {
     scroll_delay = 0,
     ---@type 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
     style = 'background',
-    virtual_text = '● ', -- '■'' also looks nice
+    -- '■ ' also looks nice (remove space with monospace nerd symbols)
+    virtual_text = '● ',
     priority = 500,
   },
 
