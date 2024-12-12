@@ -110,7 +110,8 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
 
 CONFIGURATION                          *oklch-color-picker.nvim-configuration*
 
-Disable default patterns by setting them to false:
+
+DISABLE DEFAULT PATTERNS BY SETTING THEM TO FALSE:
 
 >lua
     {
@@ -120,7 +121,8 @@ Disable default patterns by setting them to false:
     }
 <
 
-Define your own patterns:
+
+DEFINE YOUR OWN PATTERNS:
 
 >lua
     {
@@ -152,7 +154,8 @@ Define your own patterns:
     }
 <
 
-Choose highlighting style:
+
+CHOOSE HIGHLIGHTING STYLE:
 
 
 
