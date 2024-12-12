@@ -18,11 +18,17 @@ local M = {}
 ---@class oklch.Config
 local default_config = {
 
-  ---@type oklch.HightlightConfig
+  ---@class oklch.HightlightConfig
   highlight = {
     enabled = true,
+    -- async delay in ms
     edit_delay = 60,
+    -- async delay in ms
     scroll_delay = 0,
+    ---@type 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
+    style = 'background',
+    virtual_text = '● ', -- '■'' also looks nice
+    priority = 500,
   },
 
   ---@type { [string]: oklch.PatternList}
@@ -46,14 +52,11 @@ local default_config = {
     numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
   },
 
-  ---@type boolean
   register_cmds = true,
 
-  ---@type boolean
   -- Download Rust binaries automatically.
   auto_download = true,
 
-  ---@type integer
   log_level = vim.log.levels.INFO,
 }
 
@@ -65,7 +68,7 @@ M.config = nil
 --- @type oklch.FinalPatternList[]
 M.final_patterns = {}
 
----@param config oklch.Config
+---@param config? oklch.Config
 function M.setup(config)
   M.config = vim.tbl_deep_extend('force', default_config, config or {})
   utils.setup(M.config)

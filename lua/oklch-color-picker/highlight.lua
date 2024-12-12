@@ -5,34 +5,76 @@ local find, sub, format = string.find, string.sub, string.format
 local insert = table.insert
 local pow, min, max = math.pow, math.min, math.max
 local rshift, band = bit.rshift, bit.band
-local nvim_buf_clear_namespace, nvim_buf_add_highlight, nvim_set_hl = vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_add_highlight, vim.api.nvim_set_hl
+local nvim_buf_clear_namespace, nvim_buf_set_extmark, nvim_set_hl = vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_set_extmark, vim.api.nvim_set_hl
 
 local M = {}
-
---- @class oklch.HightlightConfig
---- @field enabled boolean
---- @field edit_delay number async delay in ms
---- @field scroll_delay number async delay in ms
 
 ---@type fun(color: string, format: string|nil): number|nil
 M.parse = nil
 
 ---@type oklch.FinalPatternList[]
-M.patterns = nil
+local patterns = nil
 
 ---@type oklch.HightlightConfig
-M.config = nil
+local config = nil
 
+---@type number
 local ns
+---@type number
+local gr
 
---- @param config oklch.HightlightConfig
---- @param patterns oklch.FinalPatternList[]
+---@type fun(integer, integer, integer, integer, string)
+local set_extmark
+
+---@return boolean|nil -- true if error
+local function make_set_extmark()
+  ---@type vim.api.keyset.set_extmark
+  local mrk = {
+    priority = config.priority,
+  }
+  if config.style == 'background' or config.style == 'foreground' then
+    set_extmark = function(bufnr, line_n, start_col, end_col, group)
+      mrk.hl_group = group
+      mrk.end_col = end_col
+      nvim_buf_set_extmark(bufnr, ns, line_n, start_col, mrk)
+    end
+  elseif config.style:find '^virtual' then
+    mrk.virt_text = { { config.virtual_text, '' } }
+    if config.style == 'virtual_left' then
+      set_extmark = function(bufnr, line_n, start_col, _, group)
+        mrk.virt_text[1][2] = group
+        mrk.virt_text_pos = 'inline'
+        nvim_buf_set_extmark(bufnr, ns, line_n, start_col, mrk)
+      end
+    elseif config.style == 'virtual_right' then
+      set_extmark = function(bufnr, line_n, _, end_col, group)
+        mrk.virt_text[1][2] = group
+        mrk.virt_text_pos = 'inline'
+        nvim_buf_set_extmark(bufnr, ns, line_n, end_col, mrk)
+      end
+    elseif config.style == 'virtual_eol' then
+      set_extmark = function(bufnr, line_n, start_col, _, group)
+        mrk.virt_text[1][2] = group
+        nvim_buf_set_extmark(bufnr, ns, line_n, start_col, mrk)
+      end
+    else
+      return true
+    end
+  else
+    return true
+  end
+end
+
+--- @param config_ oklch.HightlightConfig
+--- @param patterns_ oklch.FinalPatternList[]
 --- @param auto_download boolean
-function M.setup(config, patterns, auto_download)
-  M.config = config
-  M.patterns = patterns
+function M.setup(config_, patterns_, auto_download)
+  config = config_
+  patterns = patterns_
 
-  if not M.config.enabled then
+  if make_set_extmark() then
+    utils.log('Invalid config.highlight.style, highlighting disabled', vim.log.levels.ERROR)
+    config.enabled = false
     return
   end
 
@@ -49,10 +91,14 @@ function M.setup(config, patterns, auto_download)
     M.parse = parser.parse
 
     ns = vim.api.nvim_create_namespace 'OklchColorPickerNamespace'
-    M.gr = vim.api.nvim_create_augroup('OklchColorPicker', {})
+    gr = vim.api.nvim_create_augroup('OklchColorPicker', {})
+
+    if not config.enabled then
+      return
+    end
 
     -- set to false for enable to work
-    M.config.enabled = false
+    config.enabled = false
     M.enable()
   end
 
@@ -64,13 +110,13 @@ function M.setup(config, patterns, auto_download)
 end
 
 function M.disable()
-  if not M.config or not M.config.enabled then
+  if not config or not config.enabled then
     return
   end
-  M.config.enabled = false
+  config.enabled = false
 
   M.bufs = {}
-  vim.api.nvim_clear_autocmds { group = M.gr }
+  vim.api.nvim_clear_autocmds { group = gr }
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_loaded(bufnr) then
       pcall(vim.api.nvim_buf_clear_namespace, bufnr, ns, 0, -1)
@@ -79,13 +125,13 @@ function M.disable()
 end
 
 function M.enable()
-  if not M.parse or not M.config or M.config.enabled then
+  if not M.parse or not config or config.enabled then
     return
   end
-  M.config.enabled = true
+  config.enabled = true
 
   vim.api.nvim_create_autocmd('BufEnter', {
-    group = M.gr,
+    group = gr,
     callback = function(data)
       M.on_buf_enter(data.buf, false)
     end,
@@ -101,7 +147,7 @@ function M.enable()
 end
 
 function M.toggle()
-  if M.config.enabled then
+  if config.enabled then
     M.disable()
   else
     M.enable()
@@ -114,8 +160,6 @@ end
 
 --- @type { [integer]: BufData }
 M.bufs = {}
---- @type integer
-M.gr = nil
 
 --- Unattaching is very annoying, so just make sure we never attach twice
 --- @type { [integer]: boolean}
@@ -160,14 +204,14 @@ function M.on_buf_enter(bufnr, force_update)
       on_detach = function()
         M.bufs[bufnr] = nil
         M.buf_attached[bufnr] = nil
-        vim.api.nvim_clear_autocmds { buffer = bufnr, group = M.gr }
+        vim.api.nvim_clear_autocmds { buffer = bufnr, group = gr }
       end,
     })
     M.buf_attached[bufnr] = true
   end
 
   vim.api.nvim_create_autocmd('WinScrolled', {
-    group = M.gr,
+    group = gr,
     buffer = bufnr,
     callback = function(data)
       local buf_data = M.bufs[bufnr]
@@ -178,13 +222,13 @@ function M.on_buf_enter(bufnr, force_update)
       local top, bottom = M.get_view(bufnr)
       if top < buf_data.prev_view.top and bottom <= buf_data.prev_view.bottom then
         -- scrolled up
-        M.update_lines(data.buf, 0, buf_data.prev_view.top + 1)
+        M.update_lines(data.buf, 0, buf_data.prev_view.top + 1, true)
       elseif bottom > buf_data.prev_view.bottom and top >= buf_data.prev_view.top then
         -- scrolled down
-        M.update_lines(data.buf, buf_data.prev_view.bottom, 1e9)
+        M.update_lines(data.buf, buf_data.prev_view.bottom, 1e9, true)
       else
         -- large jump
-        M.update_lines(data.buf, 0, 1e9)
+        M.update_lines(data.buf, 0, 1e9, true)
       end
       buf_data.prev_view.top = top
       buf_data.prev_view.bottom = bottom
@@ -237,7 +281,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     buf_data.pending_updates.to_line = min(max(buf_data.pending_updates.to_line, to_line), bottom)
   end
 
-  local delay = scroll and M.config.scroll_delay or M.config.edit_delay
+  local delay = scroll and config.scroll_delay or config.edit_delay
   M.pending_timer:stop()
 
   if delay <= 0 then
@@ -322,8 +366,12 @@ local function compute_color_group(rgb)
   local hex = format('#%06x', rgb)
   local group_name = format('OCP_%s', sub(hex, 2))
 
-  local fg = is_light(rgb) and 'Black' or 'White'
-  nvim_set_hl(0, group_name, { fg = fg, bg = hex })
+  if config.style == 'background' then
+    local opposite = is_light(rgb) and 'Black' or 'White'
+    nvim_set_hl(0, group_name, { fg = opposite, bg = hex })
+  else
+    nvim_set_hl(0, group_name, { fg = hex })
+  end
 
   hex_color_groups[rgb] = group_name
 
@@ -334,20 +382,20 @@ local ft_patterns_cache = {}
 
 ---@param ft string
 ---@return oklch.FinalPatternList[]
-function M.get_ft_patterns(ft)
-  local patterns = ft_patterns_cache[ft]
-  if patterns then
-    return patterns
+local function get_ft_patterns(ft)
+  local ft_patterns = ft_patterns_cache[ft]
+  if ft_patterns then
+    return ft_patterns
   end
 
-  patterns = {}
-  for _, pattern_list in ipairs(M.patterns) do
+  ft_patterns = {}
+  for _, pattern_list in ipairs(patterns) do
     if pattern_list.ft(ft) then
-      insert(patterns, pattern_list)
+      insert(ft_patterns, pattern_list)
     end
   end
-  ft_patterns_cache[ft] = patterns
-  return patterns
+  ft_patterns_cache[ft] = ft_patterns
+  return ft_patterns
 end
 
 local line_matches = {}
@@ -357,7 +405,7 @@ local line_matches = {}
 ---@param from_line integer
 ---@param ft string
 function M.highlight_lines(bufnr, lines, from_line, ft)
-  local patterns = M.get_ft_patterns(ft)
+  local ft_patterns = get_ft_patterns(ft)
   local parse = M.parse
 
   nvim_buf_clear_namespace(bufnr, ns, from_line, from_line + #lines)
@@ -365,7 +413,7 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
   for i, line in ipairs(lines) do
     local match_idx = 0
 
-    for _, pattern_list in ipairs(patterns) do
+    for _, pattern_list in ipairs(ft_patterns) do
       for _, pattern in ipairs(pattern_list) do
         local start = 1
         local match_start, match_end = find(line, pattern.cheap, start)
@@ -394,7 +442,7 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
             if rgb then
               local group = compute_color_group(rgb)
               local line_n = from_line + i - 1 -- zero based index
-              nvim_buf_add_highlight(bufnr, ns, group, line_n, match_start - 1, match_end --[[@as number]])
+              set_extmark(bufnr, line_n, match_start - 1, match_end, group)
             end
             match_idx = match_idx + 2
             line_matches[match_idx - 1] = match_start

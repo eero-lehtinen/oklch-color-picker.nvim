@@ -28,7 +28,7 @@
 {
   'eero-lehtinen/oklch-color-picker.nvim',
   config = function()
-    require('oklch-color-picker').setup {}
+    require('oklch-color-picker').setup()
     -- One handed keymaps recommended, you will be using the mouse
     vim.keymap.set('n', '<leader>v', function()
       require('oklch-color-picker').pick_under_cursor()
@@ -50,8 +50,12 @@ local default_config = {
 
   highlight = {
     enabled = true,
-    edit_delay = 60,
-    scroll_delay = 0,
+    edit_delay = 60, -- ms
+    scroll_delay = 0, -- ms
+    -- options: 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
+    style = 'background',
+    virtual_text = '● ', -- '■'' also looks nice
+    priority = 500,
   },
 
   patterns = {
