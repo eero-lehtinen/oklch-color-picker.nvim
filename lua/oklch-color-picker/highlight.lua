@@ -239,11 +239,6 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
   local delay = scroll and config.scroll_delay or config.edit_delay
   M.pending_timer:stop()
 
-  if delay <= 0 then
-    M.process_update(bufnr)
-    return
-  end
-
   M.pending_timer:start(
     delay,
     0,
