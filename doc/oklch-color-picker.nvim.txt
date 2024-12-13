@@ -38,14 +38,13 @@ lazy.nvim <https://github.com/folke/lazy.nvim>
 >lua
     {
       'eero-lehtinen/oklch-color-picker.nvim',
-      config = function()
-        require('oklch-color-picker').setup()
-        -- One handed keymaps recommended, you will be using the mouse
-        vim.keymap.set('n', '<leader>v', function()
-          require('oklch-color-picker').pick_under_cursor()
-        end, { desc = 'Color pick under cursor' })
-      end,
-    },
+      event = 'VeryLazy',
+      opts = {},
+      keys = {
+        -- One handed keymap recommended, you will be using the mouse
+        { '<leader>v', '<cmd>ColorPickOklch<cr>', desc = 'Color pick under cursor' }
+      }
+    }
 <
 
 This plugin automatically downloads the picker application and a color parser
@@ -65,7 +64,7 @@ https://github.com/user-attachments/assets/822b5717-133d-4caf-a198-cbe3337bf87a
 DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
 
 >lua
-    local default_config = {
+    local default_opts = {
     
       highlight = {
         enabled = true,
@@ -114,7 +113,7 @@ CONFIGURATION                          *oklch-color-picker.nvim-configuration*
 DISABLE DEFAULT PATTERNS BY SETTING THEM TO FALSE: ~
 
 >lua
-    {
+    opts = {
       patterns = {
         numbers_in_brackets = false
       }
@@ -125,7 +124,7 @@ DISABLE DEFAULT PATTERNS BY SETTING THEM TO FALSE: ~
 DEFINE YOUR OWN PATTERNS: ~
 
 >lua
-    {
+    opts = {
       patterns = {
         -- Example with all properties:
         glsl_vec_linear = {
