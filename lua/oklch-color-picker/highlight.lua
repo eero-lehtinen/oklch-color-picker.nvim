@@ -328,7 +328,7 @@ local function compute_color_group(rgb)
     local opposite = is_light(rgb) and 'Black' or 'White'
     nvim_set_hl(0, group_name, { fg = opposite, bg = hex })
   else
-    nvim_set_hl(0, group_name, { fg = hex })
+    nvim_set_hl(0, group_name, { fg = hex, bg = 'none' })
   end
 
   hex_color_groups[rgb] = group_name
