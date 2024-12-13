@@ -27,14 +27,13 @@
 ```lua
 {
   'eero-lehtinen/oklch-color-picker.nvim',
-  config = function()
-    require('oklch-color-picker').setup()
-    -- One handed keymaps recommended, you will be using the mouse
-    vim.keymap.set('n', '<leader>v', function()
-      require('oklch-color-picker').pick_under_cursor()
-    end, { desc = 'Color pick under cursor' })
-  end,
-},
+  event = 'VeryLazy',
+  opts = {},
+  keys = {
+    -- One handed keymap recommended, you will be using the mouse
+    { '<leader>v', '<cmd>ColorPickOklch<cr>', desc = 'Color pick under cursor' }
+  }
+}
 ```
 
 This plugin automatically downloads the picker application and a color parser library from the releases page of [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker) (it's open source too in a different repo!). The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ performance and startup time. There are prebuilt binaries for Linux, macOS, and Windows.
@@ -46,7 +45,7 @@ https://github.com/user-attachments/assets/822b5717-133d-4caf-a198-cbe3337bf87a
 ## Default Options
 
 ```lua
-local default_config = {
+local default_opts = {
 
   highlight = {
     enabled = true,
@@ -93,7 +92,7 @@ local default_config = {
 ### Disable default patterns by setting them to false:
 
 ```lua
-{
+opts = {
   patterns = {
     numbers_in_brackets = false
   }
@@ -103,7 +102,7 @@ local default_config = {
 ### Define your own patterns:
 
 ```lua
-{
+opts = {
   patterns = {
     -- Example with all properties:
     glsl_vec_linear = {

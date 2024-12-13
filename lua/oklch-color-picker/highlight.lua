@@ -15,24 +15,24 @@ M.parse = nil
 ---@type oklch.FinalPatternList[]
 local patterns = nil
 
----@type oklch.HightlightConfig
-local config = nil
+---@type oklch.HighlightOpts
+local opts = nil
 
 ---@type number
 local ns
 ---@type number
 local gr
 
---- @param config_ oklch.HightlightConfig
+--- @param opts_ oklch.HighlightOpts
 --- @param patterns_ oklch.FinalPatternList[]
 --- @param auto_download boolean
-function M.setup(config_, patterns_, auto_download)
-  config = config_
+function M.setup(opts_, patterns_, auto_download)
+  opts = opts_
   patterns = patterns_
 
   if M.make_set_extmark() then
     utils.log('Invalid config.highlight.style, highlighting disabled', vim.log.levels.ERROR)
-    config.enabled = false
+    opts.enabled = false
     return
   end
 
@@ -51,12 +51,12 @@ function M.setup(config_, patterns_, auto_download)
     ns = vim.api.nvim_create_namespace 'OklchColorPickerNamespace'
     gr = vim.api.nvim_create_augroup('OklchColorPicker', {})
 
-    if not config.enabled then
+    if not opts.enabled then
       return
     end
 
     -- set to false for enable to work
-    config.enabled = false
+    opts.enabled = false
     M.enable()
   end
 
@@ -68,10 +68,10 @@ function M.setup(config_, patterns_, auto_download)
 end
 
 function M.disable()
-  if not config or not config.enabled then
+  if not opts or not opts.enabled then
     return
   end
-  config.enabled = false
+  opts.enabled = false
 
   M.bufs = {}
   vim.api.nvim_clear_autocmds { group = gr }
@@ -83,10 +83,10 @@ function M.disable()
 end
 
 function M.enable()
-  if not M.parse or not config or config.enabled then
+  if not M.parse or not opts or opts.enabled then
     return
   end
-  config.enabled = true
+  opts.enabled = true
 
   vim.api.nvim_create_autocmd('BufEnter', {
     group = gr,
@@ -105,7 +105,7 @@ function M.enable()
 end
 
 function M.toggle()
-  if config.enabled then
+  if opts.enabled then
     M.disable()
   else
     M.enable()
@@ -236,7 +236,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     buf_data.pending_updates.to_line = min(max(buf_data.pending_updates.to_line, to_line), bottom)
   end
 
-  local delay = scroll and config.scroll_delay or config.edit_delay
+  local delay = scroll and opts.scroll_delay or opts.edit_delay
   M.pending_timer:stop()
 
   M.pending_timer:start(
@@ -316,7 +316,7 @@ local function compute_color_group(rgb)
   local hex = format('#%06x', rgb)
   local group_name = format('OCP_%s', sub(hex, 2))
 
-  if config.style == 'background' then
+  if opts.style == 'background' then
     local opposite = is_light(rgb) and 'Black' or 'White'
     nvim_set_hl(0, group_name, { fg = opposite, bg = hex })
   else
@@ -335,31 +335,31 @@ local set_extmark
 function M.make_set_extmark()
   ---@type vim.api.keyset.set_extmark
   local reuse_mark = {
-    priority = config.priority,
+    priority = opts.priority,
   }
-  if config.style == 'background' or config.style == 'foreground' then
+  if opts.style == 'background' or opts.style == 'foreground' then
     set_extmark = function(bufnr, line_n, start_col, end_col, group)
       reuse_mark.hl_group = group
       reuse_mark.end_col = end_col
       nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
     end
-  elseif config.style:find '^virtual' then
-    reuse_mark.virt_text = { { config.virtual_text, '' } }
+  elseif opts.style:find '^virtual' then
+    reuse_mark.virt_text = { { opts.virtual_text, '' } }
     local virt_arr = reuse_mark.virt_text[1]
 
-    if config.style == 'virtual_left' then
+    if opts.style == 'virtual_left' then
       reuse_mark.virt_text_pos = 'inline'
       set_extmark = function(bufnr, line_n, start_col, _, group)
         virt_arr[2] = group
         nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
       end
-    elseif config.style == 'virtual_right' then
+    elseif opts.style == 'virtual_right' then
       reuse_mark.virt_text_pos = 'inline'
       set_extmark = function(bufnr, line_n, _, end_col, group)
         virt_arr[2] = group
         nvim_buf_set_extmark(bufnr, ns, line_n, end_col, reuse_mark)
       end
-    elseif config.style == 'virtual_eol' then
+    elseif opts.style == 'virtual_eol' then
       set_extmark = function(bufnr, line_n, start_col, _, group)
         virt_arr[2] = group
         nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)

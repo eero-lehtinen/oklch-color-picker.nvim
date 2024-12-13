@@ -5,7 +5,6 @@ local tailwind = require 'oklch-color-picker.tailwind'
 
 local lshift, band = bit.lshift, bit.band
 
----@class oklch
 local M = {}
 
 --- Return a number with R, G, and B components combined into a single number 0xRRGGBB.
@@ -15,10 +14,10 @@ local M = {}
 
 ---@alias oklch.PatternList { priority: number|nil, format: string|nil, ft: string[]|nil, custom_parse: oklch.CustomParseFunc|nil , [number]: string }
 
----@class oklch.Config
-local default_config = {
+---@class oklch.Opts
+local default_opts = {
 
-  ---@class oklch.HightlightConfig
+  ---@class oklch.HighlightOpts
   highlight = {
     enabled = true,
     -- async delay in ms
@@ -61,26 +60,26 @@ local default_config = {
   log_level = vim.log.levels.INFO,
 }
 
----@type oklch.Config
-M.config = nil
+---@type oklch.Opts
+M.opts = nil
 
 ---@alias oklch.FinalPatternList { priority: number, name: string, format: string|nil, ft: (fun(ft: string): boolean), custom_parse: oklch.CustomParseFunc|nil, [number]: { cheap: string, grouped: string, simple_groups: boolean } }
 
 --- @type oklch.FinalPatternList[]
 M.final_patterns = {}
 
----@param config? oklch.Config
-function M.setup(config)
-  M.config = vim.tbl_deep_extend('force', default_config, config or {})
-  utils.setup(M.config)
+---@param opts? oklch.Opts
+function M.setup(opts)
+  M.opts = vim.tbl_deep_extend('force', default_opts, opts or {})
+  utils.setup(M.opts)
 
-  if M.config.register_cmds then
+  if M.opts.register_cmds then
     vim.api.nvim_create_user_command('ColorPickOklch', function()
       M.pick_under_cursor()
     end, { desc = 'Color pick text under cursor with the Oklch color picker' })
   end
 
-  for key, pattern_list in pairs(M.config.patterns) do
+  for key, pattern_list in pairs(M.opts.patterns) do
     if pattern_list and pattern_list[1] ~= nil then
       local ft = function()
         return true
@@ -125,16 +124,16 @@ function M.setup(config)
     return a.priority > b.priority
   end)
 
-  if M.config.auto_download then
+  if M.opts.auto_download then
     downloader.ensure_app_downloaded(function(err)
       if err then
         utils.log(err, vim.log.levels.ERROR)
       else
-        highlight.setup(M.config.highlight, M.final_patterns, M.config.auto_download)
+        highlight.setup(M.opts.highlight, M.final_patterns, M.opts.auto_download)
       end
     end)
   else
-    highlight.setup(M.config.highlight, M.final_patterns, M.config.auto_download)
+    highlight.setup(M.opts.highlight, M.final_patterns, M.opts.auto_download)
   end
 end
 
