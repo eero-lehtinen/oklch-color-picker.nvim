@@ -1,17 +1,16 @@
 local M = {}
 
----@type oklch.Config
-M.config = nil
+local log_level = vim.log.levels.INFO
 
----@param config oklch.Config
-function M.setup(config)
-  M.config = config
+---@param log_level_ integer
+function M.setup(log_level_)
+  log_level = log_level_
 end
 
 ---@param msg string
 ---@param level integer
 function M.log(msg, level)
-  if level >= (M.config ~= nil and M.config.log_level or vim.log.levels.INFO) then
+  if level >= log_level then
     vim.schedule(function()
       msg = 'oklch-color-picker: ' .. msg
 

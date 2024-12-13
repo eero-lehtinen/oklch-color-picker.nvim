@@ -71,7 +71,7 @@ M.final_patterns = {}
 ---@param opts? oklch.Opts
 function M.setup(opts)
   M.opts = vim.tbl_deep_extend('force', default_opts, opts or {})
-  utils.setup(M.opts)
+  utils.setup(M.opts.log_level)
 
   if M.opts.register_cmds then
     vim.api.nvim_create_user_command('ColorPickOklch', function()
