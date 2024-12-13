@@ -90,7 +90,7 @@ local default_config = {
 
 ## Configuration
 
-#### Disable default patterns by setting them to false:
+### Disable default patterns by setting them to false:
 
 ```lua
 {
@@ -100,7 +100,7 @@ local default_config = {
 }
 ```
 
-#### Define your own patterns:
+### Define your own patterns:
 
 ```lua
 {
@@ -132,9 +132,9 @@ local default_config = {
 }
 ```
 
-#### Choose highlighting style:
+### Choose highlighting style:
 
-<img src="https://github.com/user-attachments/assets/e2bd3157-f262-43f4-9aea-a803d7da8015" width=400 alt="highlighting styles">
+<img src="https://github.com/user-attachments/assets/6327882d-5d1c-43e0-aa9d-397980b99dfe" width=400 alt="highlighting styles">
 
 ## API & Commands
 
