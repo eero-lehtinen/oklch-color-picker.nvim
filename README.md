@@ -54,8 +54,8 @@ local default_config = {
     scroll_delay = 0, -- ms
     -- options: 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
     style = 'background',
-    -- '■ ' also looks nice (remove space with monospace nerd symbols)
-    virtual_text = '● ',
+    -- '● ' also looks nice (remove space with monospace nerd symbols)
+    virtual_text = '■ ',
     priority = 500,
   },
 
@@ -135,7 +135,6 @@ local default_config = {
 #### Choose highlighting style:
 
 <img src="https://github.com/user-attachments/assets/e2bd3157-f262-43f4-9aea-a803d7da8015" width=400 alt="highlighting styles">
-
 
 ## API & Commands
 
