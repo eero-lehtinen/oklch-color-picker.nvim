@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 December 12
+*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 December 13
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -73,8 +73,8 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
         scroll_delay = 0, -- ms
         -- options: 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
         style = 'background',
-        -- '■ ' also looks nice (remove space with monospace nerd symbols)
-        virtual_text = '● ',
+        -- '● ' also looks nice (remove space with monospace nerd symbols)
+        virtual_text = '■ ',
         priority = 500,
       },
     
