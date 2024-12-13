@@ -23,48 +23,6 @@ local ns
 ---@type number
 local gr
 
----@type fun(integer, integer, integer, integer, string)
-local set_extmark
-
----@return boolean|nil -- true if error
-local function make_set_extmark()
-  ---@type vim.api.keyset.set_extmark
-  local mrk = {
-    priority = config.priority,
-  }
-  if config.style == 'background' or config.style == 'foreground' then
-    set_extmark = function(bufnr, line_n, start_col, end_col, group)
-      mrk.hl_group = group
-      mrk.end_col = end_col
-      nvim_buf_set_extmark(bufnr, ns, line_n, start_col, mrk)
-    end
-  elseif config.style:find '^virtual' then
-    mrk.virt_text = { { config.virtual_text, '' } }
-    if config.style == 'virtual_left' then
-      set_extmark = function(bufnr, line_n, start_col, _, group)
-        mrk.virt_text[1][2] = group
-        mrk.virt_text_pos = 'inline'
-        nvim_buf_set_extmark(bufnr, ns, line_n, start_col, mrk)
-      end
-    elseif config.style == 'virtual_right' then
-      set_extmark = function(bufnr, line_n, _, end_col, group)
-        mrk.virt_text[1][2] = group
-        mrk.virt_text_pos = 'inline'
-        nvim_buf_set_extmark(bufnr, ns, line_n, end_col, mrk)
-      end
-    elseif config.style == 'virtual_eol' then
-      set_extmark = function(bufnr, line_n, start_col, _, group)
-        mrk.virt_text[1][2] = group
-        nvim_buf_set_extmark(bufnr, ns, line_n, start_col, mrk)
-      end
-    else
-      return true
-    end
-  else
-    return true
-  end
-end
-
 --- @param config_ oklch.HightlightConfig
 --- @param patterns_ oklch.FinalPatternList[]
 --- @param auto_download boolean
@@ -72,7 +30,7 @@ function M.setup(config_, patterns_, auto_download)
   config = config_
   patterns = patterns_
 
-  if make_set_extmark() then
+  if M.make_set_extmark() then
     utils.log('Invalid config.highlight.style, highlighting disabled', vim.log.levels.ERROR)
     config.enabled = false
     return
@@ -376,6 +334,50 @@ local function compute_color_group(rgb)
   hex_color_groups[rgb] = group_name
 
   return group_name
+end
+
+---@type fun(integer, integer, integer, integer, string)
+local set_extmark
+
+---@return boolean|nil -- true if error
+function M.make_set_extmark()
+  ---@type vim.api.keyset.set_extmark
+  local reuse_mark = {
+    priority = config.priority,
+  }
+  if config.style == 'background' or config.style == 'foreground' then
+    set_extmark = function(bufnr, line_n, start_col, end_col, group)
+      reuse_mark.hl_group = group
+      reuse_mark.end_col = end_col
+      nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
+    end
+  elseif config.style:find '^virtual' then
+    reuse_mark.virt_text = { { config.virtual_text, '' } }
+    local virt_arr = reuse_mark.virt_text[1]
+
+    if config.style == 'virtual_left' then
+      reuse_mark.virt_text_pos = 'inline'
+      set_extmark = function(bufnr, line_n, start_col, _, group)
+        virt_arr[2] = group
+        nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
+      end
+    elseif config.style == 'virtual_right' then
+      reuse_mark.virt_text_pos = 'inline'
+      set_extmark = function(bufnr, line_n, _, end_col, group)
+        virt_arr[2] = group
+        nvim_buf_set_extmark(bufnr, ns, line_n, end_col, reuse_mark)
+      end
+    elseif config.style == 'virtual_eol' then
+      set_extmark = function(bufnr, line_n, start_col, _, group)
+        virt_arr[2] = group
+        nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
+      end
+    else
+      return true
+    end
+  else
+    return true
+  end
 end
 
 local ft_patterns_cache = {}
