@@ -91,14 +91,14 @@ function M.enable()
   vim.api.nvim_create_autocmd('BufEnter', {
     group = gr,
     callback = function(data)
-      M.on_buf_enter(data.buf, false)
+      M.on_buf_enter(data.buf)
     end,
   })
 
   vim.schedule(function()
     for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_loaded(bufnr) then
-        M.on_buf_enter(bufnr, true)
+        M.on_buf_enter(bufnr)
       end
     end
   end)
@@ -124,17 +124,14 @@ M.bufs = {}
 M.buf_attached = {}
 
 --- @param bufnr number
---- @param force_update boolean
-function M.on_buf_enter(bufnr, force_update)
+function M.on_buf_enter(bufnr)
   local buftype = vim.api.nvim_get_option_value('buftype', { buf = bufnr })
   if buftype ~= '' then
     return
   end
 
   if M.bufs[bufnr] then
-    if force_update or M.bufs[bufnr].pending_updates then
-      M.update(bufnr)
-    end
+    M.update_view(bufnr)
     return
   end
 
@@ -142,7 +139,7 @@ function M.on_buf_enter(bufnr, force_update)
     prev_view = { top = 0, bottom = 0 },
   }
 
-  M.update(bufnr)
+  M.update_view(bufnr)
 
   if M.buf_attached[bufnr] == nil then
     vim.api.nvim_buf_attach(bufnr, false, {
@@ -157,7 +154,7 @@ function M.on_buf_enter(bufnr, force_update)
         end
       end,
       on_reload = function()
-        M.update(bufnr)
+        M.update_view(bufnr)
       end,
       on_detach = function()
         M.bufs[bufnr] = nil
@@ -171,32 +168,32 @@ function M.on_buf_enter(bufnr, force_update)
   vim.api.nvim_create_autocmd('WinScrolled', {
     group = gr,
     buffer = bufnr,
-    callback = function(data)
-      local buf_data = M.bufs[bufnr]
-      if buf_data == nil then
-        return
-      end
-
-      local top, bottom = M.get_view(bufnr)
-      if top < buf_data.prev_view.top and bottom <= buf_data.prev_view.bottom then
-        -- scrolled up
-        M.update_lines(data.buf, 0, buf_data.prev_view.top + 1, true)
-      elseif bottom > buf_data.prev_view.bottom and top >= buf_data.prev_view.top then
-        -- scrolled down
-        M.update_lines(data.buf, buf_data.prev_view.bottom, 1e9, true)
-      else
-        -- large jump
-        M.update_lines(data.buf, 0, 1e9, true)
-      end
-      buf_data.prev_view.top = top
-      buf_data.prev_view.bottom = bottom
+    callback = function()
+      M.update_view(bufnr)
     end,
   })
 end
 
 --- @param bufnr integer
-function M.update(bufnr)
-  M.update_lines(bufnr, 0, 1e9, true)
+function M.update_view(bufnr)
+  local buf_data = M.bufs[bufnr]
+  if buf_data == nil then
+    return
+  end
+
+  local top, bottom = M.get_view(bufnr)
+  if top < buf_data.prev_view.top and bottom <= buf_data.prev_view.bottom then
+    -- scrolled up
+    M.update_lines(bufnr, 0, buf_data.prev_view.top + 1, true)
+  elseif bottom > buf_data.prev_view.bottom and top >= buf_data.prev_view.top then
+    -- scrolled down
+    M.update_lines(bufnr, buf_data.prev_view.bottom, 1e9, true)
+  else
+    -- large jump
+    M.update_lines(bufnr, 0, 1e9, true)
+  end
+  buf_data.prev_view.top = top
+  buf_data.prev_view.bottom = bottom
 end
 
 local function get_view()
