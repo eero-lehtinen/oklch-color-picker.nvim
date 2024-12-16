@@ -22,6 +22,8 @@
 
 ## Installation
 
+Requires Neovim 0.10+
+
 [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua

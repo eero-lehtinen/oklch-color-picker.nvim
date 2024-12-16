@@ -70,6 +70,11 @@ M.final_patterns = {}
 
 ---@param opts? oklch.Opts
 function M.setup(opts)
+  if vim.fn.has 'nvim-0.10' == 0 then
+    utils.log('oklch-color-picker.nvim requires Neovim 0.10+', vim.log.levels.ERROR)
+    return
+  end
+
   M.opts = vim.tbl_deep_extend('force', default_opts, opts or {})
   utils.setup(M.opts.log_level)
 
