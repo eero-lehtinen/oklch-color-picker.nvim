@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 December 13
+*oklch-color-picker.nvim.txt*  For NVIM v0.10.0  Last change: 2024 December 16
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -32,6 +32,8 @@ FEATURES                                    *oklch-color-picker.nvim-features*
 
 
 INSTALLATION                            *oklch-color-picker.nvim-installation*
+
+Requires Neovim 0.10+
 
 lazy.nvim <https://github.com/folke/lazy.nvim>
 
