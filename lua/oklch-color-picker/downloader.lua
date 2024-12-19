@@ -67,11 +67,12 @@ function M.validate_parser_version()
   return result
 end
 
+---@param kind 'lib'|'app'
 ---@return string, string
-function M.get_target_info()
+function M.get_target_info(kind)
   if utils.is_macos() then
     return 'x86_64-apple-darwin', '.tar.gz'
-  elseif utils.is_windows() then
+  elseif utils.is_windows() or (kind == 'app' and utils.is_wsl()) then
     return 'x86_64-pc-windows-gnu', '.zip'
   else
     return 'x86_64-unknown-linux-gnu', '.tar.gz'
@@ -80,7 +81,7 @@ end
 
 ---@param callback fun(err: string|nil)
 function M.download_app(callback)
-  local platform, archive_ext = M.get_target_info()
+  local platform, archive_ext = M.get_target_info 'app'
 
   local archive_basename = 'oklch-color-picker-' .. version .. '-' .. platform
   local archive = archive_basename .. archive_ext
@@ -90,6 +91,11 @@ function M.download_app(callback)
   local cwd = utils.get_path()
 
   utils.log('Downloading picker app...', vim.log.levels.INFO)
+
+  if vim.fn.executable 'curl' ~= 1 then
+    callback "'curl' not found, please install it"
+    return
+  end
 
   vim.system(
     { 'curl', '--fail', '-o', archive, '-L', url },
@@ -120,7 +126,17 @@ function M.download_app(callback)
 
       if utils.is_windows() then
         vim.system({ 'powershell', '-command', 'Expand-Archive', '-Path', archive, '-DestinationPath', '.' }, { cwd = cwd }, on_extracted)
+      elseif utils.is_wsl() then
+        if vim.fn.executable 'unzip' ~= 1 then
+          callback "'unzip' not found, please install it"
+          return
+        end
+        vim.system({ 'unzip', archive }, { cwd = cwd }, on_extracted)
       else
+        if vim.fn.executable 'tar' ~= 1 then
+          callback "'tar' not found, please install it"
+          return
+        end
         vim.system({ 'tar', 'xzf', archive }, { cwd = cwd }, on_extracted)
       end
     end)
@@ -129,7 +145,7 @@ end
 
 ---@param callback fun(err: string|nil)
 function M.download_parser(callback)
-  local platform, _ = M.get_target_info()
+  local platform, _ = M.get_target_info 'lib'
   local lib_ext = utils.get_lib_extension()
 
   local lib = 'parser_lua_module-' .. platform .. lib_ext
@@ -140,6 +156,11 @@ function M.download_parser(callback)
   utils.log('Downloading parser...', vim.log.levels.INFO)
 
   local out_lib = 'parser_lua_module' .. lib_ext
+
+  if vim.fn.executable 'curl' ~= 1 then
+    callback "'curl' not found, please install it"
+    return
+  end
 
   vim.system(
     { 'curl', '--fail', '-o', out_lib, '-L', url },

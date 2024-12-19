@@ -57,6 +57,10 @@ local default_opts = {
   -- Download Rust binaries automatically.
   auto_download = true,
 
+  -- Use the Windows version of the app on WSL instead of trying through WSLg,
+  -- which seems unreliable.
+  wsl_use_windows_app = true,
+
   log_level = vim.log.levels.INFO,
 }
 
@@ -76,7 +80,7 @@ function M.setup(opts)
   end
 
   M.opts = vim.tbl_deep_extend('force', default_opts, opts or {})
-  utils.setup(M.opts.log_level)
+  utils.setup(M.opts)
 
   if M.opts.register_cmds then
     vim.api.nvim_create_user_command('ColorPickOklch', function()
@@ -232,7 +236,7 @@ local function start_app()
 
   local stderr = function(err, data)
     if data then
-      utils.log(data:match '^[^\r\n]*', vim.log.levels.WARN)
+      utils.log(data, vim.log.levels.WARN)
     elseif err then
       utils.log('Stderr error: ' .. err, vim.log.levels.DEBUG)
     else

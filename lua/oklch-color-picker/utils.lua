@@ -1,16 +1,17 @@
 local M = {}
 
-local log_level = vim.log.levels.INFO
+---@type oklch.Opts
+local opts
 
----@param log_level_ integer
-function M.setup(log_level_)
-  log_level = log_level_
+---@param opts_ oklch.Opts
+function M.setup(opts_)
+  opts = opts_
 end
 
 ---@param msg string
 ---@param level integer
 function M.log(msg, level)
-  if level >= log_level then
+  if level >= opts.log_level then
     vim.schedule(function()
       msg = 'oklch-color-picker: ' .. msg
 
@@ -59,9 +60,13 @@ function M.is_macos()
   return vim.loop.os_uname().sysname:find 'Darwin' ~= nil
 end
 
+function M.is_wsl()
+  return opts.wsl_use_windows_app and vim.env.WSL_INTEROP ~= nil
+end
+
 ---@return string
 function M.executable()
-  local executable_ext = M.is_windows() and '.exe' or ''
+  local executable_ext = (M.is_windows() or M.is_wsl()) and '.exe' or ''
   return 'oklch-color-picker' .. executable_ext
 end
 
