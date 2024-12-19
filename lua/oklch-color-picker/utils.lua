@@ -66,7 +66,7 @@ end
 
 ---@return string
 function M.executable()
-  local executable_ext = M.is_windows() or M.is_wsl() and '.exe' or ''
+  local executable_ext = (M.is_windows() or M.is_wsl()) and '.exe' or ''
   return 'oklch-color-picker' .. executable_ext
 end
 
