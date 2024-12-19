@@ -92,6 +92,11 @@ function M.download_app(callback)
 
   utils.log('Downloading picker app...', vim.log.levels.INFO)
 
+  if vim.fn.executable 'curl' ~= 1 then
+    callback "'curl' not found, please install it"
+    return
+  end
+
   vim.system(
     { 'curl', '--fail', '-o', archive, '-L', url },
     { cwd = cwd },
@@ -122,8 +127,16 @@ function M.download_app(callback)
       if utils.is_windows() then
         vim.system({ 'powershell', '-command', 'Expand-Archive', '-Path', archive, '-DestinationPath', '.' }, { cwd = cwd }, on_extracted)
       elseif utils.is_wsl() then
+        if vim.fn.executable 'unzip' ~= 1 then
+          callback "'unzip' not found, please install it"
+          return
+        end
         vim.system({ 'unzip', archive }, { cwd = cwd }, on_extracted)
       else
+        if vim.fn.executable 'tar' ~= 1 then
+          callback "'tar' not found, please install it"
+          return
+        end
         vim.system({ 'tar', 'xzf', archive }, { cwd = cwd }, on_extracted)
       end
     end)
@@ -143,6 +156,11 @@ function M.download_parser(callback)
   utils.log('Downloading parser...', vim.log.levels.INFO)
 
   local out_lib = 'parser_lua_module' .. lib_ext
+
+  if vim.fn.executable 'curl' ~= 1 then
+    callback "'curl' not found, please install it"
+    return
+  end
 
   vim.system(
     { 'curl', '--fail', '-o', out_lib, '-L', url },
