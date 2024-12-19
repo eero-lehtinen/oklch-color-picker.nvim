@@ -121,6 +121,8 @@ function M.download_app(callback)
 
       if utils.is_windows() then
         vim.system({ 'powershell', '-command', 'Expand-Archive', '-Path', archive, '-DestinationPath', '.' }, { cwd = cwd }, on_extracted)
+      elseif utils.is_wsl() then
+        vim.system({ 'unzip', archive }, { cwd = cwd }, on_extracted)
       else
         vim.system({ 'tar', 'xzf', archive }, { cwd = cwd }, on_extracted)
       end
