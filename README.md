@@ -85,8 +85,7 @@ local default_opts = {
   -- Download Rust binaries automatically.
   auto_download = true,
 
-  -- Use the Windows version of the app on WSL instead of trying through WSLg,
-  -- which seems unreliable.
+  -- Use the Windows version of the app on WSL instead of using unreliable WSLg.
   wsl_use_windows_app = true,
 
   log_level = vim.log.levels.INFO,
