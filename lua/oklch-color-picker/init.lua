@@ -236,7 +236,7 @@ local function start_app()
 
   local stderr = function(err, data)
     if data then
-      utils.log(data:match '^[^\r\n]*', vim.log.levels.WARN)
+      utils.log(data, vim.log.levels.WARN)
     elseif err then
       utils.log('Stderr error: ' .. err, vim.log.levels.DEBUG)
     else
