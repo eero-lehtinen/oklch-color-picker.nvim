@@ -67,11 +67,12 @@ function M.validate_parser_version()
   return result
 end
 
+---@param kind 'lib'|'app'
 ---@return string, string
-function M.get_target_info()
+function M.get_target_info(kind)
   if utils.is_macos() then
     return 'x86_64-apple-darwin', '.tar.gz'
-  elseif utils.is_windows() then
+  elseif utils.is_windows() or (kind == 'app' and utils.is_wsl()) then
     return 'x86_64-pc-windows-gnu', '.zip'
   else
     return 'x86_64-unknown-linux-gnu', '.tar.gz'
@@ -80,7 +81,7 @@ end
 
 ---@param callback fun(err: string|nil)
 function M.download_app(callback)
-  local platform, archive_ext = M.get_target_info()
+  local platform, archive_ext = M.get_target_info 'app'
 
   local archive_basename = 'oklch-color-picker-' .. version .. '-' .. platform
   local archive = archive_basename .. archive_ext
@@ -129,7 +130,7 @@ end
 
 ---@param callback fun(err: string|nil)
 function M.download_parser(callback)
-  local platform, _ = M.get_target_info()
+  local platform, _ = M.get_target_info 'lib'
   local lib_ext = utils.get_lib_extension()
 
   local lib = 'parser_lua_module-' .. platform .. lib_ext
