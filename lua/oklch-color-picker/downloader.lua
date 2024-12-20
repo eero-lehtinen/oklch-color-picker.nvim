@@ -71,7 +71,7 @@ end
 ---@return string, string
 function M.get_target_info(kind)
   if utils.is_macos() then
-    return 'x86_64-apple-darwin', '.tar.gz'
+    return utils.arch() .. '-apple-darwin', '.tar.gz'
   elseif utils.is_windows() or (kind == 'app' and utils.is_wsl()) then
     return 'x86_64-pc-windows-msvc', '.zip'
   else
