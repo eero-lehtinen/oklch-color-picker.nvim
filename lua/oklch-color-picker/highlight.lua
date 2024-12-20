@@ -1,11 +1,12 @@
-local utils = require 'oklch-color-picker.utils'
-local downloader = require 'oklch-color-picker.downloader'
+local utils = require("oklch-color-picker.utils")
+local downloader = require("oklch-color-picker.downloader")
 
 local find, sub, format = string.find, string.sub, string.format
 local insert = table.insert
 local pow, min, max = math.pow, math.min, math.max
 local rshift, band = bit.rshift, bit.band
-local nvim_buf_clear_namespace, nvim_buf_set_extmark, nvim_set_hl = vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_set_extmark, vim.api.nvim_set_hl
+local nvim_buf_clear_namespace, nvim_buf_set_extmark, nvim_set_hl =
+  vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_set_extmark, vim.api.nvim_set_hl
 
 local M = {}
 
@@ -31,7 +32,7 @@ function M.setup(opts_, patterns_, auto_download)
   patterns = patterns_
 
   if M.make_set_extmark() then
-    utils.log('Invalid config.highlight.style, highlighting disabled', vim.log.levels.ERROR)
+    utils.log("Invalid config.highlight.style, highlighting disabled", vim.log.levels.ERROR)
     opts.enabled = false
     return
   end
@@ -41,15 +42,15 @@ function M.setup(opts_, patterns_, auto_download)
       utils.log(err, vim.log.levels.ERROR)
       return
     end
-    local parser = require('oklch-color-picker.parser').get_parser()
+    local parser = require("oklch-color-picker.parser").get_parser()
     if parser == nil then
       utils.log("Couldn't load parser library", vim.log.levels.ERROR)
       return
     end
     M.parse = parser.parse
 
-    ns = vim.api.nvim_create_namespace 'OklchColorPickerNamespace'
-    gr = vim.api.nvim_create_augroup('OklchColorPicker', {})
+    ns = vim.api.nvim_create_namespace("OklchColorPickerNamespace")
+    gr = vim.api.nvim_create_augroup("OklchColorPicker", {})
 
     if not opts.enabled then
       return
@@ -74,7 +75,7 @@ function M.disable()
   opts.enabled = false
 
   M.bufs = {}
-  vim.api.nvim_clear_autocmds { group = gr }
+  vim.api.nvim_clear_autocmds({ group = gr })
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
     if vim.api.nvim_buf_is_loaded(bufnr) then
       pcall(vim.api.nvim_buf_clear_namespace, bufnr, ns, 0, -1)
@@ -88,7 +89,7 @@ function M.enable()
   end
   opts.enabled = true
 
-  vim.api.nvim_create_autocmd('BufEnter', {
+  vim.api.nvim_create_autocmd("BufEnter", {
     group = gr,
     callback = function(data)
       M.on_buf_enter(data.buf)
@@ -125,8 +126,8 @@ M.buf_attached = {}
 
 --- @param bufnr number
 function M.on_buf_enter(bufnr)
-  local buftype = vim.api.nvim_get_option_value('buftype', { buf = bufnr })
-  if buftype ~= '' then
+  local buftype = vim.api.nvim_get_option_value("buftype", { buf = bufnr })
+  if buftype ~= "" then
     return
   end
 
@@ -159,13 +160,13 @@ function M.on_buf_enter(bufnr)
       on_detach = function()
         M.bufs[bufnr] = nil
         M.buf_attached[bufnr] = nil
-        vim.api.nvim_clear_autocmds { buffer = bufnr, group = gr }
+        vim.api.nvim_clear_autocmds({ buffer = bufnr, group = gr })
       end,
     })
     M.buf_attached[bufnr] = true
   end
 
-  vim.api.nvim_create_autocmd('WinScrolled', {
+  vim.api.nvim_create_autocmd("WinScrolled", {
     group = gr,
     buffer = bufnr,
     callback = function()
@@ -198,9 +199,9 @@ end
 
 local function get_view()
   return {
-    vim.fn.line 'w0' - 1,
+    vim.fn.line("w0") - 1,
     -- return one extra line because it doesn't count it if it's wrapped
-    vim.fn.line 'w$' + 1,
+    vim.fn.line("w$") + 1,
   }
 end
 
@@ -263,12 +264,12 @@ function M.process_update(bufnr)
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
 
-  local ft = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+  local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
 
   -- ignore very long lines
   for i, line in ipairs(lines) do
     if string.len(line) > 4000 then
-      lines[i] = ''
+      lines[i] = ""
     end
   end
 
@@ -276,7 +277,7 @@ function M.process_update(bufnr)
 
   if M.perf_logging then
     local ms = (vim.uv.hrtime() - t) / 1000000
-    print(format('color highlighting took: %.3f ms, lines %d to %d', ms, from_line, to_line))
+    print(format("color highlighting took: %.3f ms, lines %d to %d", ms, from_line, to_line))
   end
 end
 
@@ -313,14 +314,14 @@ local function compute_color_group(rgb)
     return cached_group_name
   end
 
-  local hex = format('#%06x', rgb)
-  local group_name = format('OCP_%s', sub(hex, 2))
+  local hex = format("#%06x", rgb)
+  local group_name = format("OCP_%s", sub(hex, 2))
 
-  if opts.style == 'background' then
-    local opposite = is_light(rgb) and 'Black' or 'White'
+  if opts.style == "background" then
+    local opposite = is_light(rgb) and "Black" or "White"
     nvim_set_hl(0, group_name, { fg = opposite, bg = hex })
   else
-    nvim_set_hl(0, group_name, { fg = hex, bg = 'none' })
+    nvim_set_hl(0, group_name, { fg = hex, bg = "none" })
   end
 
   hex_color_groups[rgb] = group_name
@@ -337,29 +338,29 @@ function M.make_set_extmark()
   local reuse_mark = {
     priority = opts.priority,
   }
-  if opts.style == 'background' or opts.style == 'foreground' then
+  if opts.style == "background" or opts.style == "foreground" then
     set_extmark = function(bufnr, line_n, start_col, end_col, group)
       reuse_mark.hl_group = group
       reuse_mark.end_col = end_col
       nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
     end
-  elseif opts.style:find '^virtual' then
-    reuse_mark.virt_text = { { opts.virtual_text, '' } }
+  elseif opts.style:find("^virtual") then
+    reuse_mark.virt_text = { { opts.virtual_text, "" } }
     local virt_arr = reuse_mark.virt_text[1]
 
-    if opts.style == 'virtual_left' then
-      reuse_mark.virt_text_pos = 'inline'
+    if opts.style == "virtual_left" then
+      reuse_mark.virt_text_pos = "inline"
       set_extmark = function(bufnr, line_n, start_col, _, group)
         virt_arr[2] = group
         nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
       end
-    elseif opts.style == 'virtual_right' then
-      reuse_mark.virt_text_pos = 'inline'
+    elseif opts.style == "virtual_right" then
+      reuse_mark.virt_text_pos = "inline"
       set_extmark = function(bufnr, line_n, _, end_col, group)
         virt_arr[2] = group
         nvim_buf_set_extmark(bufnr, ns, line_n, end_col, reuse_mark)
       end
-    elseif opts.style == 'virtual_eol' then
+    elseif opts.style == "virtual_eol" then
       set_extmark = function(bufnr, line_n, start_col, _, group)
         virt_arr[2] = group
         nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
@@ -431,7 +432,8 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
             end
 
             local color = sub(line, replace_start --[[@as number]], replace_end)
-            local rgb = pattern_list.custom_parse and pattern_list.custom_parse(color) or parse(color, pattern_list.format)
+            local rgb = pattern_list.custom_parse and pattern_list.custom_parse(color)
+              or parse(color, pattern_list.format)
 
             if rgb then
               local group = compute_color_group(rgb)

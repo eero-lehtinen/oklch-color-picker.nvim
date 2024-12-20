@@ -1,7 +1,7 @@
-local utils = require 'oklch-color-picker.utils'
-local highlight = require 'oklch-color-picker.highlight'
-local downloader = require 'oklch-color-picker.downloader'
-local tailwind = require 'oklch-color-picker.tailwind'
+local utils = require("oklch-color-picker.utils")
+local highlight = require("oklch-color-picker.highlight")
+local downloader = require("oklch-color-picker.downloader")
+local tailwind = require("oklch-color-picker.tailwind")
 
 local lshift, band = bit.lshift, bit.band
 
@@ -25,31 +25,31 @@ local default_opts = {
     -- async delay in ms
     scroll_delay = 0,
     ---@type 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
-    style = 'background',
+    style = "background",
     -- '● ' also looks nice (remove space with monospace nerd symbols)
-    virtual_text = '■ ',
+    virtual_text = "■ ",
     priority = 500,
   },
 
   ---@type { [string]: oklch.PatternList}
   patterns = {
-    hex = { priority = -1, '()#%x%x%x+%f[%W]()' },
-    hex_literal = { priority = -1, '()0x%x%x%x%x%x%x+%f[%W]()' },
+    hex = { priority = -1, "()#%x%x%x+%f[%W]()" },
+    hex_literal = { priority = -1, "()0x%x%x%x%x%x%x+%f[%W]()" },
 
     -- Rgb and Hsl support modern and legacy formats:
     -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
-    css_rgb = { priority = -1, '()rgba?%(.-%)()' },
-    css_hsl = { priority = -1, '()hsla?%(.-%)()' },
-    css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
+    css_rgb = { priority = -1, "()rgba?%(.-%)()" },
+    css_hsl = { priority = -1, "()hsla?%(.-%)()" },
+    css_oklch = { priority = -1, "()oklch%([^,]-%)()" },
 
     tailwind = {
       priority = -2,
       custom_parse = tailwind.custom_parse,
-      '%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()',
+      "%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()",
     },
 
     -- Allows any digits, dots, commas or whitespace within brackets.
-    numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
+    numbers_in_brackets = { priority = -10, "%(()[%d.,%s]+()%)" },
   },
 
   register_cmds = true,
@@ -73,18 +73,18 @@ M.final_patterns = {}
 
 ---@param opts? oklch.Opts
 function M.setup(opts)
-  if vim.fn.has 'nvim-0.10' == 0 then
-    utils.log('oklch-color-picker.nvim requires Neovim 0.10+', vim.log.levels.ERROR)
+  if vim.fn.has("nvim-0.10") == 0 then
+    utils.log("oklch-color-picker.nvim requires Neovim 0.10+", vim.log.levels.ERROR)
     return
   end
 
-  M.opts = vim.tbl_deep_extend('force', default_opts, opts or {})
+  M.opts = vim.tbl_deep_extend("force", default_opts, opts or {})
   utils.setup(M.opts)
 
   if M.opts.register_cmds then
-    vim.api.nvim_create_user_command('ColorPickOklch', function()
+    vim.api.nvim_create_user_command("ColorPickOklch", function()
       M.pick_under_cursor()
-    end, { desc = 'Color pick text under cursor with the Oklch color picker' })
+    end, { desc = "Color pick text under cursor with the Oklch color picker" })
   end
 
   for key, pattern_list in pairs(M.opts.patterns) do
@@ -145,9 +145,9 @@ function M.setup(opts)
   end
 end
 
-local empty_group_re = vim.regex [[\(%\)\@<!()]]
+local empty_group_re = vim.regex([[\(%\)\@<!()]])
 assert(empty_group_re)
-local unescaped_paren_re = vim.regex [=[\(%\)\@<!\[()\]]=]
+local unescaped_paren_re = vim.regex([=[\(%\)\@<!\[()\]]=])
 assert(unescaped_paren_re)
 
 ---@param pattern string
@@ -157,21 +157,21 @@ assert(unescaped_paren_re)
 function M.validate_and_remove_groups(pattern)
   local m1, m2 = empty_group_re:match_str(pattern)
   if not m1 then
-    return 'Contains zero empty groups.'
+    return "Contains zero empty groups."
   end
   pattern = pattern:sub(1, m1) .. pattern:sub(m2 + 1)
   local m3, m4 = empty_group_re:match_str(pattern)
   if not m3 then
-    return 'Contains only one empty group.'
+    return "Contains only one empty group."
   end
   pattern = pattern:sub(1, m3) .. pattern:sub(m4 + 1)
 
   if unescaped_paren_re:match_str(pattern) then
-    return 'Contains unescaped parentheses in addition to the two empty groups.'
+    return "Contains unescaped parentheses in addition to the two empty groups."
   end
 
-  if pattern == '' then
-    return 'Pattern is empty.'
+  if pattern == "" then
+    return "Pattern is empty."
   end
 
   local simple_groups = m1 == 0 and m4 == string.len(pattern) + 2
@@ -219,17 +219,17 @@ local function start_app()
 
   local stdout = function(err, data)
     if data then
-      utils.log('Stdout: ' .. data, vim.log.levels.DEBUG)
-      if data == '' then
-        utils.log('Picker returned an empty string', vim.log.levels.WARN)
+      utils.log("Stdout: " .. data, vim.log.levels.DEBUG)
+      if data == "" then
+        utils.log("Picker returned an empty string", vim.log.levels.WARN)
         return
       end
-      local color = data:match '^[^\r\n]*'
+      local color = data:match("^[^\r\n]*")
       apply_new_color(color)
     elseif err then
-      utils.log('Stdout error: ' .. err, vim.log.levels.DEBUG)
+      utils.log("Stdout error: " .. err, vim.log.levels.DEBUG)
     else
-      utils.log('Stdout closed', vim.log.levels.DEBUG)
+      utils.log("Stdout closed", vim.log.levels.DEBUG)
     end
   end
 
@@ -237,29 +237,29 @@ local function start_app()
     if data then
       utils.log(data, vim.log.levels.WARN)
     elseif err then
-      utils.log('Stderr error: ' .. err, vim.log.levels.DEBUG)
+      utils.log("Stderr error: " .. err, vim.log.levels.DEBUG)
     else
-      utils.log('Stderr closed', vim.log.levels.DEBUG)
+      utils.log("Stderr closed", vim.log.levels.DEBUG)
     end
   end
 
   local exec = utils.executable_full_path()
   if exec == nil then
-    utils.log('Picker executable not found', vim.log.levels.ERROR)
+    utils.log("Picker executable not found", vim.log.levels.ERROR)
     return
   end
 
   local cmd = { exec, pending_edit.color }
   if pending_edit.color_format then
-    table.insert(cmd, '--format')
+    table.insert(cmd, "--format")
     table.insert(cmd, pending_edit.color_format)
   end
 
   vim.system(cmd, { stdout = stdout, stderr = stderr }, function(res)
     if res.code ~= 0 then
-      utils.log('App failed and exited with code ' .. res.code, vim.log.levels.DEBUG)
+      utils.log("App failed and exited with code " .. res.code, vim.log.levels.DEBUG)
     end
-    utils.log('App exited successfully ' .. vim.inspect(res), vim.log.levels.DEBUG)
+    utils.log("App exited successfully " .. vim.inspect(res), vim.log.levels.DEBUG)
   end)
 end
 
@@ -280,7 +280,7 @@ local function find_color(line, cursor_col, ft)
             local color
             if pattern_list.custom_parse then
               local rgb = pattern_list.custom_parse(replace)
-              color = rgb and string.format('#%06x', rgb) or nil
+              color = rgb and string.format("#%06x", rgb) or nil
               format = nil
             else
               color = replace
@@ -312,12 +312,12 @@ function M.pick_under_cursor(force_color_format)
 
   local bufnr = vim.api.nvim_get_current_buf()
   local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
-  local ft = vim.api.nvim_get_option_value('filetype', { buf = 0 })
+  local ft = vim.api.nvim_get_option_value("filetype", { buf = 0 })
 
   local res = find_color(line, col, ft)
 
   if not res then
-    utils.log('No color under cursor', vim.log.levels.INFO)
+    utils.log("No color under cursor", vim.log.levels.INFO)
     return
   end
 

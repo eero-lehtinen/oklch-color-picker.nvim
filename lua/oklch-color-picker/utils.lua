@@ -13,14 +13,14 @@ end
 function M.log(msg, level)
   if level >= opts.log_level then
     vim.schedule(function()
-      msg = 'oklch-color-picker: ' .. msg
+      msg = "oklch-color-picker: " .. msg
 
       if level == vim.log.levels.INFO then
         -- trim beginning until echospace
         local max_len = vim.v.echospace
         local len = msg:len()
         if len > max_len then
-          msg = '<' .. msg:sub(len - max_len + 2)
+          msg = "<" .. msg:sub(len - max_len + 2)
         end
       end
 
@@ -52,12 +52,12 @@ end
 
 ---@return boolean
 function M.is_windows()
-  return vim.loop.os_uname().sysname:find 'Windows' ~= nil
+  return vim.loop.os_uname().sysname:find("Windows") ~= nil
 end
 
 ---@return boolean
 function M.is_macos()
-  return vim.loop.os_uname().sysname:find 'Darwin' ~= nil
+  return vim.loop.os_uname().sysname:find("Darwin") ~= nil
 end
 
 function M.is_wsl()
@@ -66,13 +66,13 @@ end
 
 ---@return 'aarch64'|'x86_64'
 function M.arch()
-  return jit.arch:lower():match 'arm' and 'aarch64' or 'x86_64'
+  return jit.arch:lower():match("arm") and "aarch64" or "x86_64"
 end
 
 ---@return string
 function M.executable()
-  local executable_ext = (M.is_windows() or M.is_wsl()) and '.exe' or ''
-  return 'oklch-color-picker' .. executable_ext
+  local executable_ext = (M.is_windows() or M.is_wsl()) and ".exe" or ""
+  return "oklch-color-picker" .. executable_ext
 end
 
 M.exec = nil
@@ -82,7 +82,7 @@ function M.executable_full_path()
   if M.exec then
     return M.exec
   end
-  local exec = M.get_path() .. '/' .. M.executable()
+  local exec = M.get_path() .. "/" .. M.executable()
   if vim.fn.executable(exec) == 1 then
     M.exec = exec
     return M.exec
@@ -98,19 +98,19 @@ function M.get_path()
   if path ~= nil then
     return path
   end
-  path = vim.fn.fnamemodify(debug.getinfo(1, 'S').source:sub(2), ':p:h:h:h')
+  path = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h:h")
   return path
 end
 
 --- @return string
 function M.get_lib_extension()
   if M.is_macos() then
-    return '.dylib'
+    return ".dylib"
   end
   if M.is_windows() then
-    return '.dll'
+    return ".dll"
   end
-  return '.so'
+  return ".so"
 end
 
 return M
