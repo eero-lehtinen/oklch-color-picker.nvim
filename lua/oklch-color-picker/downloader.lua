@@ -73,7 +73,7 @@ function M.get_target_info(kind)
   if utils.is_macos() then
     return 'x86_64-apple-darwin', '.tar.gz'
   elseif utils.is_windows() or (kind == 'app' and utils.is_wsl()) then
-    return 'x86_64-pc-windows-gnu', '.zip'
+    return 'x86_64-pc-windows-msvc', '.zip'
   else
     return 'x86_64-unknown-linux-gnu', '.tar.gz'
   end
@@ -171,6 +171,7 @@ function M.download_parser(callback)
         return
       end
 
+      utils.log('Parser located at ' .. cwd, vim.log.levels.DEBUG)
       utils.log('Parser downloaded', vim.log.levels.INFO)
       callback(nil)
     end)
