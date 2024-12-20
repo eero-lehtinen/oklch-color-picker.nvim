@@ -64,6 +64,11 @@ function M.is_wsl()
   return opts.wsl_use_windows_app and vim.env.WSL_INTEROP ~= nil
 end
 
+---@return 'aarch64'|'x86_64'
+function M.arch()
+  return jit.arch:lower():match 'arm' and 'aarch64' or 'x86_64'
+end
+
 ---@return string
 function M.executable()
   local executable_ext = (M.is_windows() or M.is_wsl()) and '.exe' or ''
