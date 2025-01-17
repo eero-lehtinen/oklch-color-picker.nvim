@@ -96,13 +96,23 @@ function M.enable()
     end,
   })
 
-  vim.schedule(function()
+  local init = vim.schedule_wrap(function()
     for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_loaded(bufnr) then
         M.on_buf_enter(bufnr)
       end
     end
   end)
+
+  vim.api.nvim_create_autocmd("ColorScheme", {
+    group = gr,
+    callback = function()
+      M.clear_hl_cache()
+      init()
+    end,
+  })
+
+  init()
 end
 
 function M.toggle()
@@ -305,6 +315,10 @@ local function is_light(rgb)
 end
 
 local hex_color_groups = {}
+
+function M.clear_hl_cache()
+  hex_color_groups = {}
+end
 
 --- @param rgb number
 --- @return string
