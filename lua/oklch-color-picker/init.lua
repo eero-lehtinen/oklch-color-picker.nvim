@@ -218,6 +218,7 @@ function M.components_to_number(r, g, b)
 end
 
 M.pick_under_cursor = picker.pick_under_cursor
+M.open_picker = picker.open_picker
 
 M.highlight = {
   enable = highlight.enable,

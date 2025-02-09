@@ -146,19 +146,51 @@ opts = {
 
 ## API & Commands
 
-```lua
--- Launch color picker for color under cursor:
-require('oklch-color-picker').pick_under_cursor()
--- Force input format, useful for raw color types that can't be auto detected:
-require('oklch-color-picker').pick_under_cursor("raw_oklch")
+### Picking
 
+```lua
+-- Launch color picker for color under cursor.
+require('oklch-color-picker').pick_under_cursor()
+-- Force input format, useful for raw color types that can't be auto detected.
+require('oklch-color-picker').pick_under_cursor({ force_format = "raw_oklch" })
+-- Call `open_picker` as a fallback with default options if there was no color under the cursor.
+require('oklch-color-picker').pick_under_cursor({ fallback_open = {} })
+
+-- Open the picker ignoring whatever is under the cursor. Useful for inserting new colors.
+require("oklch-color-picker").open_picker()
+```
+
+The command `:ColorPickOklch` can be used instead of `pick_under_cursor()`.
+
+#### Definitions
+
+```lua
+---@class picker.PickUnderCursorOpts
+---@field force_format? string auto detect by default
+---@field fallback_open? picker.OpenPickerOpts open the picker anyway if no color under the cursor is found
+
+--- @param opts? picker.PickUnderCursorOpts
+--- @return boolean success true if a color was found and picker opened
+function pick_under_cursor(opts)
+
+---@class picker.OpenPickerOpts
+---@field initial_color? string any color that the picker can parse, e.g. "#fff" (uses a random hex color by default)
+---@field force_format? string auto detect by default
+
+--- @param opts? picker.OpenPickerOpts
+--- @return boolean success true if the picker was able to open
+function open_picker(opts)
+
+```
+
+### Highlighting
+
+```lua
 -- Highlighting can be controlled at runtime:
 require("oklch-color-picker").highlight.disable()
 require("oklch-color-picker").highlight.enable()
 require("oklch-color-picker").highlight.toggle()
 ```
-
-The command `:ColorPickOklch` can be used instead of `pick_under_cursor()`.
 
 ### Color Formats
 
