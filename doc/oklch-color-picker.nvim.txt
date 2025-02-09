@@ -39,7 +39,6 @@ lazy.nvim <https://github.com/folke/lazy.nvim>
 >lua
     {
       "eero-lehtinen/oklch-color-picker.nvim",
-      dev = true,
       event = "VeryLazy",
       version = "*",
       keys = {
