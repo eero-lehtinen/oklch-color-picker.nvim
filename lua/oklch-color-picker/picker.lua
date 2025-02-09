@@ -11,9 +11,16 @@ function M.setup(final_patterns_)
   final_patterns = final_patterns_
 end
 
---- @alias oklch.picker.PendingEdit { bufnr: number, changedtick: number, line_number: number, start: number, finish: number, color: string, color_format: string|nil }|nil
+--- @class oklch.picker.PendingEdit
+--- @field bufnr number
+--- @field changedtick number
+--- @field line_number number
+--- @field start number
+--- @field finish number
+--- @field color? string
+--- @field color_format? string
 
---- @type oklch.picker.PendingEdit
+--- @type oklch.picker.PendingEdit|nil
 local pending_edit = nil
 
 ---@param color string
@@ -34,7 +41,7 @@ local function apply_new_color(color)
       pending_edit.line_number - 1,
       pending_edit.start - 1,
       pending_edit.line_number - 1,
-      pending_edit.finish,
+      pending_edit.finish - 1,
       { color }
     )
     pending_edit = nil
@@ -46,7 +53,7 @@ end
 local function start_app()
   if not pending_edit then
     utils.log("Can't start app, no pending edit", vim.log.levels.WARN)
-    return
+    return false
   end
 
   local stdout = function(err, data)
@@ -78,7 +85,7 @@ local function start_app()
   local exec = utils.executable_full_path()
   if exec == nil then
     utils.log("Picker executable not found", vim.log.levels.ERROR)
-    return
+    return false
   end
 
   local cmd = { exec, pending_edit.color }
@@ -93,6 +100,8 @@ local function start_app()
     end
     utils.log("App exited successfully " .. vim.inspect(res), vim.log.levels.DEBUG)
   end)
+
+  return true
 end
 
 --- @param line string
@@ -120,7 +129,7 @@ local function find_color(line, cursor_col, ft)
 
             if color then
               return {
-                pos = { replace_start, replace_end - 1 },
+                pos = { replace_start, replace_end },
                 color = color,
                 color_format = format,
               }
@@ -136,24 +145,47 @@ local function find_color(line, cursor_col, ft)
   return nil
 end
 
---- @param force_color_format string|nil
-function M.pick_under_cursor(force_color_format)
+local function cursor_info()
   local cursor_pos = vim.api.nvim_win_get_cursor(0)
   local row = cursor_pos[1]
   local col = cursor_pos[2] + 1
 
   local bufnr = vim.api.nvim_get_current_buf()
+
+  return row, col, bufnr
+end
+
+---@class picker.PickUnderCursorOpts
+---@field force_format? string auto detect by default
+---@field fallback_open? picker.OpenPickerOpts open the picker anyway if no color under the cursor is found
+
+--- @param opts? picker.PickUnderCursorOpts|string opts (or `force_color_format` for backwards compatibility)
+--- @return boolean success true if a color was found and picker opened
+function M.pick_under_cursor(opts)
+  local row, col, bufnr = cursor_info()
+
   local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
   local ft = vim.api.nvim_get_option_value("filetype", { buf = 0 })
 
   local res = find_color(line, col, ft)
 
   if not res then
+    if type(opts) == "table" and opts.fallback_open then
+      return M.open_picker(opts.fallback_open)
+    end
     utils.log("No color under cursor", vim.log.levels.INFO)
-    return
+    return false
   end
 
   utils.log(string.format("Found color '%s' at position %s", res.color, vim.inspect(res.pos)), vim.log.levels.DEBUG)
+
+  local color_format = nil
+  if type(opts) == "string" then
+    color_format = opts
+  elseif type(opts) == "table" then
+    color_format = opts.force_format
+  end
+  color_format = color_format or res.color_format
 
   pending_edit = {
     bufnr = bufnr,
@@ -162,10 +194,34 @@ function M.pick_under_cursor(force_color_format)
     start = res.pos[1],
     finish = res.pos[2],
     color = res.color,
-    color_format = force_color_format or res.color_format,
+    color_format = color_format,
   }
 
-  start_app()
+  return start_app()
+end
+
+---@class picker.OpenPickerOpts
+---@field initial_color? string any color that the picker can parse, e.g. "#fff" (uses a random hex color by default)
+---@field force_format? string auto detect by default
+
+--- Open the picker and insert the new color at the cursor position. Ignores whatever is happening under the cursor.
+---
+--- @param opts? picker.OpenPickerOpts
+--- @return boolean success true if the picker was able to open
+function M.open_picker(opts)
+  local row, col, bufnr = cursor_info()
+
+  pending_edit = {
+    bufnr = bufnr,
+    changedtick = vim.api.nvim_buf_get_changedtick(bufnr),
+    line_number = row,
+    start = col,
+    finish = col,
+    color = opts and opts.initial_color,
+    color_format = opts and opts.force_format,
+  }
+
+  return start_app()
 end
 
 return M
