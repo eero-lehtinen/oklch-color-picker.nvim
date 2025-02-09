@@ -8,15 +8,17 @@ local rshift, band = bit.rshift, bit.band
 local nvim_buf_clear_namespace, nvim_buf_set_extmark, nvim_set_hl =
   vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_set_extmark, vim.api.nvim_set_hl
 
+---@class oklch.highlight
 local M = {}
 
+--- Default parser for highlighting
 ---@type fun(color: string, format: string|nil): number|nil
 M.parse = nil
 
 ---@type oklch.FinalPatternList[]
 local patterns = nil
 
----@type oklch.HighlightOpts
+---@type oklch.highlight.Opts
 local opts = nil
 
 ---@type number
@@ -24,7 +26,7 @@ local ns
 ---@type number
 local gr
 
---- @param opts_ oklch.HighlightOpts
+--- @param opts_ oklch.highlight.Opts
 --- @param patterns_ oklch.FinalPatternList[]
 --- @param auto_download boolean
 function M.setup(opts_, patterns_, auto_download)
@@ -115,12 +117,15 @@ function M.enable()
   init()
 end
 
+---@return boolean -- true if enabled, false if disabled
 function M.toggle()
   if opts.enabled then
     M.disable()
   else
     M.enable()
   end
+
+  return opts.enabled
 end
 
 ---@class BufData
@@ -226,6 +231,14 @@ M.pending_timer = vim.uv.new_timer()
 
 M.perf_logging = false
 
+---@param enabled? boolean
+function M.set_perf_logging(enabled)
+  if enabled == nil then
+    enabled = true
+  end
+  M.perf_logging = enabled
+end
+
 --- @param bufnr integer
 --- @param from_line integer
 --- @param to_line integer
@@ -247,7 +260,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
     buf_data.pending_updates.to_line = min(max(buf_data.pending_updates.to_line, to_line), bottom)
   end
 
-  local delay = scroll and opts.scroll_delay or opts.edit_delay
+  local delay = assert(scroll and opts.scroll_delay or opts.edit_delay)
   M.pending_timer:stop()
 
   M.pending_timer:start(
