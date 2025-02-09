@@ -88,7 +88,10 @@ local function start_app()
     return false
   end
 
-  local cmd = { exec, pending_edit.color }
+  local cmd = { exec }
+  if pending_edit.color then
+    table.insert(cmd, pending_edit.color)
+  end
   if pending_edit.color_format then
     table.insert(cmd, "--format")
     table.insert(cmd, pending_edit.color_format)
