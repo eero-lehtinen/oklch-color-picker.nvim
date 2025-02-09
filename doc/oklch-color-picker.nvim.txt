@@ -38,14 +38,16 @@ lazy.nvim <https://github.com/folke/lazy.nvim>
 
 >lua
     {
-      'eero-lehtinen/oklch-color-picker.nvim',
-      event = 'VeryLazy',
+      "eero-lehtinen/oklch-color-picker.nvim",
+      dev = true,
+      event = "VeryLazy",
       version = "*",
-      opts = {},
       keys = {
         -- One handed keymap recommended, you will be using the mouse
-        { '<leader>v', '<cmd>ColorPickOklch<cr>', desc = 'Color pick under cursor' }
-      }
+        { "<leader>v", "<cmd>ColorPickOklch<cr>", desc = "Color pick under cursor" },
+      },
+      ---@type oklch.Opts
+      opts = {},
     }
 <
 
@@ -67,36 +69,35 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
 
 >lua
     local default_opts = {
-    
       highlight = {
         enabled = true,
-        edit_delay = 60, -- ms
-        scroll_delay = 0, -- ms
+        edit_delay = 60, -- async delay in ms
+        scroll_delay = 0, -- async delay in ms
         -- options: 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
-        style = 'background',
+        style = "background",
         -- '● ' also looks nice (space can be removed if using monospace nerd symbols)
-        virtual_text = '■ ',
+        virtual_text = "■ ",
         priority = 500,
       },
     
       patterns = {
-        hex = { priority = -1, '()#%x%x%x+%f[%W]()' },
-        hex_literal = { priority = -1, '()0x%x%x%x%x%x%x+%f[%W]()' },
+        hex = { priority = -1, "()#%x%x%x+%f[%W]()" },
+        hex_literal = { priority = -1, "()0x%x%x%x%x%x%x+%f[%W]()" },
     
         -- Rgb and Hsl support modern and legacy formats:
         -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
-        css_rgb = { priority = -1, '()rgba?%(.-%)()' },
-        css_hsl = { priority = -1, '()hsla?%(.-%)()' },
-        css_oklch = { priority = -1, '()oklch%([^,]-%)()' },
+        css_rgb = { priority = -1, "()rgba?%(.-%)()" },
+        css_hsl = { priority = -1, "()hsla?%(.-%)()" },
+        css_oklch = { priority = -1, "()oklch%([^,]-%)()" },
     
         tailwind = {
           priority = -2,
-          custom_parse = require('oklch-color-picker.tailwind').custom_parse,
-          '%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()',
+          custom_parse = tailwind.custom_parse,
+          "%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()",
         },
     
         -- Allows any digits, dots, commas or whitespace within brackets.
-        numbers_in_brackets = { priority = -10, '%(()[%d.,%s]+()%)' },
+        numbers_in_brackets = { priority = -10, "%(()[%d.,%s]+()%)" },
       },
     
       register_cmds = true,
@@ -136,24 +137,24 @@ DEFINE YOUR OWN PATTERNS: ~
           -- (Optional) Higher priority patterns are tried first. Defaults to 0.
           priority = 5,
           -- (Optional) Color format for the picker. Auto detect by default.
-          format = 'raw_rgb_float',
+          format = "raw_rgb_float",
           -- (Optional) Filetypes to apply the pattern to. Must be a table.
-          ft = { 'glsl' },
+          ft = { "glsl" },
           -- (Optional) Custom parser function for unsupported formats.
           custom_parse = function(match)
             -- Some parsing logic ...
             return 0xFFFFFF
-          end
+          end,
           -- The list of patterns.
           -- Pattern reference at https://www.lua.org/manual/5.4/manual.html#6.4.1
-          'vec3%(()[%d.,%s]+()%)', -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
-          'vec4%(()[%d.,%s]+()%)',
+          "vec3%(()[%d.,%s]+()%)", -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
+          "vec4%(()[%d.,%s]+()%)",
         },
     
         -- Replace default css patterns to match only modern formats:
         -- (no "a" suffix in name or commas)
-        css_rgb = { '()rgb%([^,]-%)()' },
-        css_hsl = { '()hsl%([^,]-%)()' },
+        css_rgb = { "()rgb%([^,]-%)()" },
+        css_hsl = { "()hsl%([^,]-%)()" },
       }
     }
 <
@@ -173,9 +174,9 @@ API & COMMANDS                        *oklch-color-picker.nvim-api-&-commands*
     require('oklch-color-picker').pick_under_cursor("raw_oklch")
     
     -- Highlighting can be controlled at runtime:
-    require("oklch-color-picker.highlight").disable()
-    require("oklch-color-picker.highlight").enable()
-    require("oklch-color-picker.highlight").toggle()
+    require("oklch-color-picker").highlight.disable()
+    require("oklch-color-picker").highlight.enable()
+    require("oklch-color-picker").highlight.toggle()
 <
 
 The command `:ColorPickOklch` can be used instead of `pick_under_cursor()`.
@@ -277,7 +278,7 @@ Features `hex`, `short_hex`, `rgb`, `hsl`, and `tailwind` were enabled.
 
 Measurements were done by manually adding `vim.uv.hrtime` logging to the update
 functions of each plugin. Check your own timings in this plugin by setting
-`require("oklch-color-picker.highlight").perf_logging = true`.
+`require("oklch-color-picker").highlight.set_perf_logging(true)`.
 
 
 OTHER SIMILAR PLUGINS          *oklch-color-picker.nvim-other-similar-plugins*
