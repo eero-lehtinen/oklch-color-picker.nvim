@@ -32,7 +32,11 @@ Requires Neovim 0.10+
   version = "*",
   keys = {
     -- One handed keymap recommended, you will be using the mouse
-    { "<leader>v", "<cmd>ColorPickOklch<cr>", desc = "Color pick under cursor" },
+    {
+      "<leader>v",
+      function() require("oklch-color-picker").pick_under_cursor() end,
+      desc = "Color pick under cursor",
+    },
   },
   ---@type oklch.Opts
   opts = {},
