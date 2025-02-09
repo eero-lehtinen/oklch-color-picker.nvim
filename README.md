@@ -28,7 +28,6 @@ Requires Neovim 0.10+
 ```lua
 {
   "eero-lehtinen/oklch-color-picker.nvim",
-  dev = true,
   event = "VeryLazy",
   version = "*",
   keys = {
