@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.1.0...v1.1.1) (2025-02-09)
+
+
+### Bug Fixes
+
+* add color to cmd only if it's set ([#10](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/10)) ([f6a312b](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/f6a312bb20b761735c187dfedc5dc11e43e473e3))
+
 ## [1.1.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.0.0...v1.1.0) (2025-02-09)
 
 
