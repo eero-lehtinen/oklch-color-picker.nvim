@@ -68,20 +68,37 @@ function M.validate_parser_version()
 end
 
 ---@param kind 'lib'|'app'
----@return string, string
+---@return string|nil, string, string
 function M.get_target_info(kind)
-  if utils.is_macos() then
-    return utils.arch() .. "-apple-darwin", ".tar.gz"
-  elseif utils.is_windows() or (kind == "app" and utils.is_wsl()) then
-    return "x86_64-pc-windows-msvc", ".zip"
+  if vim.fn.has("android") == 1 then
+    return "Android not currently supported", "", ""
+  end
+
+  local rust_arch = nil
+  if jit.arch == "arm64" then
+    rust_arch = "aarch64"
+  elseif jit.arch == "x64" then
+    rust_arch = "x86_64"
+  end
+
+  if jit.os == "OSX" and rust_arch then
+    return nil, rust_arch .. "-apple-darwin", ".tar.gz"
+  elseif (jit.os == "Windows" or (kind == "app" and utils.is_wsl())) and rust_arch == "x86_64" then
+    return nil, "x86_64-pc-windows-msvc", ".zip"
+  elseif jit.os == "Linux" and rust_arch == "x86_64" then
+    return nil, "x86_64-unknown-linux-gnu", ".tar.gz"
   else
-    return "x86_64-unknown-linux-gnu", ".tar.gz"
+    return string.format("Platform (%s - %s) not currently supported", jit.os, jit.arch), "", ""
   end
 end
 
 ---@param callback fun(err: string|nil)
 function M.download_app(callback)
-  local platform, archive_ext = M.get_target_info("app")
+  local error, platform, archive_ext = M.get_target_info("app")
+  if error then
+    callback(error)
+    return
+  end
 
   local archive_basename = "oklch-color-picker-" .. version .. "-" .. platform
   local archive = archive_basename .. archive_ext
@@ -149,7 +166,12 @@ end
 
 ---@param callback fun(err: string|nil)
 function M.download_parser(callback)
-  local platform, _ = M.get_target_info("lib")
+  local error, platform, _ = M.get_target_info("lib")
+  if error then
+    callback(error)
+    return
+  end
+
   local lib_ext = utils.get_lib_extension()
 
   local lib = "parser_lua_module-" .. platform .. lib_ext

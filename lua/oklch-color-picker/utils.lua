@@ -52,21 +52,16 @@ end
 
 ---@return boolean
 function M.is_windows()
-  return vim.loop.os_uname().sysname:find("Windows") ~= nil
+  return jit.os == "Windows"
 end
 
 ---@return boolean
 function M.is_macos()
-  return vim.loop.os_uname().sysname:find("Darwin") ~= nil
+  return jit.os == "OSX"
 end
 
 function M.is_wsl()
   return opts.wsl_use_windows_app and vim.env.WSL_INTEROP ~= nil
-end
-
----@return 'aarch64'|'x86_64'
-function M.arch()
-  return jit.arch:lower():match("arm") and "aarch64" or "x86_64"
 end
 
 ---@return string
