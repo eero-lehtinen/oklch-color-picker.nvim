@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.1.1...v1.1.2) (2025-02-18)
+
+
+### Bug Fixes
+
+* make platform detection more robust ([47f40e7](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/47f40e76a7cbb738a639cb6d1ec2172001501a8c))
+
 ## [1.1.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.1.0...v1.1.1) (2025-02-09)
 
 
