@@ -93,7 +93,10 @@ function M.get_path()
   if path ~= nil then
     return path
   end
-  path = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h:h")
+  path = vim.fn.stdpath("data") .. "/oklch-color-picker"
+  if vim.fn.isdirectory(path) == 0 then
+    vim.fn.mkdir(path, "p")
+  end
   return path
 end
 
