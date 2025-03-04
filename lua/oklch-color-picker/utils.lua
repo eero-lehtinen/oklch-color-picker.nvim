@@ -93,7 +93,7 @@ function M.get_path()
   if path ~= nil then
     return path
   end
-  path = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h:h")
+  path = vim.fn.stdpath("cache") .. "/oklch-color-picker"
   return path
 end
 
