@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.1.2...v1.2.0) (2025-03-04)
+
+
+### Features
+
+* update picker app to 0.16.0 ([#17](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/17)) ([59164a3](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/59164a3b1fb13866a387f8850ca2cebcdd0e388a))
+
+
+### Bug Fixes
+
+* parser version checks on windows ([#15](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/15)) ([c865d83](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/c865d8398c7e4c494b328e4b6aac5a85354e0ca2))
+
 ## [1.1.2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.1.1...v1.1.2) (2025-02-18)
 
 
