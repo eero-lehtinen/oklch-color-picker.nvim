@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.2.0...v1.2.1) (2025-03-04)
+
+
+### Bug Fixes
+
+* use nvim data path for binaries ([2e6f35a](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/2e6f35a460230a81abdb68f99e06278894396d7b))
+
 ## [1.2.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.1.2...v1.2.0) (2025-03-04)
 
 
