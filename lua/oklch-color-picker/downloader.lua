@@ -43,28 +43,51 @@ end
 
 ---@param callback fun(err: string|nil)
 function M.ensure_parser_downloaded(callback)
-  if M.validate_parser_version() then
-    callback(nil)
-    return
-  end
-
-  M.download_parser(function(err)
-    if err then
-      callback("Couldn't download parser library: " .. err)
+  M.validate_parser_version(vim.schedule_wrap(function(correct_parser_version)
+    if correct_parser_version then
+      callback(nil)
       return
     end
-    callback(nil)
+
+    M.download_parser(function(err)
+      if err then
+        callback("Couldn't download parser library: " .. err)
+        return
+      end
+      callback(nil)
+    end)
+  end))
+end
+
+---@param callback fun(valid: boolean)
+function M.validate_parser_version(callback)
+  vim.uv.fs_open(utils.get_path() .. "/parser_version", "r", 438, function(err, fd)
+    if err or not fd then
+      utils.log(err or "", vim.log.levels.DEBUG)
+      return callback(false)
+    end
+
+    vim.uv.fs_read(fd, 1024, 0, function(read_err, data)
+      vim.uv.fs_close(fd)
+      return callback(not read_err and data == version)
+    end)
   end)
 end
 
----@return boolean
-function M.validate_parser_version()
-  local parser = require("oklch-color-picker.parser").get_parser()
-  local result = parser ~= nil and parser.version():find(version)
-  if not result then
-    package.loaded["parser_lua_module"] = nil
-  end
-  return result
+function M.write_parser_version()
+  vim.uv.fs_open(utils.get_path() .. "/parser_version", "w", 438, function(err, fd)
+    if err or not fd then
+      utils.log("Couldn't open version file for writing: " .. (err or ""), vim.log.levels.WARN)
+      return
+    end
+
+    vim.uv.fs_write(fd, version, 0, function(write_err)
+      vim.uv.fs_close(fd)
+      if write_err then
+        utils.log("Couldn't write version file:" .. write_err, vim.log.levels.WARN)
+      end
+    end)
+  end)
 end
 
 ---@param kind 'lib'|'app'
@@ -138,6 +161,7 @@ function M.download_app(callback)
 
         utils.log("Extraction success, binary in " .. cwd, vim.log.levels.DEBUG)
         utils.log("Picker app downloaded", vim.log.levels.INFO)
+
         callback(nil)
       end)
 
@@ -194,8 +218,16 @@ function M.download_parser(callback)
     vim.schedule_wrap(function(out)
       if out.code ~= 0 then
         callback("Curl failed\nstdout: " .. out.stdout .. "\nstderr: " .. out.stderr)
+        if utils.is_windows() then
+          utils.log(
+            "You likely have other Neovim instances open and using the library. Close them and try again.",
+            vim.log.levels.WARN
+          )
+        end
         return
       end
+
+      M.write_parser_version()
 
       utils.log("Parser located at " .. cwd, vim.log.levels.DEBUG)
       utils.log("Parser downloaded", vim.log.levels.INFO)
