@@ -17,20 +17,25 @@ local M = {}
 ---@field wsl_use_windows_app? boolean Use the Windows version of the app on WSL instead of using unreliable WSLg
 ---@field log_level? integer
 
----@class oklch.highlight.Opts
----@field enabled? boolean
----@field edit_delay? number async delay in ms
----@field scroll_delay? number async delay in ms
----@field style? 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
----@field virtual_text? string `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `
----@field priority? number
-
 ---@class oklch.PatternList
 ---@field priority? number
 ---@field format? string
 ---@field ft? string[]
 ---@field custom_parse? oklch.CustomParseFunc
 ---@field [integer] string
+
+---@class oklch.highlight.Opts
+---@field enabled? boolean
+---@field edit_delay? number Async delay in ms
+---@field scroll_delay? number Async delay in ms
+---@field style? 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
+---@field virtual_text? string `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `.
+---@field emphasis? oklch.highlight.EmphasisOpts|false Make foreground and virtual colors visible when they are close the the editor background.
+---@field priority? number
+
+---@class oklch.highlight.EmphasisOpts
+---@field threshold? [number, number] Distance (0..1) to the background color where emphasis activates (first number for dark themes, second for light ones).
+---@field amount? [number, number] How much (0..255) to offset the background of emphasized colors (first number for dark colors, second for light ones).
 
 --- Return a number with R, G, and B components combined into a single number 0xRRGGBB.
 --- (`require("oklch-color-picker").components_to_number` can help with this)
@@ -47,6 +52,10 @@ local default_opts = {
     style = "background",
     virtual_text = "■ ",
     priority = 175,
+    emphasis = {
+      threshold = { 0.1, 0.17 },
+      amount = { 45, -80 },
+    },
   },
 
   patterns = {
@@ -207,15 +216,7 @@ function M.setup(opts_)
   end
 end
 
---- Combines r, g, b (0-255) integer values to a combined color 0xRRGGBB.
---- Passing floats or numbers outside of 0-255 can result in weird outputs.
----@param r integer
----@param g integer
----@param b integer
----@return integer
-function M.components_to_number(r, g, b)
-  return band(lshift(r, 16), lshift(g, 8), b)
-end
+M.components_to_number = highlight.rgb_pack
 
 M.pick_under_cursor = picker.pick_under_cursor
 M.open_picker = picker.open_picker

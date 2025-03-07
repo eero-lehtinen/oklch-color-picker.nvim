@@ -4,7 +4,7 @@ local downloader = require("oklch-color-picker.downloader")
 local find, sub, format = string.find, string.sub, string.format
 local insert = table.insert
 local pow, min, max = math.pow, math.min, math.max
-local rshift, band = bit.rshift, bit.band
+local rshift, band, lshift, bor = bit.rshift, bit.band, bit.lshift, bit.bor
 local nvim_buf_clear_namespace, nvim_buf_set_extmark, nvim_set_hl =
   vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_set_extmark, vim.api.nvim_set_hl
 
@@ -38,6 +38,8 @@ function M.setup(opts_, patterns_, auto_download)
     opts.enabled = false
     return
   end
+
+  M.update_emphasis_values()
 
   local on_downloaded = function(err)
     if err then
@@ -110,6 +112,7 @@ function M.enable()
     group = gr,
     callback = function()
       M.clear_hl_cache()
+      M.update_emphasis_values()
       init()
     end,
   })
@@ -316,15 +319,74 @@ for i = 0, 255 do
   linear_lookup[i] = to_linear(i / 255)
 end
 
---- Follows W3C guidelines in choosing the better contrast foreground.
---- https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
---- @param rgb number
---- @return boolean
-local function is_light(rgb)
+local function rgb_unpack(rgb)
   local r = rshift(rgb, 16)
   local g = band(rshift(rgb, 8), 0xff)
   local b = band(rgb, 0xff)
-  return 0.2126 * linear_lookup[r] + 0.7152 * linear_lookup[g] + 0.0722 * linear_lookup[b] > 0.179
+  return { r, g, b }
+end
+
+--- Combines r, g, b (0-255) integer values to a combined color 0xRRGGBB.
+--- Passing floats or numbers outside of 0-255 can result in weird outputs.
+---@param r integer
+---@param g integer
+---@param b integer
+---@return integer
+function M.rgb_pack(r, g, b)
+  return bor(lshift(r, 16), lshift(g, 8), b)
+end
+
+--- Based on  W3C guidelines
+--- https://stackoverflow.com/questions/3942878/how-to-decide-font-color-in-white-or-black-depending-on-background-color
+--- @param color [number, number, number]
+local function lightness(color)
+  return 0.2126 * linear_lookup[color[1]] + 0.7152 * linear_lookup[color[2]] + 0.0722 * linear_lookup[color[3]]
+end
+
+--- @param color [number, number, number]
+--- @return boolean
+local function is_light(color)
+  return lightness(color) > 0.179
+end
+
+local function square(a)
+  return a * a
+end
+
+local function color_distance(a, b)
+  local r_ = 0.5 * (a[1] + b[1])
+  return math.sqrt(
+    (2 + r_ / 256) * square(b[1] - a[1]) + 4 * square(b[2] - a[2]) + (2 + (255 - r_) / 256) * square(b[3] - a[3])
+  )
+end
+
+local function get_hl(hl_name)
+  local hl = vim.api.nvim_get_hl(0, { name = hl_name, create = false })
+  local i = 0
+  while hl and hl.link and i < 50 do
+    hl = vim.api.nvim_get_hl(0, { name = hl.link, create = false })
+  end
+  return hl
+end
+
+---@type [number, number, number]
+local bg_color = { 0, 0, 0 }
+local bg_color_is_light = false
+local emphasis_threshold = 1.
+local light_emphasis = 0
+local dark_emphasis = 0
+
+function M.update_emphasis_values()
+  local hl = get_hl("Normal")
+  if hl.bg then
+    bg_color = rgb_unpack(hl.bg)
+  else
+    bg_color = vim.api.nvim_get_option_value("background", {}) == "light" and { 255, 255, 255 } or { 0, 0, 0 }
+  end
+  bg_color_is_light = is_light(bg_color)
+  emphasis_threshold = opts.emphasis and opts.emphasis.threshold[bg_color_is_light and 2 or 1] or 1
+  dark_emphasis = opts.emphasis and opts.emphasis.amount[1] or 0
+  light_emphasis = opts.emphasis and opts.emphasis.amount[2] or 0
 end
 
 local hex_color_groups = {}
@@ -345,10 +407,21 @@ local function compute_color_group(rgb)
   local group_name = format("OCP_%s", sub(hex, 2))
 
   if opts.style == "background" then
-    local opposite = is_light(rgb) and "Black" or "White"
+    local opposite = is_light(rgb_unpack(rgb)) and "Black" or "White"
     nvim_set_hl(0, group_name, { fg = opposite, bg = hex })
   else
-    nvim_set_hl(0, group_name, { fg = hex, bg = "none" })
+    local color = rgb_unpack(rgb)
+    local bg = "NONE"
+
+    if emphasis_threshold < 1. and color_distance(bg_color, color) < emphasis_threshold * 765 then
+      local emphasis = is_light(color) and light_emphasis or dark_emphasis
+      for i in ipairs(color) do
+        color[i] = min(max(color[i] + emphasis, 0), 255)
+      end
+      bg = format("#%02x%02x%02x", color[1], color[2], color[3])
+    end
+
+    nvim_set_hl(0, group_name, { fg = hex, bg = bg })
   end
 
   hex_color_groups[rgb] = group_name

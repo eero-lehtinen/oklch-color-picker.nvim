@@ -55,14 +55,23 @@ https://github.com/user-attachments/assets/822b5717-133d-4caf-a198-cbe3337bf87a
 local default_opts = {
   highlight = {
     enabled = true,
-    edit_delay = 60, -- async delay in ms
-    scroll_delay = 0, -- async delay in ms
-    -- options: 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
+    edit_delay = 60, -- Async delay in ms.
+    scroll_delay = 0, -- Async delay in ms.
+    -- Options: 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
     style = "background",
-    -- `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `
+    -- `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `.
     virtual_text = "■ ",
     priority = 175,
+    -- Make foreground and virtual colors visible when they are close the the editor background
+    emphasis = {
+      -- Distance (0..1) to the background color where emphasis activates (first number for dark themes, second for light ones).
+      threshold = { 0.1, 0.17 },
+      -- How much (0..255) to offset the background of emphasized colors (first item for dark colors, second for light ones).
+      amount = { 45, -80 },
+
+    },
   },
+
 
   patterns = {
     hex = { priority = -1, "()#%x%x%x+%f[%W]()" },
