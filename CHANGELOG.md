@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.2.2...v1.3.0) (2025-03-07)
+
+
+### Features
+
+* highlight emphasis for virtual and foreground styles (Closes [#21](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/21)) ([c9f692d](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/c9f692d9aa185d9535142ad291ac7712c62935f2))
+
+
+### Bug Fixes
+
+* set default hl priority lower than user hl ([762cc68](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/762cc689ed812160be209d2a85652338e2010f40))
+
 ## [1.2.2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.2.1...v1.2.2) (2025-03-04)
 
 
