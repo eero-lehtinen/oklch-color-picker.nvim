@@ -365,6 +365,7 @@ local function get_hl(hl_name)
   local i = 0
   while hl and hl.link and i < 50 do
     hl = vim.api.nvim_get_hl(0, { name = hl.link, create = false })
+    i = i + 1
   end
   return hl
 end
