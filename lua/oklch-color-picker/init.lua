@@ -26,16 +26,16 @@ local M = {}
 
 ---@class oklch.highlight.Opts
 ---@field enabled? boolean
----@field edit_delay? number Async delay in ms
----@field scroll_delay? number Async delay in ms
+---@field edit_delay? number Async delay in ms.
+---@field scroll_delay? number Async delay in ms.
 ---@field style? 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
 ---@field virtual_text? string `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `.
 ---@field emphasis? oklch.highlight.EmphasisOpts|false Make foreground and virtual colors visible when they are close the the editor background.
 ---@field priority? number
 
 ---@class oklch.highlight.EmphasisOpts
----@field threshold? [number, number] Distance (0..1) to the background color where emphasis activates (first number for dark themes, second for light ones).
----@field amount? [number, number] How much (0..255) to offset the background of emphasized colors (first number for dark colors, second for light ones).
+---@field threshold? [number, number] Distance (0..1) to the background color where emphasis activates (first item for dark themes, second for light ones).
+---@field amount? [number, number] How much (0..255) to offset the background of emphasized colors (first item for dark colors, second for light ones).
 
 --- Return a number with R, G, and B components combined into a single number 0xRRGGBB.
 --- (`require("oklch-color-picker").components_to_number` can help with this)

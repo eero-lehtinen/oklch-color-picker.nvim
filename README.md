@@ -64,7 +64,7 @@ local default_opts = {
     priority = 175,
     -- Make foreground and virtual colors visible when they are close the the editor background
     emphasis = {
-      -- Distance (0..1) to the background color where emphasis activates (first number for dark themes, second for light ones).
+      -- Distance (0..1) to the background color where emphasis activates (first item for dark themes, second for light ones).
       threshold = { 0.1, 0.17 },
       -- How much (0..255) to offset the background of emphasized colors (first item for dark colors, second for light ones).
       amount = { 45, -80 },
