@@ -46,7 +46,7 @@ local default_opts = {
     scroll_delay = 0,
     style = "background",
     virtual_text = "■ ",
-    priority = 500,
+    priority = 175,
   },
 
   patterns = {

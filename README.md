@@ -61,7 +61,7 @@ local default_opts = {
     style = "background",
     -- `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `
     virtual_text = "■ ",
-    priority = 500,
+    priority = 175,
   },
 
   patterns = {
