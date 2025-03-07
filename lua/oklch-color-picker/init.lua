@@ -22,7 +22,7 @@ local M = {}
 ---@field edit_delay? number async delay in ms
 ---@field scroll_delay? number async delay in ms
 ---@field style? 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
----@field virtual_text? string '● ' also looks nice (remove space with monospace nerd symbols)
+---@field virtual_text? string `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `
 ---@field priority? number
 
 ---@class oklch.PatternList

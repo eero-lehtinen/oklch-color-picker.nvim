@@ -59,7 +59,7 @@ local default_opts = {
     scroll_delay = 0, -- async delay in ms
     -- options: 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
     style = "background",
-    -- '● ' also looks nice (space can be removed if using monospace nerd symbols)
+    -- `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `
     virtual_text = "■ ",
     priority = 500,
   },
