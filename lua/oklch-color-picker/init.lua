@@ -30,7 +30,7 @@ local M = {}
 ---@field scroll_delay? number Async delay in ms.
 ---@field style? 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
 ---@field virtual_text? string `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `.
----@field emphasis? oklch.highlight.EmphasisOpts|false Make foreground and virtual colors visible when they are close the the editor background.
+---@field emphasis? oklch.highlight.EmphasisOpts|false Make foreground and virtual colors more visible when they are close to the editor background.
 ---@field priority? number
 
 ---@class oklch.highlight.EmphasisOpts
