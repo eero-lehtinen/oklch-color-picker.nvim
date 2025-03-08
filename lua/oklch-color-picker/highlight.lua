@@ -454,34 +454,30 @@ function M.make_set_extmark()
       reuse_mark.end_col = end_col
       nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
     end
-  elseif opts.style:find("virtual") then
+  elseif
+    opts.style == "virtual_left"
+    or opts.style == "virtual_eol"
+    or opts.style == "foreground+virtual_left"
+    or opts.style == "foreground+virtual_eol"
+  then
     reuse_mark.virt_text = { { opts.virtual_text, "" } }
     local virt_arr = reuse_mark.virt_text[1]
 
-    if opts.style == "virtual_left" or opts.style == "foreground+virtual_left" then
+    if opts.style:find("virtual_left") then
       reuse_mark.virt_text_pos = "inline"
       reuse_mark.right_gravity = false
       reuse_mark.end_right_gravity = false
+    end
 
-      set_extmark = function(bufnr, line_n, start_col, end_col, group)
-        virt_arr[2] = group
-        reuse_mark.end_col = end_col
-        if opts.style == "foreground+virtual_left" then
-          reuse_mark.hl_group = group
-        end
-        nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
+    local foreground = opts.style:find("foreground")
+
+    set_extmark = function(bufnr, line_n, start_col, end_col, group)
+      virt_arr[2] = group
+      reuse_mark.end_col = end_col
+      if foreground then
+        reuse_mark.hl_group = group
       end
-    elseif opts.style == "virtual_eol" or opts.style == "foreground+virtual_eol" then
-      set_extmark = function(bufnr, line_n, start_col, end_col, group)
-        virt_arr[2] = group
-        reuse_mark.end_col = end_col
-        if opts.style == "foreground+virtual_eol" then
-          reuse_mark.hl_group = group
-        end
-        nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
-      end
-    else
-      return true
+      nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
     end
   else
     return true
