@@ -31,11 +31,11 @@ local M = {}
 ---@field italic? boolean
 ---@field virtual_text? string `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `.
 ---@field priority? number
----@field emphasis? oklch.highlight.EmphasisOpts|false Make foreground and virtual colors more visible when they are close to the editor background.
+---@field emphasis? oklch.highlight.EmphasisOpts|false Tint the highlight background for 'foreground' and 'virtual' styles when the color is too close to the editor background.
 
 ---@class oklch.highlight.EmphasisOpts
----@field threshold? [number, number] Distance (0..1) to the background color where emphasis activates (first item for dark themes, second for light ones).
----@field amount? [number, number] How much (0..255) to offset the background of emphasized colors (first item for dark colors, second for light ones).
+---@field threshold? [number, number] Distance (0..1) to the editor background where emphasis activates (first item for dark themes, second for light ones).
+---@field amount? [number, number] How much (0..255) to offset the color (first item for dark colors, second for light ones).
 
 --- Return a number with R, G, and B components combined into a single number 0xRRGGBB.
 --- (`require("oklch-color-picker").components_to_number` can help with this)
