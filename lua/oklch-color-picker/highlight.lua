@@ -451,8 +451,11 @@ function M.make_set_extmark()
 
     if opts.style == "virtual_left" then
       reuse_mark.virt_text_pos = "inline"
-      set_extmark = function(bufnr, line_n, start_col, _, group)
+      reuse_mark.right_gravity = false
+      reuse_mark.end_right_gravity = false
+      set_extmark = function(bufnr, line_n, start_col, end_col, group)
         virt_arr[2] = group
+        reuse_mark.end_col = end_col
         nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
       end
     elseif opts.style == "virtual_right" then
@@ -462,8 +465,9 @@ function M.make_set_extmark()
         nvim_buf_set_extmark(bufnr, ns, line_n, end_col, reuse_mark)
       end
     elseif opts.style == "virtual_eol" then
-      set_extmark = function(bufnr, line_n, start_col, _, group)
+      set_extmark = function(bufnr, line_n, start_col, end_col, group)
         virt_arr[2] = group
+        reuse_mark.end_col = end_col
         nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
       end
     else
