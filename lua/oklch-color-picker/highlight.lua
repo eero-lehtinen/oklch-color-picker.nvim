@@ -405,11 +405,17 @@ local function compute_color_group(rgb)
   end
 
   local hex = format("#%06x", rgb)
-  local group_name = format("OCP_%s", sub(hex, 2))
+  local group_name = format("OCP_%06x", rgb)
+
+  local group = {
+    bold = opts.bold,
+    italic = opts.italic,
+  }
 
   if opts.style == "background" then
     local opposite = is_light(rgb_unpack(rgb)) and "Black" or "White"
-    nvim_set_hl(0, group_name, { fg = opposite, bg = hex })
+    group.fg = opposite
+    group.bg = hex
   else
     local color = rgb_unpack(rgb)
     local bg = "NONE"
@@ -422,8 +428,11 @@ local function compute_color_group(rgb)
       bg = format("#%02x%02x%02x", color[1], color[2], color[3])
     end
 
-    nvim_set_hl(0, group_name, { fg = hex, bg = bg })
+    group.fg = hex
+    group.bg = bg
   end
+
+  nvim_set_hl(0, group_name, group)
 
   hex_color_groups[rgb] = group_name
 
@@ -445,29 +454,30 @@ function M.make_set_extmark()
       reuse_mark.end_col = end_col
       nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
     end
-  elseif opts.style:find("^virtual") then
+  elseif opts.style:find("virtual") then
     reuse_mark.virt_text = { { opts.virtual_text, "" } }
     local virt_arr = reuse_mark.virt_text[1]
 
-    if opts.style == "virtual_left" then
+    if opts.style == "virtual_left" or opts.style == "foreground+virtual_left" then
       reuse_mark.virt_text_pos = "inline"
       reuse_mark.right_gravity = false
       reuse_mark.end_right_gravity = false
+
       set_extmark = function(bufnr, line_n, start_col, end_col, group)
         virt_arr[2] = group
         reuse_mark.end_col = end_col
+        if opts.style == "foreground+virtual_left" then
+          reuse_mark.hl_group = group
+        end
         nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
       end
-    elseif opts.style == "virtual_right" then
-      reuse_mark.virt_text_pos = "inline"
-      set_extmark = function(bufnr, line_n, _, end_col, group)
-        virt_arr[2] = group
-        nvim_buf_set_extmark(bufnr, ns, line_n, end_col, reuse_mark)
-      end
-    elseif opts.style == "virtual_eol" then
+    elseif opts.style == "virtual_eol" or opts.style == "foreground+virtual_eol" then
       set_extmark = function(bufnr, line_n, start_col, end_col, group)
         virt_arr[2] = group
         reuse_mark.end_col = end_col
+        if opts.style == "foreground+virtual_eol" then
+          reuse_mark.hl_group = group
+        end
         nvim_buf_set_extmark(bufnr, ns, line_n, start_col, reuse_mark)
       end
     else

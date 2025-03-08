@@ -4,8 +4,6 @@ local downloader = require("oklch-color-picker.downloader")
 local tailwind = require("oklch-color-picker.tailwind")
 local picker = require("oklch-color-picker.picker")
 
-local lshift, band = bit.lshift, bit.band
-
 ---@class oklch
 local M = {}
 
@@ -28,10 +26,12 @@ local M = {}
 ---@field enabled? boolean
 ---@field edit_delay? number Async delay in ms.
 ---@field scroll_delay? number Async delay in ms.
----@field style? 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
+---@field style? 'background'|'foreground'|'virtual_left'|'virtual_eol'|'foreground+virtual_left'|'foreground+virtual_eol'
+---@field bold? boolean
+---@field italic? boolean
 ---@field virtual_text? string `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `.
----@field emphasis? oklch.highlight.EmphasisOpts|false Make foreground and virtual colors more visible when they are close to the editor background.
 ---@field priority? number
+---@field emphasis? oklch.highlight.EmphasisOpts|false Make foreground and virtual colors more visible when they are close to the editor background.
 
 ---@class oklch.highlight.EmphasisOpts
 ---@field threshold? [number, number] Distance (0..1) to the background color where emphasis activates (first item for dark themes, second for light ones).
@@ -50,6 +50,8 @@ local default_opts = {
     edit_delay = 60,
     scroll_delay = 0,
     style = "background",
+    bold = false,
+    italic = false,
     virtual_text = "■ ",
     priority = 175,
     emphasis = {

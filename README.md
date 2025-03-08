@@ -57,8 +57,10 @@ local default_opts = {
     enabled = true,
     edit_delay = 60, -- Async delay in ms.
     scroll_delay = 0, -- Async delay in ms.
-    -- Options: 'background'|'foreground'|'virtual_left'|'virtual_right'|'virtual_eol'
+    -- Options: 'background'|'foreground'|'virtual_left'|'virtual_eol'|'foreground+virtual_left'|'foreground+virtual_eol'
     style = "background",
+    bold = false,
+    italic = false,
     -- `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `.
     virtual_text = "■ ",
     priority = 175,
