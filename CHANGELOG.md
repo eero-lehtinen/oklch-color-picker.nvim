@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.0.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.3.0...v2.0.0) (2025-03-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove virtual_right style, add more useful styles (fixes #24)
+
+### Features
+
+* remove virtual_right style, add more useful styles (fixes [#24](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/24)) ([a0cc0e7](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/a0cc0e76541747e2e26e25987f43fcdda84ab94f))
+
+
+### Bug Fixes
+
+* possible infinite hl link chain ([12595cd](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/12595cdc4870080b5b84ce0a53f98d42760178e3))
+* use better gravity settings for virtual_left ([d01b692](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/d01b69240e40c13be49992feb0dfeb47062725e6))
+
 ## [1.3.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.2.2...v1.3.0) (2025-03-07)
 
 
