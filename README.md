@@ -55,14 +55,19 @@ https://github.com/user-attachments/assets/822b5717-133d-4caf-a198-cbe3337bf87a
 local default_opts = {
   highlight = {
     enabled = true,
-    edit_delay = 60, -- Async delay in ms.
-    scroll_delay = 0, -- Async delay in ms.
+    -- Async delay in ms.
+    edit_delay = 60,
+    -- Async delay in ms.
+    scroll_delay = 0,
     -- Options: 'background'|'foreground'|'virtual_left'|'virtual_eol'|'foreground+virtual_left'|'foreground+virtual_eol'
     style = "background",
-    bold = false,
-    italic = false,
+    -- nil = no effect, true = on, false = off
+    bold = nil,
+    -- nil = no effect, true = on, false = off
+    italic = nil,
     -- `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `.
     virtual_text = "■ ",
+    -- Less than user hl by default (:help vim.highlight.priorities)
     priority = 175,
     -- Tint the highlight background for 'foreground' and 'virtual' styles when the color is too close to the editor background.
     -- Set `emphasis = false` to disable.
@@ -73,7 +78,6 @@ local default_opts = {
       amount = { 45, -80 },
     },
   },
-
 
   patterns = {
     hex = { priority = -1, "()#%x%x%x+%f[%W]()" },
