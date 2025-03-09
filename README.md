@@ -65,6 +65,7 @@ local default_opts = {
     virtual_text = "■ ",
     priority = 175,
     -- Tint the highlight background for 'foreground' and 'virtual' styles when the color is too close to the editor background.
+    -- Set `emphasis = false` to disable.
     emphasis = {
       -- Distance (0..1) to the editor background where emphasis activates (first item for dark themes, second for light ones).
       threshold = { 0.1, 0.17 },
