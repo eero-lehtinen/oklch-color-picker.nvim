@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*    For NVIM v0.10.0   Last change: 2025 March 09
+*oklch-color-picker.nvim.txt*    For NVIM v0.10.0   Last change: 2025 March 10
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -237,9 +237,10 @@ HIGHLIGHTING ~
 COLOR FORMATS ~
 
 The picker application supports the following formats: (`hex`, `rgb`, `oklch`,
-`hsl`, `hex_literal`, `raw_rgb`, `raw_rgb_float`, `raw_rgb_linear`,
-`raw_oklch`). Most of these are auto detected. E.g. CSS rgb values are detected
-because they are surrounded by `rgb()` and hex starts with `#`.
+`hsl`, `hex_literal`, `rgb_legacy`, `hsl_legacy`, `raw_rgb`, `raw_rgb_float`,
+`raw_rgb_linear`, `raw_oklch`). Most of these are auto detected. E.g. CSS rgb
+values are detected because they are surrounded by `rgb()` and hex starts with
+`#`.
 
 The raw formats are just lists of numbers separated by commas that can be used
 with any programming language. The picker auto detection assumes raw formats to
