@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v2.0.0...v2.0.1) (2025-03-09)
+
+
+### Bug Fixes
+
+* allow keeping bold and italic unchanged ([d44318f](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/d44318f5f5c2419a7811ac195da66efaf55c4824))
+
 ## [2.0.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v1.3.0...v2.0.0) (2025-03-08)
 
 
