@@ -208,7 +208,7 @@ require("oklch-color-picker").highlight.toggle()
 
 ### Color Formats
 
-The picker application supports the following formats: (`hex`, `rgb`, `oklch`, `hsl`, `hex_literal`, `raw_rgb`, `raw_rgb_float`, `raw_rgb_linear`, `raw_oklch`).
+The picker application supports the following formats: (`hex`, `rgb`, `oklch`, `hsl`, `hex_literal`, `rgb_legacy`, `hsl_legacy`, `raw_rgb`, `raw_rgb_float`, `raw_rgb_linear`, `raw_oklch`).
 Most of these are auto detected. E.g. CSS rgb values are detected because they are surrounded by `rgb()` and hex starts with `#`.
 
 The raw formats are just lists of numbers separated by commas that can be used with any programming language. The picker auto detection assumes raw formats to be either integer `0-255` or float `0.0-1.0` srgb colors (formats `raw_rgb` or `raw_rgb_float`). For `raw_rgb_linear` or `raw_oklch` values you have to specify the format manually. Note that the picker accepts colors with and without alpha (3 or 4 numbers separated by commas).
