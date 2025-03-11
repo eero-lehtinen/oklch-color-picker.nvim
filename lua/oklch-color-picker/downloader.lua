@@ -1,6 +1,6 @@
 local utils = require("oklch-color-picker.utils")
 
-local version = "2.0.0"
+local version = "1.16.1"
 
 local github_url = "https://github.com/eero-lehtinen/oklch-color-picker/releases/download/" .. version .. "/"
 
