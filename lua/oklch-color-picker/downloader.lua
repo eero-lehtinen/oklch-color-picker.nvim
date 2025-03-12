@@ -155,8 +155,18 @@ function M.download_app(callback)
         end
 
         os.remove(cwd .. "/" .. archive)
-        os.remove(cwd .. "/" .. utils.executable())
-        os.rename(cwd .. "/" .. archive_basename .. "/" .. utils.executable(), cwd .. "/" .. utils.executable())
+        local success, err = vim.uv.fs_rename(
+          cwd .. "/" .. archive_basename .. "/" .. utils.executable(),
+          cwd .. "/" .. utils.executable()
+        )
+        if err or not success then
+          if utils.is_windows() then
+            utils.log("You likely have the picker app open somewhere. Close it and try again.", vim.log.levels.WARN)
+          end
+          callback("Picker app rename after download failed: " .. err)
+          return
+        end
+
         os.remove(cwd .. "/" .. archive_basename)
 
         utils.log("Extraction success, binary in " .. cwd, vim.log.levels.DEBUG)
