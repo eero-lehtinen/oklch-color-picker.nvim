@@ -212,18 +212,26 @@ function M.download_parser(callback)
     return
   end
 
+  -- Download to a temporary file to avoid crashing:
+  -- https://developer.apple.com/documentation/security/updating-mac-software
   vim.system(
-    { "curl", "--fail", "-o", out_lib, "-L", url },
+    { "curl", "--fail", "-o", out_lib .. ".tmp", "-L", url },
     { cwd = cwd },
     vim.schedule_wrap(function(out)
       if out.code ~= 0 then
         callback("Curl failed\nstdout: " .. out.stdout .. "\nstderr: " .. out.stderr)
+        return
+      end
+
+      local success, err = vim.uv.fs_rename(cwd .. "/" .. out_lib .. ".tmp", cwd .. "/" .. out_lib)
+      if err or not success then
         if utils.is_windows() then
           utils.log(
             "You likely have other Neovim instances open and using the library. Close them and try again.",
             vim.log.levels.WARN
           )
         end
+        callback("Parser rename after download failed: " .. err)
         return
       end
 
