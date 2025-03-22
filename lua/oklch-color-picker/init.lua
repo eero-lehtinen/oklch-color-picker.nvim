@@ -27,8 +27,8 @@ local M = {}
 ---@field edit_delay? number Async delay in ms.
 ---@field scroll_delay? number Async delay in ms.
 ---@field style? 'background'|'foreground'|'virtual_left'|'virtual_eol'|'foreground+virtual_left'|'foreground+virtual_eol'
----@field bold? boolean|nil nil = no effect, true = on, false = off
----@field italic? boolean|nil nil = no effect, true = on, false = off
+---@field bold? boolean
+---@field italic? boolean
 ---@field virtual_text? string `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `.
 ---@field priority? number Less than user hl by default (:help vim.highlight.priorities)
 ---@field emphasis? oklch.highlight.EmphasisOpts|false Tint the highlight background for 'foreground' and 'virtual' styles when the color is too close to the editor background.
@@ -50,8 +50,8 @@ local default_opts = {
     edit_delay = 60,
     scroll_delay = 0,
     style = "background",
-    bold = nil,
-    italic = nil,
+    bold = false,
+    italic = false,
     virtual_text = "■ ",
     priority = 175,
     emphasis = {

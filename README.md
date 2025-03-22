@@ -61,10 +61,8 @@ local default_opts = {
     scroll_delay = 0,
     -- Options: 'background'|'foreground'|'virtual_left'|'virtual_eol'|'foreground+virtual_left'|'foreground+virtual_eol'
     style = "background",
-    -- nil = no effect, true = on, false = off
-    bold = nil,
-    -- nil = no effect, true = on, false = off
-    italic = nil,
+    bold = false,
+    italic = false,
     -- `● ` also looks nice, nerd fonts also have bigger shapes ` `, `󰝤 `, and ` `.
     virtual_text = "■ ",
     -- Less than user hl by default (:help vim.highlight.priorities)
