@@ -75,6 +75,16 @@ local default_opts = {
       -- How much (0..255) to offset the color (first item for dark colors, second for light ones).
       amount = { 45, -80 },
     },
+
+    -- List of LSP clients that are allowed to highlight colors:
+    -- By default, only fairly performant and useful LSPs are enabled.
+    -- "tailwindcss", "cssls", and "css_variables" all highlight small files in 2-10ms
+    -- (still a lot slower than the 0.1 ms of this plugin, but they give some extra features).
+    -- Some LSPs are very slow like "svelte" (>1000 ms) even in tiny files and don't give new features.
+    --- "lua_ls" is also not worth enabling because it never finds any colors.
+    enabled_lsps = { "tailwindcss", "cssls", "css_variables" },
+    -- Async delay in ms, LSPs also have their own latency.
+    lsp_delay = 120,
   },
 
   patterns = {
@@ -244,7 +254,7 @@ When editing, only the changed lines are updated. In the common case, when chang
 
 [brenoprata10/nvim-highlight-colors](https://github.com/brenoprata10/nvim-highlight-colors) in the stress test takes 10 ms to do a full screen update. It doesn't do partial updates, so a full update is done every `InsertLeave` or `WinScrolled` event. The code seems to include handlers for `TextChanged`, but those didn't work for some reason. Features `hex`, `short_hex`, `rgb`, `hsl`, and `tailwind` were enabled.
 
-Measurements were done by manually adding `vim.uv.hrtime` logging to the update functions of each plugin. Check your own timings in this plugin by setting `require("oklch-color-picker").highlight.set_perf_logging(true)`.
+Measurements were done by manually adding `vim.uv.hrtime` logging to the update functions of each plugin. Check your own timings in this plugin by setting `require("oklch-color-picker").highlight.set_perf_logging(true)` (you can also check your LSP timings with `set_lsp_perf_logging(true)`).
 
 ## Other similar plugins
 
