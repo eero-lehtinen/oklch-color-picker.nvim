@@ -5,7 +5,7 @@ Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
 
   - Features                                |oklch-color-picker.nvim-features|
   - Installation                        |oklch-color-picker.nvim-installation|
-  - Demo                                        |oklch-color-picker.nvim-demo|
+  - Showcase                                |oklch-color-picker.nvim-showcase|
   - Default Options                  |oklch-color-picker.nvim-default-options|
   - Configuration                      |oklch-color-picker.nvim-configuration|
   - API & Commands                    |oklch-color-picker.nvim-api-&-commands|
@@ -24,6 +24,7 @@ FEATURES                                    *oklch-color-picker.nvim-features*
     - Hex literal (`0xRRGGBB`, `0xAARRGGBB`)
     - Tailwind (e.g. `bg-red-800`)
     - Can recognize any numbers in brackets as a color (e.g., `vec3(0.5, 0.5, 0.5)`)
+    - LSP colors
     - Custom formats can be defined
 - Integrated graphical color picker using the perceptual Oklch color space:
     - Consists of lightness, chroma, and hue for intuitive adjustments
@@ -62,10 +63,18 @@ in a different repo!). The picker is a standalone ⚡Rust⚡ application with
 for Linux, macOS, and Windows.
 
 
-DEMO                                            *oklch-color-picker.nvim-demo*
+SHOWCASE                                    *oklch-color-picker.nvim-showcase*
+
+
+VIDEO ~
 
 
 https://github.com/user-attachments/assets/822b5717-133d-4caf-a198-cbe3337bf87a
+
+
+LSP FEATURES ~
+
+
 
 
 DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
@@ -142,6 +151,11 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
 CONFIGURATION                          *oklch-color-picker.nvim-configuration*
 
 
+CHOOSE HIGHLIGHTING STYLE: ~
+
+
+
+
 DISABLE DEFAULT PATTERNS BY SETTING THEM TO FALSE: ~
 
 >lua
@@ -184,11 +198,6 @@ DEFINE YOUR OWN PATTERNS: ~
       }
     }
 <
-
-
-CHOOSE HIGHLIGHTING STYLE: ~
-
-
 
 
 API & COMMANDS                        *oklch-color-picker.nvim-api-&-commands*
