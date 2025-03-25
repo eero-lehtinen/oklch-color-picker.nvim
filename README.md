@@ -14,6 +14,7 @@
   - Hex literal (`0xRRGGBB`, `0xAARRGGBB`)
   - Tailwind (e.g. `bg-red-800`)
   - Can recognize any numbers in brackets as a color (e.g., `vec3(0.5, 0.5, 0.5)`)
+  - LSP colors
   - Custom formats can be defined
 - Integrated graphical color picker using the perceptual Oklch color space:
   - Consists of lightness, chroma, and hue for intuitive adjustments
@@ -45,9 +46,16 @@ Requires Neovim 0.10+
 
 This plugin automatically downloads the picker application and a color parser library from the releases page of [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker) (it's open source too in a different repo!). The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ performance and startup time. There are prebuilt binaries for Linux, macOS, and Windows.
 
-## Demo
+## Showcase
+
+### Video
 
 https://github.com/user-attachments/assets/822b5717-133d-4caf-a198-cbe3337bf87a
+
+### LSP features
+
+<img width=550 src="https://github.com/user-attachments/assets/05750119-acc0-4e4e-b923-fe19005bde2f">
+
 
 ## Default Options
 
@@ -121,6 +129,14 @@ local default_opts = {
 
 ## Configuration
 
+### Choose highlighting style:
+
+<img width=600 src="https://github.com/user-attachments/assets/6d4774c6-80a1-46ef-a9cc-f17ae8553c8a">
+
+
+
+
+
 ### Disable default patterns by setting them to false:
 
 ```lua
@@ -163,9 +179,7 @@ opts = {
 }
 ```
 
-### Choose highlighting style:
 
-<img src="https://github.com/user-attachments/assets/6327882d-5d1c-43e0-aa9d-397980b99dfe" width=400 alt="highlighting styles">
 
 ## API & Commands
 
