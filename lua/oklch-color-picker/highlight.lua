@@ -5,8 +5,12 @@ local find, sub, format = string.find, string.sub, string.format
 local insert = table.insert
 local pow, min, max, floor = math.pow, math.min, math.max, math.floor
 local rshift, band, lshift, bor = bit.rshift, bit.band, bit.lshift, bit.bor
-local nvim_buf_clear_namespace, nvim_buf_set_extmark, nvim_set_hl =
-  vim.api.nvim_buf_clear_namespace, vim.api.nvim_buf_set_extmark, vim.api.nvim_set_hl
+local nvim_buf_clear_namespace, nvim_buf_del_extmark, nvim_buf_set_extmark, nvim_set_hl, nvim_buf_get_extmarks =
+  vim.api.nvim_buf_clear_namespace,
+  vim.api.nvim_buf_del_extmark,
+  vim.api.nvim_buf_set_extmark,
+  vim.api.nvim_set_hl,
+  vim.api.nvim_buf_get_extmarks
 
 ---@class oklch.highlight
 local M = {}
@@ -512,7 +516,7 @@ local function compute_color_group(rgb)
   return group_name
 end
 
----@type fun(bufnr: integer, ns: integer, priority: number, line_n: integer, start_col: integer, end_col: integer, group: string)
+---@type fun(bufnr: integer, ns: integer, priority: number, line_n: integer, start_col: integer, end_col: integer, group: string): integer
 local set_extmark
 
 ---@return boolean|nil -- true if error
@@ -524,7 +528,7 @@ function M.make_set_extmark()
       reuse_mark.priority = priority
       reuse_mark.hl_group = group
       reuse_mark.end_col = end_col
-      nvim_buf_set_extmark(bufnr, namespace, line_n, start_col, reuse_mark)
+      return nvim_buf_set_extmark(bufnr, namespace, line_n, start_col, reuse_mark)
     end
   elseif
     opts.style == "virtual_left"
@@ -550,7 +554,7 @@ function M.make_set_extmark()
       if foreground then
         reuse_mark.hl_group = group
       end
-      nvim_buf_set_extmark(bufnr, namespace, line_n, start_col, reuse_mark)
+      return nvim_buf_set_extmark(bufnr, namespace, line_n, start_col, reuse_mark)
     end
   else
     return true
@@ -577,7 +581,17 @@ local function get_ft_patterns(ft)
   return ft_patterns
 end
 
-local line_matches = {}
+M.lsp_namespaces = {}
+M.lsp_namespaces_list = {}
+local function get_lsp_namespace(clientName)
+  local namespace = M.lsp_namespaces[clientName]
+  if namespace == nil then
+    namespace = vim.api.nvim_create_namespace("OklchColorPickerLsp_" .. clientName)
+    table.insert(M.lsp_namespaces_list, namespace)
+    M.lsp_namespaces[clientName] = namespace
+  end
+  return namespace
+end
 
 ---@param bufnr integer
 ---@param lines string[]
@@ -589,8 +603,14 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
 
   nvim_buf_clear_namespace(bufnr, ns, from_line, from_line + #lines)
 
+  local lsp_namespaces_list = M.lsp_namespaces_list
+  local get_mark_start = {}
+  local get_mark_end = {}
+
   for i, line in ipairs(lines) do
-    local match_idx = 0
+    local line_n = from_line + i - 1
+    get_mark_start[1] = line_n
+    get_mark_end[1] = line_n
 
     for _, pattern_list in ipairs(ft_patterns) do
       for _, pattern in ipairs(pattern_list) do
@@ -599,8 +619,17 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
 
         while match_start ~= nil do
           local has_space = true
-          for m = 1, match_idx, 2 do
-            if line_matches[m] <= match_end and line_matches[m + 1] >= match_start then
+          get_mark_start[2] = match_start - 1
+          get_mark_end[2] = match_end - 1
+
+          -- Try to avoid previous normal marks and LSP marks
+          if #nvim_buf_get_extmarks(bufnr, ns, get_mark_start, get_mark_end, { overlap = true, limit = 1 }) > 0 then
+            has_space = false
+          end
+          for _, lsp_ns in ipairs(lsp_namespaces_list) do
+            if
+              #nvim_buf_get_extmarks(bufnr, lsp_ns, get_mark_start, get_mark_end, { overlap = true, limit = 1 }) > 0
+            then
               has_space = false
               break
             end
@@ -621,12 +650,8 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
 
             if rgb then
               local group = compute_color_group(rgb)
-              local line_n = from_line + i - 1 -- zero based index
               set_extmark(bufnr, ns, opts.priority, line_n, match_start - 1, match_end --[[@as integer]], group)
             end
-            match_idx = match_idx + 2
-            line_matches[match_idx - 1] = match_start
-            line_matches[match_idx] = match_end
           end
 
           start = match_end + 1
@@ -637,21 +662,11 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
   end
 end
 
-M.lsp_namespaces = {}
-local function get_lsp_namespace(clientName)
-  local namespace = M.lsp_namespaces[clientName]
-  if namespace == nil then
-    namespace = vim.api.nvim_create_namespace("OklchColorPickerLsp" .. clientName)
-    M.lsp_namespaces[clientName] = namespace
-  end
-  return namespace
-end
-
 local lsp_method = "textDocument/documentColor"
 
 ---@alias LspColor ColorResult|{ packed_color: integer }
 
----@type { [string]: LspColor[] }
+---@type { [string]: LspColor[] }[]
 M.lsp_colors = {}
 
 ---@class ColorResult
@@ -671,31 +686,45 @@ function M.process_update_lsp(bufnr, callback)
 
   ---@diagnostic disable-next-line: deprecated
   local clients = (vim.lsp.get_clients or vim.lsp.get_active_clients)({ bufnr = bufnr })
+  if M.lsp_colors[bufnr] == nil then
+    M.lsp_colors[bufnr] = {}
+  end
   local done = 0
   local expected = 0
   for _, client in ipairs(clients) do
     if enabled_lsps[client.name] and client:supports_method(lsp_method, bufnr) then
       expected = expected + 1
       client:request(lsp_method, params, function(err, results)
-        local lsp_ns = get_lsp_namespace(client.name)
         if not err and results then
+          local mark_start = {}
+          local mark_end = {}
+          local lsp_ns = get_lsp_namespace(client.name)
           nvim_buf_clear_namespace(bufnr, lsp_ns, 0, -1)
+
           for _, result in
             ipairs(results --[=[@as LspColor[]]=])
           do
+            local line_n = result.range.start.line
+            mark_start[1] = line_n
+            mark_end[1] = line_n
+            mark_start[2] = result.range.start.character
+            mark_end[2] = result.range["end"].character
+            -- Override non-LSP marks
+            for _, m in ipairs(nvim_buf_get_extmarks(bufnr, ns, mark_start, mark_end, { overlap = true })) do
+              nvim_buf_del_extmark(bufnr, ns, m[1])
+            end
+
             result.packed_color = M.rgb_pack(
               float_to_int8(result.color.red),
               float_to_int8(result.color.green),
               float_to_int8(result.color.blue)
             )
             local group = compute_color_group(result.packed_color)
-            local line_n = result.range.start.line
-            local match_start = result.range.start.character
-            local match_end = result.range["end"].character
-            set_extmark(bufnr, lsp_ns, opts.priority + 1, line_n, match_start, match_end, group)
+            set_extmark(bufnr, lsp_ns, opts.priority, line_n, mark_start[2], mark_end[2], group)
           end
         end
-        M.lsp_colors[client.name] = results
+
+        M.lsp_colors[bufnr][client.name] = results or {}
 
         done = done + 1
         if M.lsp_perf_logging then

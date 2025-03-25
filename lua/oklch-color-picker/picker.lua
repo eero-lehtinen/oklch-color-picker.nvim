@@ -108,12 +108,13 @@ local function start_app()
   return true
 end
 
+--- @param bufnr number
 --- @param line string
 --- @param line_n number
 --- @param cursor_col number
 --- @param ft string
 --- @return { pos: [number, number], color: string, color_format: string|nil }| nil
-local function find_color(line, line_n, cursor_col, ft)
+local function find_color(bufnr, line, line_n, cursor_col, ft)
   for _, pattern_list in ipairs(final_patterns) do
     if pattern_list.ft(ft) then
       for _, pattern in ipairs(pattern_list) do
@@ -150,7 +151,7 @@ local function find_color(line, line_n, cursor_col, ft)
   -- As a last resort, check if we are over a lsp color (change to zero-indexing)
   cursor_col = cursor_col - 1
   line_n = line_n - 1
-  for _, lsp_colors in pairs(highlight.lsp_colors) do
+  for _, lsp_colors in pairs(highlight.lsp_colors[bufnr]) do
     for _, lsp_color in ipairs(lsp_colors) do
       if
         lsp_color.range.start.line == line_n
@@ -193,7 +194,7 @@ function M.pick_under_cursor(opts)
   local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
   local ft = vim.api.nvim_get_option_value("filetype", { buf = 0 })
 
-  local res = find_color(line, row, col, ft)
+  local res = find_color(bufnr, line, row, col, ft)
 
   if not res then
     if type(opts) == "table" and opts.fallback_open then
