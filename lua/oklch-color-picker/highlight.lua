@@ -158,6 +158,7 @@ end
 ---@class BufData
 ---@field pending_updates { from_line: integer, to_line: integer }|nil
 ---@field prev_view { top: integer, bottom: integer }
+---@field lsp_colors table<string, LspColor[]>
 ---@field lsp_in_flight boolean|nil
 ---@field lsp_queued boolean|nil
 
@@ -182,6 +183,7 @@ function M.on_buf_enter(bufnr)
 
   M.bufs[bufnr] = {
     prev_view = { top = 0, bottom = 0 },
+    lsp_colors = {},
   }
 
   M.update_view(bufnr)
@@ -516,16 +518,17 @@ local function compute_color_group(rgb)
   return group_name
 end
 
----@type fun(bufnr: integer, ns: integer, priority: number, line_n: integer, start_col: integer, end_col: integer, group: string): integer
+---@type fun(bufnr: integer, ns: integer, line_n: integer, start_col: integer, end_col: integer, group: string): integer
 local set_extmark
 
 ---@return boolean|nil -- true if error
 function M.make_set_extmark()
   ---@type vim.api.keyset.set_extmark
-  local reuse_mark = {}
+  local reuse_mark = {
+    priority = opts.priority,
+  }
   if opts.style == "background" or opts.style == "foreground" then
-    set_extmark = function(bufnr, namespace, priority, line_n, start_col, end_col, group)
-      reuse_mark.priority = priority
+    set_extmark = function(bufnr, namespace, line_n, start_col, end_col, group)
       reuse_mark.hl_group = group
       reuse_mark.end_col = end_col
       return nvim_buf_set_extmark(bufnr, namespace, line_n, start_col, reuse_mark)
@@ -547,8 +550,7 @@ function M.make_set_extmark()
 
     local foreground = opts.style:find("foreground")
 
-    set_extmark = function(bufnr, namespace, priority, line_n, start_col, end_col, group)
-      reuse_mark.priority = priority
+    set_extmark = function(bufnr, namespace, line_n, start_col, end_col, group)
       virt_arr[2] = group
       reuse_mark.end_col = end_col
       if foreground then
@@ -625,13 +627,14 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
           -- Try to avoid previous normal marks and LSP marks
           if #nvim_buf_get_extmarks(bufnr, ns, get_mark_start, get_mark_end, { overlap = true, limit = 1 }) > 0 then
             has_space = false
-          end
-          for _, lsp_ns in ipairs(lsp_namespaces_list) do
-            if
-              #nvim_buf_get_extmarks(bufnr, lsp_ns, get_mark_start, get_mark_end, { overlap = true, limit = 1 }) > 0
-            then
-              has_space = false
-              break
+          else
+            for _, lsp_ns in ipairs(lsp_namespaces_list) do
+              if
+                #nvim_buf_get_extmarks(bufnr, lsp_ns, get_mark_start, get_mark_end, { overlap = true, limit = 1 }) > 0
+              then
+                has_space = false
+                break
+              end
             end
           end
 
@@ -650,7 +653,7 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
 
             if rgb then
               local group = compute_color_group(rgb)
-              set_extmark(bufnr, ns, opts.priority, line_n, match_start - 1, match_end --[[@as integer]], group)
+              set_extmark(bufnr, ns, line_n, match_start - 1, match_end --[[@as integer]], group)
             end
           end
 
@@ -662,12 +665,9 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
   end
 end
 
-local lsp_method = "textDocument/documentColor"
+local color_method = "textDocument/documentColor"
 
 ---@alias LspColor ColorResult|{ packed_color: integer }
-
----@type { [string]: LspColor[] }[]
-M.lsp_colors = {}
 
 ---@class ColorResult
 ---@field color { alpha: number, blue: number, green: number, red: number }
@@ -684,33 +684,37 @@ function M.process_update_lsp(bufnr, callback)
 
   local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
 
-  ---@diagnostic disable-next-line: deprecated
-  local clients = (vim.lsp.get_clients or vim.lsp.get_active_clients)({ bufnr = bufnr })
-  if M.lsp_colors[bufnr] == nil then
-    M.lsp_colors[bufnr] = {}
-  end
+  local clients = vim.lsp.get_clients({ bufnr = bufnr, method = color_method })
+
   local done = 0
   local expected = 0
+
   for _, client in ipairs(clients) do
-    if enabled_lsps[client.name] and client:supports_method(lsp_method, bufnr) then
-      expected = expected + 1
-      client:request(lsp_method, params, function(err, results)
+    if not enabled_lsps[client.name] then
+      goto continue
+    end
+
+    expected = expected + 1
+
+    local lsp_handler = function(err, results)
+      results = results --[[@as LspColor[]|nil]]
+      local buf_data = M.bufs[bufnr]
+
+      if buf_data then
         if not err and results then
-          local mark_start = {}
-          local mark_end = {}
+          local get_mark_start = {}
+          local get_mark_end = {}
           local lsp_ns = get_lsp_namespace(client.name)
           nvim_buf_clear_namespace(bufnr, lsp_ns, 0, -1)
 
-          for _, result in
-            ipairs(results --[=[@as LspColor[]]=])
-          do
+          for _, result in ipairs(results) do
             local line_n = result.range.start.line
-            mark_start[1] = line_n
-            mark_end[1] = line_n
-            mark_start[2] = result.range.start.character
-            mark_end[2] = result.range["end"].character
+            get_mark_start[1] = line_n
+            get_mark_end[1] = line_n
+            get_mark_start[2] = result.range.start.character
+            get_mark_end[2] = result.range["end"].character
             -- Override non-LSP marks
-            for _, m in ipairs(nvim_buf_get_extmarks(bufnr, ns, mark_start, mark_end, { overlap = true })) do
+            for _, m in ipairs(nvim_buf_get_extmarks(bufnr, ns, get_mark_start, get_mark_end, { overlap = true })) do
               nvim_buf_del_extmark(bufnr, ns, m[1])
             end
 
@@ -720,22 +724,33 @@ function M.process_update_lsp(bufnr, callback)
               float_to_int8(result.color.blue)
             )
             local group = compute_color_group(result.packed_color)
-            set_extmark(bufnr, lsp_ns, opts.priority, line_n, mark_start[2], mark_end[2], group)
+            set_extmark(bufnr, lsp_ns, line_n, get_mark_start[2], get_mark_end[2], group)
           end
         end
 
-        M.lsp_colors[bufnr][client.name] = results or {}
+        buf_data.lsp_colors[client.name] = results or {}
+      end
 
-        done = done + 1
-        if M.lsp_perf_logging then
-          local ms = (vim.uv.hrtime() - t) / 1000000
-          print(format("lsp color highlighting (%s) took: %.3f ms", client.name, ms))
-        end
-        if done == expected then
-          callback()
-        end
-      end, bufnr)
+      done = done + 1
+      if M.lsp_perf_logging then
+        local ms = (vim.uv.hrtime() - t) / 1000000
+        print(format("lsp color highlighting (%s) took: %.3f ms", client.name, ms))
+      end
+      if done == expected then
+        callback()
+      end
     end
+
+    ---@diagnostic disable-next-line: param-type-mismatch (Changed in 0.11, still using 0.10 compatible API)
+    local status = client.request(color_method, params, lsp_handler, bufnr)
+
+    if not status then
+      done = done + 1
+      buf_data.lsp_colors[client.name] = {}
+      utils.log(format("Failed LSP request with %s", client.name), vim.log.levels.DEBUG)
+    end
+
+    ::continue::
   end
 end
 

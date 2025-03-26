@@ -149,9 +149,13 @@ local function find_color(bufnr, line, line_n, cursor_col, ft)
   end
 
   -- As a last resort, check if we are over a lsp color (change to zero-indexing)
+  local buf_data = highlight.bufs[bufnr]
+  if not buf_data then
+    return nil
+  end
   cursor_col = cursor_col - 1
   line_n = line_n - 1
-  for _, lsp_colors in pairs(highlight.lsp_colors[bufnr]) do
+  for _, lsp_colors in pairs(buf_data.lsp_colors) do
     for _, lsp_color in ipairs(lsp_colors) do
       if
         lsp_color.range.start.line == line_n
