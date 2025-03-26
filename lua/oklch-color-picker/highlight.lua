@@ -731,11 +731,11 @@ function M.process_update_lsp(bufnr, callback)
         buf_data.lsp_colors[client.name] = results or {}
       end
 
-      done = done + 1
       if M.lsp_perf_logging then
         local ms = (vim.uv.hrtime() - t) / 1000000
         print(format("lsp color highlighting (%s) took: %.3f ms", client.name, ms))
       end
+      done = done + 1
       if done == expected then
         callback()
       end
@@ -753,6 +753,11 @@ function M.process_update_lsp(bufnr, callback)
     end
 
     ::continue::
+  end
+
+  -- This only happens if all LSPs fail, otherwise the last LSP calls the callback.
+  if done == expected then
+    callback()
   end
 end
 
