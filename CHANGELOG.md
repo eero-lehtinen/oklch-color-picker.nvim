@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.3.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.2.0...v3.3.0) (2025-03-26)
+
+
+### Features
+
+* LSP support ([#32](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/32)) ([f87d7bc](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/f87d7bcb9909f87eb765d7be613478256501b2e0))
+
+
+### Bug Fixes
+
+* callback from lsp even if all requests fail ([7c21df1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/7c21df1698751197ca0106bc2889c113b66912a2))
+* improve logging performance ([a66255a](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/a66255a01c522750d47e927aadac3f018659c8d9))
+* LSP overlapping marks ([6e4e12f](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/6e4e12f7892333a7e4a5d7841ca1865a815c1bd5))
+* make LSP colors work with 0.10 and simplify code ([3bb9413](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/3bb94137940bbe7d4a009d03852059ffe2d93328))
+
 ## [3.2.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.1.0...v3.2.0) (2025-03-18)
 
 
