@@ -33,7 +33,9 @@ local function apply_new_color(color)
 
   vim.schedule(function()
     if pending_edit.changedtick ~= vim.api.nvim_buf_get_changedtick(pending_edit.bufnr) then
-      utils.log(string.format("Not applying new color '%s' because the buffer has changed", color), vim.log.levels.WARN)
+      utils.log(function()
+        return string.format("Not applying new color '%s' because the buffer has changed", color)
+      end, vim.log.levels.WARN)
       return
     end
 
@@ -47,7 +49,9 @@ local function apply_new_color(color)
     )
     pending_edit = nil
 
-    utils.log("Applied '" .. color .. "'", vim.log.levels.INFO)
+    utils.log(function()
+      return "Applied '" .. color .. "'"
+    end, vim.log.levels.INFO)
   end)
 end
 
@@ -59,7 +63,9 @@ local function start_app()
 
   local stdout = function(err, data)
     if data then
-      utils.log("Stdout: " .. data, vim.log.levels.DEBUG)
+      utils.log(function()
+        return "Stdout: " .. data
+      end, vim.log.levels.DEBUG)
       if data == "" then
         utils.log("Picker returned an empty string", vim.log.levels.WARN)
         return
@@ -67,7 +73,9 @@ local function start_app()
       local color = data:match("^[^\r\n]*")
       apply_new_color(color)
     elseif err then
-      utils.log("Stdout error: " .. err, vim.log.levels.DEBUG)
+      utils.log(function()
+        return "Stdout error: " .. err
+      end, vim.log.levels.DEBUG)
     else
       utils.log("Stdout closed", vim.log.levels.DEBUG)
     end
@@ -77,7 +85,9 @@ local function start_app()
     if data then
       utils.log(data, vim.log.levels.WARN)
     elseif err then
-      utils.log("Stderr error: " .. err, vim.log.levels.DEBUG)
+      utils.log(function()
+        return "Stderr error: " .. err
+      end, vim.log.levels.DEBUG)
     else
       utils.log("Stderr closed", vim.log.levels.DEBUG)
     end
@@ -100,9 +110,13 @@ local function start_app()
 
   vim.system(cmd, { stdout = stdout, stderr = stderr }, function(res)
     if res.code ~= 0 then
-      utils.log("App failed and exited with code " .. res.code, vim.log.levels.DEBUG)
+      utils.log(function()
+        return "App failed and exited with code " .. res.code
+      end, vim.log.levels.DEBUG)
     end
-    utils.log("App exited successfully " .. vim.inspect(res), vim.log.levels.DEBUG)
+    utils.log(function()
+      return "App exited successfully " .. vim.inspect(res)
+    end, vim.log.levels.DEBUG)
   end)
 
   return true
@@ -208,7 +222,9 @@ function M.pick_under_cursor(opts)
     return false
   end
 
-  utils.log(string.format("Found color '%s' at position %s", res.color, vim.inspect(res.pos)), vim.log.levels.DEBUG)
+  utils.log(function()
+    return string.format("Found color '%s' at position %s", res.color, vim.inspect(res.pos))
+  end, vim.log.levels.DEBUG)
 
   local color_format = nil
   if type(opts) == "string" then

@@ -8,7 +8,9 @@ return {
     if success then
       return parser
     end
-    utils.log("Parser load failed:\n" .. vim.inspect(parser), vim.log.levels.DEBUG)
+    utils.log(function()
+      return "Parser load failed:\n" .. vim.inspect(parser)
+    end, vim.log.levels.DEBUG)
     return nil
   end,
 }

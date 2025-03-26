@@ -747,7 +747,9 @@ function M.process_update_lsp(bufnr, callback)
     if not status then
       done = done + 1
       buf_data.lsp_colors[client.name] = {}
-      utils.log(format("Failed LSP request with %s", client.name), vim.log.levels.DEBUG)
+      utils.log(function()
+        return format("Failed LSP request with %s", client.name)
+      end, vim.log.levels.DEBUG)
     end
 
     ::continue::

@@ -77,14 +77,18 @@ end
 function M.write_parser_version()
   vim.uv.fs_open(utils.get_path() .. "/parser_version", "w", 438, function(err, fd)
     if err or not fd then
-      utils.log("Couldn't open version file for writing: " .. (err or ""), vim.log.levels.WARN)
+      utils.log(function()
+        return "Couldn't open version file for writing: " .. (err or "")
+      end, vim.log.levels.WARN)
       return
     end
 
     vim.uv.fs_write(fd, version, 0, function(write_err)
       vim.uv.fs_close(fd)
       if write_err then
-        utils.log("Couldn't write version file:" .. write_err, vim.log.levels.WARN)
+        utils.log(function()
+          return "Couldn't write version file:" .. write_err
+        end, vim.log.levels.WARN)
       end
     end)
   end)
@@ -169,7 +173,9 @@ function M.download_app(callback)
 
         os.remove(cwd .. "/" .. archive_basename)
 
-        utils.log("Extraction success, binary in " .. cwd, vim.log.levels.DEBUG)
+        utils.log(function()
+          return "Extraction success, binary in " .. cwd
+        end, vim.log.levels.DEBUG)
         utils.log("Picker app downloaded", vim.log.levels.INFO)
 
         callback(nil)
@@ -247,7 +253,9 @@ function M.download_parser(callback)
 
       M.write_parser_version()
 
-      utils.log("Parser located at " .. cwd, vim.log.levels.DEBUG)
+      utils.log(function()
+        return "Parser located at " .. cwd
+      end, vim.log.levels.DEBUG)
       utils.log("Parser downloaded", vim.log.levels.INFO)
       callback(nil)
     end)

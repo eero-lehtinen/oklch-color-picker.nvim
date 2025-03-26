@@ -8,12 +8,12 @@ function M.setup(opts_)
   opts = opts_
 end
 
----@param msg string
+---@param fn_or_msg (fun(): string)|string
 ---@param level integer
-function M.log(msg, level)
+function M.log(fn_or_msg, level)
   if level >= opts.log_level then
     vim.schedule(function()
-      msg = "oklch-color-picker: " .. msg
+      local msg = "oklch-color-picker: " .. (type(fn_or_msg) == "string" and fn_or_msg or fn_or_msg())
 
       if level == vim.log.levels.INFO then
         -- trim beginning until echospace
@@ -34,8 +34,8 @@ end
 --- @param pattern string
 --- @param details string
 function M.report_invalid_pattern(pattern_list_name, i, pattern, details)
-  M.log(
-    string.format(
+  M.log(function()
+    return string.format(
       [[
 Pattern %s[%d] = '%s' is invalid: %s
 
@@ -45,9 +45,8 @@ The pattern should contain exactly two empty groups '()' to designate the replac
       i,
       pattern,
       details
-    ),
-    vim.log.levels.ERROR
-  )
+    )
+  end, vim.log.levels.ERROR)
 end
 
 ---@return boolean
