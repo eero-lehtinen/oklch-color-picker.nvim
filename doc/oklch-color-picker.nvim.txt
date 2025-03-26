@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*    For NVIM v0.10.0   Last change: 2025 March 25
+*oklch-color-picker.nvim.txt*    For NVIM v0.10.0   Last change: 2025 March 26
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -24,8 +24,8 @@ FEATURES                                    *oklch-color-picker.nvim-features*
     - Hex literal (`0xRRGGBB`, `0xAARRGGBB`)
     - Tailwind (e.g. `bg-red-800`)
     - Can recognize any numbers in brackets as a color (e.g., `vec3(0.5, 0.5, 0.5)`)
-    - LSP colors
     - Custom formats can be defined
+- LSP colors
 - Integrated graphical color picker using the perceptual Oklch color space:
     - Consists of lightness, chroma, and hue for intuitive adjustments
     - Based on Oklab <https://bottosson.github.io/posts/oklab/> theory, using Lr as an improved lightness estimate <https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab>
