@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*    For NVIM v0.10.0   Last change: 2025 March 26
+*oklch-color-picker.nvim.txt*    For NVIM v0.10.0   Last change: 2025 March 27
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -109,7 +109,8 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
         -- "tailwindcss", "cssls", and "css_variables" all highlight small files in 2-10ms
         -- (still a lot slower than the 0.1 ms of this plugin, but they give some extra features).
         -- Some LSPs are very slow like "svelte" (>1000 ms) even in tiny files and don't give new features.
-        --- "lua_ls" is also not worth enabling because it never finds any colors.
+        -- "lua_ls" is also not worth enabling because it never finds any colors.
+        -- set `enabled_lsps = true` to enable all LSPs anyways.
         enabled_lsps = { "tailwindcss", "cssls", "css_variables" },
         -- Async delay in ms, LSPs also have their own latency.
         lsp_delay = 120,
