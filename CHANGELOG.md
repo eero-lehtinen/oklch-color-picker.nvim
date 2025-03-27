@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.3.0...v3.4.0) (2025-03-27)
+
+
+### Features
+
+* allow enabling all LSPs ([cff1b1d](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/cff1b1daabe1eb9abfd1530f923d2ad9875a0e08))
+
 ## [3.3.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.2.0...v3.3.0) (2025-03-26)
 
 
