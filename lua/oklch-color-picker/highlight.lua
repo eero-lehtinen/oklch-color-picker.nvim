@@ -31,8 +31,8 @@ local ns
 ---@type number
 local gr
 
----@type { [string]: boolean }
-local enabled_lsps = {}
+---@type fun(client: string): boolean
+local lsp_enabled
 
 --- @param opts_ oklch.highlight.Opts
 --- @param patterns_ oklch.FinalPatternList[]
@@ -49,9 +49,21 @@ function M.setup(opts_, patterns_, auto_download)
 
   M.update_emphasis_values()
 
-  enabled_lsps = {}
-  for _, lsp in ipairs(opts.enabled_lsps) do
-    enabled_lsps[lsp] = true
+  if type(opts.enabled_lsps) == "boolean" then
+    local value = opts.enabled_lsps --[[@as boolean]]
+    lsp_enabled = function()
+      return value
+    end
+  elseif type(opts.enabled_lsps) == "table" then
+    local enabled_lsps = {}
+    for _, lsp in
+      ipairs(opts.enabled_lsps --[=[@as string[]]=])
+    do
+      enabled_lsps[lsp] = true
+    end
+    lsp_enabled = function(client)
+      return enabled_lsps[client] == true
+    end
   end
 
   local on_downloaded = function(err)
@@ -690,7 +702,7 @@ function M.process_update_lsp(bufnr, callback)
   local expected = 0
 
   for _, client in ipairs(clients) do
-    if not enabled_lsps[client.name] then
+    if not lsp_enabled(client.name) then
       goto continue
     end
 

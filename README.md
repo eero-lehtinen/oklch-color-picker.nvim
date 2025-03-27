@@ -56,7 +56,6 @@ https://github.com/user-attachments/assets/822b5717-133d-4caf-a198-cbe3337bf87a
 
 <img width=550 src="https://github.com/user-attachments/assets/05750119-acc0-4e4e-b923-fe19005bde2f">
 
-
 ## Default Options
 
 ```lua
@@ -89,7 +88,8 @@ local default_opts = {
     -- "tailwindcss", "cssls", and "css_variables" all highlight small files in 2-10ms
     -- (still a lot slower than the 0.1 ms of this plugin, but they give some extra features).
     -- Some LSPs are very slow like "svelte" (>1000 ms) even in tiny files and don't give new features.
-    --- "lua_ls" is also not worth enabling because it never finds any colors.
+    -- "lua_ls" is also not worth enabling because it never finds any colors.
+    -- set `enabled_lsps = true` to enable all LSPs anyways.
     enabled_lsps = { "tailwindcss", "cssls", "css_variables" },
     -- Async delay in ms, LSPs also have their own latency.
     lsp_delay = 120,
@@ -133,10 +133,6 @@ local default_opts = {
 
 <img width=600 src="https://github.com/user-attachments/assets/6d4774c6-80a1-46ef-a9cc-f17ae8553c8a">
 
-
-
-
-
 ### Disable default patterns by setting them to false:
 
 ```lua
@@ -178,8 +174,6 @@ opts = {
   }
 }
 ```
-
-
 
 ## API & Commands
 
