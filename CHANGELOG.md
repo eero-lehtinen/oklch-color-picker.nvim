@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.0...v3.4.1) (2025-03-29)
+
+
+### Bug Fixes
+
+* take into account LSP position encoding ([#35](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/35)) ([3bd4019](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/3bd4019125ce9e7845559fccb09339976e24fb50))
+
 ## [3.4.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.3.0...v3.4.0) (2025-03-27)
 
 
