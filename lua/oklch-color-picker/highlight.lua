@@ -538,6 +538,7 @@ function M.make_set_extmark()
   ---@type vim.api.keyset.set_extmark
   local reuse_mark = {
     priority = opts.priority,
+    strict = false,
   }
   if opts.style == "background" or opts.style == "foreground" then
     set_extmark = function(bufnr, namespace, line_n, start_col, end_col, group)
@@ -679,13 +680,35 @@ end
 
 local color_method = "textDocument/documentColor"
 
----@alias LspColor ColorResult|{ packed_color: integer }
+---@alias LspColor lsp.ColorInformation|{ packed_color: integer }
 
----@class ColorResult
----@field color { alpha: number, blue: number, green: number, red: number }
----@field range { start: { line: number, character: number }, ["end"]: { line: number, character: number } }
+local byteindex
+if vim.fn.has("nvim-0.11") == 1 then
+  byteindex = function(line, col, offset_encoding)
+    return vim.str_byteindex(line, offset_encoding, col, false)
+  end
+else
+  byteindex = function(line, col, offset_encoding)
+    return vim.lsp.util._str_byteindex_enc(line, col, offset_encoding)
+  end
+end
+
+---@param range lsp.Range
+---@param bufnr integer
+---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
+local function convert_lsp_range_to_nvim(range, bufnr, offset_encoding)
+  local line = vim.api.nvim_buf_get_lines(bufnr, range.start.line, range.start.line + 1, false)[1] or ""
+  range.start.character = byteindex(line, range.start.character, offset_encoding)
+  if range["end"].line == range.start.line then
+    range["end"].character = byteindex(line, range["end"].character, offset_encoding)
+  else
+    range["end"].line = range.start.line
+    range["end"].character = #line
+  end
+end
 
 ---@param bufnr integer
+---@param callback fun()
 function M.process_update_lsp(bufnr, callback)
   local buf_data = M.bufs[bufnr]
   if buf_data == nil then
@@ -720,6 +743,8 @@ function M.process_update_lsp(bufnr, callback)
           nvim_buf_clear_namespace(bufnr, lsp_ns, 0, -1)
 
           for _, result in ipairs(results) do
+            convert_lsp_range_to_nvim(result.range, bufnr, client.offset_encoding or "utf-16")
+
             local line_n = result.range.start.line
             get_mark_start[1] = line_n
             get_mark_end[1] = line_n
