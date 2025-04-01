@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.1...v3.4.2) (2025-04-01)
+
+
+### Performance Improvements
+
+* make overlapping hl check slightly faster and cleaner ([251c48e](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/251c48e7cb0c8c8180c1479d62df99b17055d9e2))
+
 ## [3.4.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.0...v3.4.1) (2025-03-29)
 
 
