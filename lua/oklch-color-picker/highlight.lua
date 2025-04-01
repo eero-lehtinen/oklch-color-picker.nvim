@@ -34,6 +34,8 @@ local gr
 ---@type fun(client: string): boolean
 local lsp_enabled
 
+local hl_group = {}
+
 --- @param opts_ oklch.highlight.Opts
 --- @param patterns_ oklch.FinalPatternList[]
 --- @param auto_download boolean
@@ -46,6 +48,11 @@ function M.setup(opts_, patterns_, auto_download)
     opts.enabled = false
     return
   end
+
+  hl_group = {
+    bold = opts.bold,
+    italic = opts.italic,
+  }
 
   M.update_emphasis_values()
 
@@ -497,15 +504,10 @@ local function compute_color_group(rgb)
 
   local group_name = format("OCP_%06x", rgb)
 
-  local group = {
-    bold = opts.bold,
-    italic = opts.italic,
-  }
-
   if opts.style == "background" then
     local opposite = is_light(rgb_unpack(rgb)) and 0x000000 or 0xFFFFFF
-    group.fg = opposite
-    group.bg = rgb
+    hl_group.fg = opposite
+    hl_group.bg = rgb
   else
     local color = rgb_unpack(rgb)
     local bg = nil
@@ -518,11 +520,11 @@ local function compute_color_group(rgb)
       bg = M.rgb_pack(color[1], color[2], color[3])
     end
 
-    group.fg = rgb
-    group.bg = bg
+    hl_group.fg = rgb
+    hl_group.bg = bg
   end
 
-  nvim_set_hl(0, group_name, group)
+  nvim_set_hl(0, group_name, hl_group)
 
   hex_color_groups[rgb] = group_name
 
