@@ -619,8 +619,15 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
   nvim_buf_clear_namespace(bufnr, ns, from_line, from_line + #lines)
 
   local lsp_namespaces_list = M.lsp_namespaces_list
-  local get_mark_start = {}
-  local get_mark_end = {}
+  local get_mark_start = { 0, 0 }
+  local get_mark_end = { 0, 0 }
+
+  local has_no_space = function(namespace)
+    return not rawequal(
+      next(nvim_buf_get_extmarks(bufnr, namespace, get_mark_start, get_mark_end, { overlap = true, limit = 1 })),
+      nil
+    )
+  end
 
   for i, line in ipairs(lines) do
     local line_n = from_line + i - 1
@@ -638,13 +645,11 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
           get_mark_end[2] = match_end - 1
 
           -- Try to avoid previous normal marks and LSP marks
-          if #nvim_buf_get_extmarks(bufnr, ns, get_mark_start, get_mark_end, { overlap = true, limit = 1 }) > 0 then
+          if has_no_space(ns) then
             has_space = false
           else
             for _, lsp_ns in ipairs(lsp_namespaces_list) do
-              if
-                #nvim_buf_get_extmarks(bufnr, lsp_ns, get_mark_start, get_mark_end, { overlap = true, limit = 1 }) > 0
-              then
+              if has_no_space(lsp_ns) then
                 has_space = false
                 break
               end
