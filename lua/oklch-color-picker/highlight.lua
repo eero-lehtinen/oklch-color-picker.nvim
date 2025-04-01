@@ -495,7 +495,6 @@ local function compute_color_group(rgb)
     return cached_group_name
   end
 
-  local hex = format("#%06x", rgb)
   local group_name = format("OCP_%06x", rgb)
 
   local group = {
@@ -504,22 +503,22 @@ local function compute_color_group(rgb)
   }
 
   if opts.style == "background" then
-    local opposite = is_light(rgb_unpack(rgb)) and "Black" or "White"
+    local opposite = is_light(rgb_unpack(rgb)) and 0x000000 or 0xFFFFFF
     group.fg = opposite
-    group.bg = hex
+    group.bg = rgb
   else
     local color = rgb_unpack(rgb)
-    local bg = "NONE"
+    local bg = nil
 
     if emphasis_threshold < 1. and color_distance(bg_color, color) < emphasis_threshold * 765 then
       local emphasis = is_light(color) and light_emphasis or dark_emphasis
       for i in ipairs(color) do
         color[i] = min(max(color[i] + emphasis, 0), 255)
       end
-      bg = format("#%02x%02x%02x", color[1], color[2], color[3])
+      bg = M.rgb_pack(color[1], color[2], color[3])
     end
 
-    group.fg = hex
+    group.fg = rgb
     group.bg = bg
   end
 
