@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.4.3](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.2...v3.4.3) (2025-04-01)
+
+
+### Performance Improvements
+
+* reuse hl group table ([d1f0790](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/d1f07901f0ca942fe29d5aa6576cff05a7b83a25))
+* use considerably faster (and undocumented) integer colors in nvim hl ([605309d](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/605309d7e3e2cf630bee90949d86980a8de5ce55))
+
 ## [3.4.2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.1...v3.4.2) (2025-04-01)
 
 
