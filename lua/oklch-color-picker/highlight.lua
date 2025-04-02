@@ -626,11 +626,25 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
   local get_mark_start = { 0, 0 }
   local get_mark_end = { 0, 0 }
 
-  local has_no_space = function(namespace)
-    return not rawequal(
+  local space_check_ns = function(namespace)
+    return rawequal(
       next(nvim_buf_get_extmarks(bufnr, namespace, get_mark_start, get_mark_end, { overlap = true, limit = 1 })),
       nil
     )
+  end
+
+  local has_space = function(match_start, match_end)
+    get_mark_start[2] = match_start - 1
+    get_mark_end[2] = match_end - 1
+    if not space_check_ns(ns) then
+      return false
+    end
+    for _, lsp_ns in ipairs(lsp_namespaces_list) do
+      if not space_check_ns(lsp_ns) then
+        return false
+      end
+    end
+    return true
   end
 
   for i, line in ipairs(lines) do
@@ -644,27 +658,9 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
         local match_start, match_end = find(line, pattern.cheap, start)
 
         while match_start ~= nil do
-          local has_space = true
-          get_mark_start[2] = match_start - 1
-          get_mark_end[2] = match_end - 1
-
-          -- Try to avoid previous normal marks and LSP marks
-          if has_no_space(ns) then
-            has_space = false
-          else
-            for _, lsp_ns in ipairs(lsp_namespaces_list) do
-              if has_no_space(lsp_ns) then
-                has_space = false
-                break
-              end
-            end
-          end
-
-          if has_space then
-            local replace_start, replace_end
-            if pattern.simple_groups then
-              replace_start, replace_end = match_start, match_end
-            else
+          if has_space(match_start, match_end) then
+            local replace_start, replace_end = match_start, match_end
+            if not pattern.simple_groups then
               _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
               replace_end = replace_end - 1
             end
