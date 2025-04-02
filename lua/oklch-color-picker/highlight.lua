@@ -195,6 +195,16 @@ function M.on_buf_enter(bufnr)
     return
   end
 
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+
+  local path = vim.api.nvim_buf_get_name(bufnr)
+  local stat, err = vim.uv.fs_stat(path)
+
+  if not err and stat and stat.size / line_count > 3000 then
+    utils.log("Minified file detected, skipping highlighting", vim.log.levels.DEBUG)
+    return
+  end
+
   if M.bufs[bufnr] then
     M.update_view(bufnr)
     return
@@ -385,13 +395,6 @@ function M.process_update(bufnr)
   local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
 
   local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
-
-  -- ignore very long lines
-  for i, line in ipairs(lines) do
-    if string.len(line) > 4000 then
-      lines[i] = ""
-    end
-  end
 
   M.highlight_lines(bufnr, lines, from_line, ft)
 
