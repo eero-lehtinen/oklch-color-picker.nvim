@@ -9,7 +9,7 @@ local M = {}
 
 ---@class oklch.Opts
 ---@field highlight? oklch.highlight.Opts
----@field patterns? table<string, oklch.PatternList>
+---@field patterns? table<string, oklch.PatternList|false>
 ---@field register_cmds? boolean
 --- Download Rust binaries automatically.
 ---@field auto_download? boolean
