@@ -192,6 +192,11 @@ M.buf_attached = {}
 
 --- @param bufnr number
 function M.on_buf_enter(bufnr)
+  if M.bufs[bufnr] then
+    M.update_view(bufnr)
+    return
+  end
+
   local buftype = vim.api.nvim_get_option_value("buftype", { buf = bufnr })
   if buftype ~= "" then
     return
@@ -204,11 +209,6 @@ function M.on_buf_enter(bufnr)
 
   if not err and stat and stat.size / line_count > 3000 then
     utils.log("Minified file detected, skipping highlighting", vim.log.levels.DEBUG)
-    return
-  end
-
-  if M.bufs[bufnr] then
-    M.update_view(bufnr)
     return
   end
 
