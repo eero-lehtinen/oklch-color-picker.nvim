@@ -622,6 +622,13 @@ local function get_lsp_namespace(client_name, buf_data)
   return namespace
 end
 
+local mark_end_cache = {}
+local mark_text_cache = {}
+
+local line_extmarks = {}
+local lsp_line_extmarks = {}
+local new_line_extmarks = {}
+
 ---@param bufnr integer
 ---@param lines string[]
 ---@param from_line integer
@@ -631,36 +638,61 @@ function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
   local ft_patterns = get_ft_patterns(ft)
   local parse = M.parse
 
-  nvim_buf_clear_namespace(bufnr, ns, from_line, from_line + #lines)
-
   local get_mark_start = { 0, 0 }
   local get_mark_end = { 0, 0 }
-
-  local space_check_ns = function(namespace)
-    return rawequal(
-      next(nvim_buf_get_extmarks(bufnr, namespace, get_mark_start, get_mark_end, { overlap = true, limit = 1 })),
-      nil
-    )
-  end
-
-  local has_space = function(match_start, match_end)
-    get_mark_start[2] = match_start - 1
-    get_mark_end[2] = match_end - 1
-    if not space_check_ns(ns) then
-      return false
-    end
-    for _, lsp_ns in ipairs(buf_data.lsp_namespaces_list) do
-      if not space_check_ns(lsp_ns) then
-        return false
-      end
-    end
-    return true
-  end
 
   for i, line in ipairs(lines) do
     local line_n = from_line + i - 1
     get_mark_start[1] = line_n
+    get_mark_start[2] = 0
     get_mark_end[1] = line_n
+    get_mark_end[2] = -1
+
+    local new_line_extmarks_length = 0
+
+    line_extmarks = nvim_buf_get_extmarks(bufnr, ns, get_mark_start, get_mark_end, {})
+    for _, lsp_ns in ipairs(buf_data.lsp_namespaces_list) do
+      lsp_line_extmarks[lsp_ns] = nvim_buf_get_extmarks(bufnr, lsp_ns, get_mark_start, get_mark_end, {})
+    end
+
+    ---@param match_start integer
+    ---@param match_end integer
+    ---@param text string
+    ---@return boolean|integer
+    local should_create_extmark = function(match_start, match_end, text)
+      for i = 2, new_line_extmarks_length, 2 do
+        if new_line_extmarks[i - 1] <= match_end and new_line_extmarks[i] > match_start then
+          return false
+        end
+      end
+
+      for _, lsp_ns in ipairs(buf_data.lsp_namespaces_list) do
+        for _, extmark in ipairs(lsp_line_extmarks[lsp_ns]) do
+          if extmark[3] <= match_end and mark_end_cache[extmark[1]] > match_start then
+            return false
+          end
+        end
+      end
+
+      for _, extmark in ipairs(line_extmarks) do
+        if extmark[3] <= match_end then
+          local extmark_end = mark_end_cache[extmark[1]]
+          if extmark_end > match_start then
+            if extmark[3] == match_start and extmark_end == match_end and mark_text_cache[extmark[1]] == text then
+              -- The old extmark is the same as the new one, so reuse it.
+              -- Mark the extmark as used so we don't delete it.
+              extmark[2] = -1
+              return false
+            end
+
+            -- We are overlapping with a previous extmark, but it's not the same as the new one, so override it.
+            return true
+          end
+        end
+      end
+
+      return true
+    end
 
     for _, pattern_list in ipairs(ft_patterns) do
       for _, pattern in ipairs(pattern_list) do
@@ -668,26 +700,42 @@ function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
         local match_start, match_end = find(line, pattern.cheap, start)
 
         while match_start ~= nil do
-          if has_space(match_start, match_end) then
-            local replace_start, replace_end = match_start, match_end
-            if not pattern.simple_groups then
-              _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
-              replace_end = replace_end - 1
-            end
+          local replace_start, replace_end = match_start, match_end
+          if not pattern.simple_groups then
+            _, _, replace_start, replace_end = find(line, pattern.grouped, match_start)
+            replace_end = replace_end - 1
+          end
+          match_start = match_start - 1
 
-            local color = sub(line, replace_start --[[@as number]], replace_end)
-            local rgb = pattern_list.custom_parse and pattern_list.custom_parse(color)
-              or parse(color, pattern_list.format)
+          local text = sub(line, replace_start --[[@as number]], replace_end)
+          if
+            should_create_extmark(match_start, match_end --[[@as number]], text)
+          then
+            local rgb = pattern_list.custom_parse and pattern_list.custom_parse(text)
+              or parse(text, pattern_list.format)
 
             if rgb then
               local group = compute_color_group(rgb)
-              set_extmark(bufnr, ns, line_n, match_start - 1, match_end --[[@as integer]], group)
+              local mark_id = set_extmark(bufnr, ns, line_n, match_start, match_end --[[@as integer]], group)
+
+              mark_end_cache[mark_id] = match_end
+              mark_text_cache[mark_id] = text
+              new_line_extmarks_length = new_line_extmarks_length + 2
+              new_line_extmarks[new_line_extmarks_length - 1] = match_start
+              new_line_extmarks[new_line_extmarks_length] = match_end
             end
           end
 
           start = match_end + 1
           match_start, match_end = find(line, pattern.cheap, start)
         end
+      end
+    end
+
+    for _, extmark in ipairs(line_extmarks) do
+      if extmark[2] ~= -1 then
+        -- The extmark was not used, so delete it.
+        nvim_buf_del_extmark(bufnr, ns, extmark[1])
       end
     end
   end
