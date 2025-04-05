@@ -180,6 +180,8 @@ end
 ---@field lsp_colors table<string, LspColor[]>
 ---@field lsp_in_flight boolean|nil
 ---@field lsp_queued boolean|nil
+---@field lsp_namespaces table<string, integer>
+---@field lsp_namespaces_list table<integer, integer>
 
 --- @type { [integer]: BufData }
 M.bufs = {}
@@ -213,6 +215,8 @@ function M.on_buf_enter(bufnr)
   M.bufs[bufnr] = {
     prev_view = { top = 0, bottom = 0 },
     lsp_colors = {},
+    lsp_namespaces = {},
+    lsp_namespaces_list = {},
   }
 
   M.update_view(bufnr)
@@ -396,7 +400,7 @@ function M.process_update(bufnr)
 
   local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
 
-  M.highlight_lines(bufnr, lines, from_line, ft)
+  M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
 
   if M.perf_logging then
     local ms = (vim.uv.hrtime() - t) / 1000000
@@ -601,13 +605,19 @@ local function get_ft_patterns(ft)
 end
 
 M.lsp_namespaces = {}
-M.lsp_namespaces_list = {}
-local function get_lsp_namespace(clientName)
-  local namespace = M.lsp_namespaces[clientName]
+
+---@param client_name string
+---@param buf_data BufData
+local function get_lsp_namespace(client_name, buf_data)
+  local namespace = M.lsp_namespaces[client_name]
+
   if namespace == nil then
-    namespace = vim.api.nvim_create_namespace("OklchColorPickerLsp_" .. clientName)
-    table.insert(M.lsp_namespaces_list, namespace)
-    M.lsp_namespaces[clientName] = namespace
+    namespace = vim.api.nvim_create_namespace("OklchColorPickerLsp_" .. client_name)
+    M.lsp_namespaces[client_name] = namespace
+  end
+  if buf_data.lsp_namespaces[client_name] == nil then
+    buf_data.lsp_namespaces[client_name] = namespace
+    table.insert(buf_data.lsp_namespaces_list, namespace)
   end
   return namespace
 end
@@ -616,13 +626,13 @@ end
 ---@param lines string[]
 ---@param from_line integer
 ---@param ft string
-function M.highlight_lines(bufnr, lines, from_line, ft)
+---@param buf_data BufData
+function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
   local ft_patterns = get_ft_patterns(ft)
   local parse = M.parse
 
   nvim_buf_clear_namespace(bufnr, ns, from_line, from_line + #lines)
 
-  local lsp_namespaces_list = M.lsp_namespaces_list
   local get_mark_start = { 0, 0 }
   local get_mark_end = { 0, 0 }
 
@@ -639,7 +649,7 @@ function M.highlight_lines(bufnr, lines, from_line, ft)
     if not space_check_ns(ns) then
       return false
     end
-    for _, lsp_ns in ipairs(lsp_namespaces_list) do
+    for _, lsp_ns in ipairs(buf_data.lsp_namespaces_list) do
       if not space_check_ns(lsp_ns) then
         return false
       end
@@ -744,7 +754,7 @@ function M.process_update_lsp(bufnr, callback)
         if not err and results then
           local get_mark_start = {}
           local get_mark_end = {}
-          local lsp_ns = get_lsp_namespace(client.name)
+          local lsp_ns = get_lsp_namespace(client.name, buf_data)
           nvim_buf_clear_namespace(bufnr, lsp_ns, 0, -1)
 
           for _, result in ipairs(results) do
