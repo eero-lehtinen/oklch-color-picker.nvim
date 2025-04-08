@@ -824,7 +824,8 @@ function M.process_update_lsp(bufnr, callback)
               float_to_int8(result.color.blue)
             )
             local group = compute_color_group(result.packed_color)
-            set_extmark(bufnr, lsp_ns, line_n, get_mark_start[2], get_mark_end[2], group)
+            local mark_id = set_extmark(bufnr, lsp_ns, line_n, get_mark_start[2], get_mark_end[2], group)
+            mark_end_cache[mark_id] = get_mark_end[2]
           end
         end
 
