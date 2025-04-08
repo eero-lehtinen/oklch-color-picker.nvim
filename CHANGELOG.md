@@ -1,5 +1,21 @@
 # Changelog
 
+## [3.4.4](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.3...v3.4.4) (2025-04-08)
+
+
+### Bug Fixes
+
+* include false in pattern type definition ([90b9d9c](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/90b9d9c8115cba9175933e4f1923d70fadf5d176))
+* lsp not setting mark end ([4b68fb1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/4b68fb1bb9dd3410c2a18823b682ecf2e5331ad2))
+
+
+### Performance Improvements
+
+* check file size only on first open ([fe69598](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/fe69598fde4dbc7877c2846d87539e10a1f6ca7d))
+* check only active lsp mark positions for current buffer ([afe2aaa](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/afe2aaa9113856186f04550b0ab213b7924ed9c5))
+* only check for long lines when opening a file ([a2463c1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/a2463c1fb9d03f0bbbea22f81613ad7ab978e646))
+* reuse highlights when possible ([72f6b3d](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/72f6b3d38e9a6256521c5f8abd97ac0b5a61a070))
+
 ## [3.4.3](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.2...v3.4.3) (2025-04-01)
 
 
