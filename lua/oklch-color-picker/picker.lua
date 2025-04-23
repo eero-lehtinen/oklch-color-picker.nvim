@@ -177,7 +177,7 @@ local function find_color(bufnr, line, line_n, cursor_col, ft)
         and cursor_col < lsp_color.range["end"].character
       then
         local start = lsp_color.range.start.character + 1
-        local finish = lsp_color.range["end"].character
+        local finish = lsp_color.range["end"].character + 1
         local color = string.format("#%06x", lsp_color.packed_color)
         return {
           pos = { start, finish },
