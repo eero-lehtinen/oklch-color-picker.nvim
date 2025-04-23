@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.5](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.4...v3.4.5) (2025-04-23)
+
+
+### Bug Fixes
+
+* lsp color picker replace off by one error ([d13ded9](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/d13ded9db436addf38935ab64bafd39169d2c240))
+
 ## [3.4.4](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.3...v3.4.4) (2025-04-08)
 
 
