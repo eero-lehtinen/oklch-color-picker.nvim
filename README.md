@@ -250,7 +250,7 @@ I don't like how an insignificant feature like color highlighting can hog CPU re
 | TextChanged | < 0.1 ms                | < 0.1 ms           | 0.9 ms   | n/a                   |
 | InsertLeave | n/a                     | n/a                | n/a      | 8.2 ms                |
 
-When you open a new buffer, visible lines are processed. With a AMD Ryzen 9 9950X, this takes around 0.2 ms on a 65 rows by 120 cols window, full of text and 10 hex colors. In [the stress test file](./stress_test.txt), where the window is filled with 975 hex colors, the initial update takes 3 ms, more than half of which is unavoidable Nvim extmark (highlight) creation and assignment overhead.
+When you open a new buffer, visible lines are processed. With a AMD Ryzen 9 9950X, this takes around 0.2 ms on a 65 rows by 120 cols window, full of text and 10 hex colors. In [the stress test file](./stress_test.txt), where the window is filled with 975 hex colors, the initial update takes 2.5 ms, more than half of which is unavoidable Nvim extmark (highlight) creation and assignment overhead.
 
 When scrolling, visible lines are processed but incrementally. If you scroll 10 lines down, only those lines are processed. This means that scrolling between 1 and 65 lines can take 0.1 – 0.7 ms in the stress test file. Rehighlighting all visible lines takes 0.7 ms instead of the initial 2.5 ms because highlight groups are cached. Basically it's faster to see a color for the second time.
 
