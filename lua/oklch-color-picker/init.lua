@@ -43,7 +43,7 @@ local M = {}
 --- (still a lot slower than the 0.1 ms of this plugin, but they give some extra features).
 --- Some LSPs are very slow like "svelte" (>1000 ms) even in tiny files and don't give new features.
 --- "lua_ls" is also not worth enabling because it never finds any colors.
---- set `enabled_lsps = true` to enable all LSPs anyways.
+--- Set `enabled_lsps = true` to enable all LSPs anyways.
 ---@field enabled_lsps? string[]|true
 ---@field lsp_delay? number
 

@@ -86,10 +86,10 @@ local default_opts = {
     -- List of LSP clients that are allowed to highlight colors:
     -- By default, only fairly performant and useful LSPs are enabled.
     -- "tailwindcss", "cssls", and "css_variables" all highlight small files in 2-10ms
-    -- (still a lot slower than the 0.1 ms of this plugin, but they give some extra features).
+    -- (still a lot slower than the ~0.1 ms of this plugin, but they give some extra features).
     -- Some LSPs are very slow like "svelte" (>1000 ms) even in tiny files and don't give new features.
     -- "lua_ls" is also not worth enabling because it never finds any colors.
-    -- set `enabled_lsps = true` to enable all LSPs anyways.
+    -- Set `enabled_lsps = true` to enable all LSPs anyways.
     enabled_lsps = { "tailwindcss", "cssls", "css_variables" },
     -- Async delay in ms, LSPs also have their own latency.
     lsp_delay = 120,
@@ -252,7 +252,7 @@ I don't like how an insignificant feature like color highlighting can hog CPU re
 
 When you open a new buffer, visible lines are processed. With a AMD Ryzen 9 9950X, this takes around 0.2 ms on a 65 rows by 120 cols window, full of text and 10 hex colors. In [the stress test file](./stress_test.txt), where the window is filled with 975 hex colors, the initial update takes 2.5 ms, more than half of which is unavoidable Nvim extmark (highlight) creation and assignment overhead.
 
-When scrolling, visible lines are processed but incrementally. If you scroll 10 lines down, only those lines are processed. This means that scrolling between 1 and 65 lines can take 0.1 – 0.7 ms in the stress test file. Rehighlighting all visible lines takes 0.7 ms instead of the initial 2.5 ms because highlight groups are cached. Basically it's faster to see a color for the second time.
+When scrolling, visible lines are processed incrementally. If you scroll 10 lines down, only those lines are processed. This means that scrolling between 1 and 65 lines can take 0.1 – 0.7 ms in the stress test file. Rehighlighting all visible lines takes 0.7 ms instead of the initial 2.5 ms because highlight groups are cached. Basically it's faster to see a color for the second time.
 
 When editing, only the changed lines are updated. In the common case, when changing text on a line with no colors, the update takes < 0.01 ms (line being 120 chars wide). Doing the same in the stress test file takes < 0.1 ms. Of course with async, it takes zero time immediately after inserting text.
 
