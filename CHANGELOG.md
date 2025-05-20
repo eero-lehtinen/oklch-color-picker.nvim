@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.4.6](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.5...v3.4.6) (2025-05-20)
+
+
+### Bug Fixes
+
+* ignore only terminal buftype by default ([bc7f652](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/bc7f6523468b3de0f8f1c87fd57bb696db449146))
+* use BufNew in addition to BufEnter ([359dd16](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/359dd16289ef2a66bbe20dbe52c34a3df471aabd)), closes [#43](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/43)
+
 ## [3.4.5](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.4...v3.4.5) (2025-04-23)
 
 
