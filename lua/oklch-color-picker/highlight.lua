@@ -125,7 +125,7 @@ function M.enable()
   end
   opts.enabled = true
 
-  vim.api.nvim_create_autocmd("BufEnter", {
+  vim.api.nvim_create_autocmd({ "BufNew", "BufEnter" }, {
     group = gr,
     callback = function(data)
       M.on_buf_enter(data.buf)
@@ -194,16 +194,6 @@ M.buf_attached = {}
 function M.on_buf_enter(bufnr)
   if M.bufs[bufnr] then
     M.update_view(bufnr)
-    return
-  end
-
-  local line_count = vim.api.nvim_buf_line_count(bufnr)
-
-  local path = vim.api.nvim_buf_get_name(bufnr)
-  local stat, err = vim.uv.fs_stat(path)
-
-  if not err and stat and stat.size / line_count > 3000 then
-    utils.log("Minified file detected, skipping highlighting", vim.log.levels.DEBUG)
     return
   end
 
@@ -396,6 +386,12 @@ function M.process_update(bufnr)
   buf_data.pending_updates = nil
 
   local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
+
+  for i, line in ipairs(lines) do
+    if string.len(line) > 1000 then
+      lines[i] = sub(line, 1, 1000)
+    end
+  end
 
   local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
 
