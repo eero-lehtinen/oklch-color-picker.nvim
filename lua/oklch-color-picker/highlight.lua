@@ -197,11 +197,6 @@ function M.on_buf_enter(bufnr)
     return
   end
 
-  local buftype = vim.api.nvim_get_option_value("buftype", { buf = bufnr })
-  if buftype ~= "" then
-    return
-  end
-
   local line_count = vim.api.nvim_buf_line_count(bufnr)
 
   local path = vim.api.nvim_buf_get_name(bufnr)
@@ -321,6 +316,10 @@ end
 M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
   local buf_data = M.bufs[bufnr]
   if buf_data == nil then
+    return
+  end
+
+  if vim.api.nvim_get_option_value("buftype", { buf = bufnr }) == "terminal" then
     return
   end
 
