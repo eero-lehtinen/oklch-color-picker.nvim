@@ -182,6 +182,8 @@ end
 ---@field lsp_queued boolean|nil
 ---@field lsp_namespaces table<string, integer>
 ---@field lsp_namespaces_list table<integer, integer>
+---@field pending_timer uv.uv_timer_t
+---@field pending_timer_lsp uv.uv_timer_t
 
 --- @type { [integer]: BufData }
 M.bufs = {}
@@ -192,22 +194,8 @@ M.buf_attached = {}
 
 --- @param bufnr number
 function M.on_buf_enter(bufnr)
-  if M.bufs[bufnr] then
-    M.update_view(bufnr)
-    return
-  end
-
-  M.bufs[bufnr] = {
-    prev_view = { top = 0, bottom = 0 },
-    lsp_colors = {},
-    lsp_namespaces = {},
-    lsp_namespaces_list = {},
-  }
-
-  M.update_view(bufnr)
-
-  if M.buf_attached[bufnr] == nil then
-    vim.api.nvim_buf_attach(bufnr, false, {
+  if not M.buf_attached[bufnr] then
+    local attached = vim.api.nvim_buf_attach(bufnr, false, {
       on_bytes = function(_, _, _, start_row, _, _, old_end_row, _, _, new_end_row, _, _)
         if new_end_row < old_end_row then
           -- We deleted some lines.
@@ -222,13 +210,36 @@ function M.on_buf_enter(bufnr)
         M.update_view(bufnr)
       end,
       on_detach = function()
+        local buf_data = M.bufs[bufnr]
+        if buf_data then
+          buf_data.pending_timer:stop()
+          buf_data.pending_timer:close()
+          buf_data.pending_timer_lsp:stop()
+          buf_data.pending_timer_lsp:close()
+        end
         M.bufs[bufnr] = nil
         M.buf_attached[bufnr] = nil
         vim.api.nvim_clear_autocmds({ buffer = bufnr, group = gr })
       end,
     })
-    M.buf_attached[bufnr] = true
+    M.buf_attached[bufnr] = attached
   end
+
+  if M.bufs[bufnr] then
+    M.update_view(bufnr)
+    return
+  end
+
+  M.bufs[bufnr] = {
+    prev_view = { top = 0, bottom = 0 },
+    lsp_colors = {},
+    lsp_namespaces = {},
+    lsp_namespaces_list = {},
+    pending_timer = assert(vim.uv.new_timer()),
+    pending_timer_lsp = assert(vim.uv.new_timer()),
+  }
+
+  M.update_view(bufnr)
 
   vim.api.nvim_create_autocmd("WinScrolled", {
     group = gr,
@@ -276,10 +287,6 @@ function M.get_view(bufnr)
   return v[1], v[2]
 end
 
-local pending_timer = assert(vim.uv.new_timer())
-
-local pending_timer_lsp = assert(vim.uv.new_timer())
-
 M.perf_logging = false
 M.lsp_perf_logging = false
 
@@ -325,9 +332,8 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
   end
 
   local delay = assert(scroll and opts.scroll_delay or opts.edit_delay)
-  pending_timer:stop()
-
-  pending_timer:start(
+  buf_data.pending_timer:stop()
+  buf_data.pending_timer:start(
     delay,
     0,
     vim.schedule_wrap(function()
@@ -344,13 +350,13 @@ end)
 ---@param bufnr integer
 ---@param buf_data BufData
 M.update_lsp = function(bufnr, buf_data)
-  pending_timer_lsp:stop()
+  buf_data.pending_timer_lsp:stop()
   if buf_data.lsp_in_flight then
     buf_data.lsp_queued = true
     return
   end
 
-  pending_timer_lsp:start(
+  buf_data.pending_timer_lsp:start(
     opts.lsp_delay,
     0,
     vim.schedule_wrap(function()
