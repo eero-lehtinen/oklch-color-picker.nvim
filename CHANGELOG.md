@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.8](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.7...v3.4.8) (2025-05-21)
+
+
+### Bug Fixes
+
+* reload colors also on BufRead and VimResized ([5d2099e](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/5d2099e74b5f22c9afdd3c3ccec6c46466a7360e))
+
 ## [3.4.7](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.6...v3.4.7) (2025-05-21)
 
 
