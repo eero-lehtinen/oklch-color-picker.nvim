@@ -125,7 +125,7 @@ function M.enable()
   end
   opts.enabled = true
 
-  vim.api.nvim_create_autocmd({ "BufNew", "BufEnter" }, {
+  vim.api.nvim_create_autocmd({ "BufNew", "BufEnter", "BufReadPost" }, {
     group = gr,
     callback = function(data)
       M.on_buf_enter(data.buf)
@@ -241,7 +241,7 @@ function M.on_buf_enter(bufnr)
 
   M.update_view(bufnr)
 
-  vim.api.nvim_create_autocmd("WinScrolled", {
+  vim.api.nvim_create_autocmd({ "WinScrolled", "VimResized" }, {
     group = gr,
     buffer = bufnr,
     callback = function()
