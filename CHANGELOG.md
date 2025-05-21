@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.7](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.6...v3.4.7) (2025-05-21)
+
+
+### Bug Fixes
+
+* highlighting multiple windows simultaneously ([1a9b3fd](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/1a9b3fde1f740ea7ab85b9ef3e8957faa9fcbf6f))
+
 ## [3.4.6](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.5...v3.4.6) (2025-05-20)
 
 
