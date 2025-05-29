@@ -19,6 +19,7 @@
 - Integrated graphical color picker using the perceptual Oklch color space:
   - Consists of lightness, chroma, and hue for intuitive adjustments
   - Based on [Oklab](https://bottosson.github.io/posts/oklab/) theory, using L<sub>r</sub> as [an improved lightness estimate](https://bottosson.github.io/posts/colorpicker/#intermission---a-new-lightness-estimate-for-oklab)
+  - Vim-like navigation (click `?` to view latest binds) (mouse is still recommended)
 
 ## Installation
 
