@@ -165,7 +165,7 @@ function M.download_app(callback)
         )
         if err or not success then
           if utils.is_windows() then
-            utils.log("You likely have the picker app open somewhere. Close it and try again.", vim.log.levels.WARN)
+            err = "\n\nYou likely have the picker app open somewhere. Close it and try again.\n\n" .. err
           end
           callback("Picker app rename after download failed: " .. err)
           return
@@ -242,10 +242,7 @@ function M.download_parser(callback)
       local success, err = vim.uv.fs_rename(cwd .. "/" .. out_lib .. ".tmp", cwd .. "/" .. out_lib)
       if err or not success then
         if utils.is_windows() then
-          utils.log(
-            "You likely have other Neovim instances open and using the library. Close them and try again.",
-            vim.log.levels.WARN
-          )
+          err = "\n\nYou likely have another Nvim instance using the library. Close it and try again.\n\n" .. err
         end
         callback("Parser rename after download failed: " .. err)
         return
