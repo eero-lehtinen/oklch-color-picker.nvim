@@ -23,7 +23,7 @@ M.parse = nil
 local patterns = nil
 
 ---@type oklch.highlight.Opts
-local opts = nil
+local opts
 
 ---@type number
 local ns
@@ -151,13 +151,13 @@ function M.enable()
     end,
   })
 
-  local init = vim.schedule_wrap(function()
+  local init = function()
     for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
       if vim.api.nvim_buf_is_loaded(bufnr) then
         M.on_buf_enter(bufnr)
       end
     end
-  end)
+  end
 
   vim.api.nvim_create_autocmd("ColorScheme", {
     group = gr,
@@ -326,7 +326,7 @@ end
 --- @param from_line integer
 --- @param to_line integer
 --- @param scroll boolean
-M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
+function M.update_lines(bufnr, from_line, to_line, scroll)
   local buf_data = M.bufs[bufnr]
   if buf_data == nil then
     return
@@ -361,7 +361,7 @@ M.update_lines = vim.schedule_wrap(function(bufnr, from_line, to_line, scroll)
   if not scroll then
     M.update_lsp(bufnr, buf_data)
   end
-end)
+end
 
 ---@param bufnr integer
 ---@param buf_data BufData
