@@ -62,8 +62,6 @@ function M.setup(opts_, patterns_, auto_download)
     italic = opts.italic,
   }
 
-  M.update_emphasis_values()
-
   if type(opts.enabled_lsps) == "boolean" then
     local value = opts.enabled_lsps --[[@as boolean]]
     lsp_enabled = function()
@@ -133,6 +131,15 @@ function M.enable()
   end
   opts.enabled = true
 
+  M.clear_hl_cache()
+  M.update_emphasis_values()
+
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_loaded(bufnr) then
+      M.on_buf_enter(bufnr)
+    end
+  end
+
   vim.api.nvim_create_autocmd({ "BufNew", "BufEnter", "BufReadPost" }, {
     group = gr,
     callback = function(data)
@@ -151,24 +158,16 @@ function M.enable()
     end,
   })
 
-  local init = function()
-    for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_is_loaded(bufnr) then
-        M.on_buf_enter(bufnr)
-      end
-    end
-  end
-
   vim.api.nvim_create_autocmd("ColorScheme", {
     group = gr,
     callback = function()
-      M.clear_hl_cache()
-      M.update_emphasis_values()
-      init()
+      if not opts.enabled then
+        return
+      end
+      M.disable()
+      M.enable()
     end,
   })
-
-  init()
 end
 
 ---@return boolean -- true if enabled, false if disabled
