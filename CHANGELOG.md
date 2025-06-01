@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.5.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.0...v3.5.1) (2025-06-01)
+
+
+### Bug Fixes
+
+* ignore blink cmp menu as it already does colors ([a8bbc95](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/a8bbc95b500c0721d280a48ed45a371bbcc65bf7))
+* remove some unnecessary scheduling delays ([98cb083](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/98cb083ac004a72e75258b32f8c846f0cac4e3dd))
+* swapping color schemes ([153053a](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/153053add54ab1acd4a24b9ca88021f0caba5a93))
+
 ## [3.5.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.4.8...v3.5.0) (2025-05-29)
 
 
