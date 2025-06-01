@@ -64,10 +64,12 @@ https://github.com/user-attachments/assets/822b5717-133d-4caf-a198-cbe3337bf87a
 local default_opts = {
   highlight = {
     enabled = true,
+
     -- Async delay in ms.
     edit_delay = 60,
     -- Async delay in ms.
     scroll_delay = 0,
+
     -- Options: 'background'|'foreground'|'virtual_left'|'virtual_eol'|'foreground+virtual_left'|'foreground+virtual_eol'
     style = "background",
     bold = false,
@@ -76,6 +78,10 @@ local default_opts = {
     virtual_text = "■ ",
     -- Less than user hl by default (:help vim.highlight.priorities)
     priority = 175,
+
+    -- Prevent attaching to buffers with these filetypes.
+    ignore_ft = { "blink-cmp-menu" },
+
     -- Tint the highlight background for 'foreground' and 'virtual' styles when the color is too close to the editor background.
     -- Set `emphasis = false` to disable.
     emphasis = {

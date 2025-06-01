@@ -36,6 +36,9 @@ local lsp_enabled
 
 local hl_group = {}
 
+---@type table<string, boolean>
+local ignore_ft = {}
+
 --- @param opts_ oklch.highlight.Opts
 --- @param patterns_ oklch.FinalPatternList[]
 --- @param auto_download boolean
@@ -47,6 +50,11 @@ function M.setup(opts_, patterns_, auto_download)
     utils.log("Invalid config.highlight.style, highlighting disabled", vim.log.levels.ERROR)
     opts.enabled = false
     return
+  end
+
+  ignore_ft = {}
+  for _, ft in ipairs(opts.ignore_ft) do
+    ignore_ft[ft] = true
   end
 
   hl_group = {
@@ -193,7 +201,15 @@ M.bufs = {}
 M.buf_attached = {}
 
 --- @param bufnr number
-function M.on_buf_enter(bufnr)
+M.on_buf_enter = vim.schedule_wrap(function(bufnr)
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
+  local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+  if ignore_ft[ft] then
+    return
+  end
+
   if not M.buf_attached[bufnr] then
     local attached = vim.api.nvim_buf_attach(bufnr, false, {
       on_bytes = function(_, _, _, start_row, _, _, old_end_row, _, _, new_end_row, _, _)
@@ -248,7 +264,7 @@ function M.on_buf_enter(bufnr)
       M.update_view(bufnr)
     end,
   })
-end
+end)
 
 --- @param bufnr integer
 function M.update_view(bufnr)

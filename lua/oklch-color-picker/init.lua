@@ -35,6 +35,8 @@ local M = {}
 ---@field virtual_text? string
 --- Less than user hl by default (:help vim.highlight.priorities)
 ---@field priority? number
+---Prevent attaching to buffers with these filetypes.
+---@field ignore_ft? string[]
 ---Tint the highlight background for 'foreground' and 'virtual' styles when the color is too close to the editor background.
 ---@field emphasis? oklch.highlight.EmphasisOpts|false
 --- List of LSP clients that are allowed to highlight colors:
@@ -70,6 +72,7 @@ local default_opts = {
     italic = false,
     virtual_text = "■ ",
     priority = 175,
+    ignore_ft = { "blink-cmp-menu" },
     emphasis = {
       threshold = { 0.1, 0.17 },
       amount = { 45, -80 },
