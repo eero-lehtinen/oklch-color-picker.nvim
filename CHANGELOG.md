@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.3](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.2...v3.5.3) (2025-06-03)
+
+
+### Bug Fixes
+
+* permission issues in WSL ([b2e7193](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/b2e71937bd2abb1e8ad1b49ce03610ba0918925e))
+
 ## [3.5.2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.1...v3.5.2) (2025-06-03)
 
 
