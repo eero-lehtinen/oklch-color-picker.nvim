@@ -71,17 +71,17 @@ end
 
 M.exec = nil
 
----@return string|nil
+---@return string?, string?
 function M.executable_full_path()
   if M.exec then
-    return M.exec
+    return nil, M.exec
   end
   local exec = M.get_path() .. "/" .. M.executable()
   if vim.fn.executable(exec) == 1 then
     M.exec = exec
-    return M.exec
+    return nil, M.exec
   end
-  return nil
+  return "Picker executable not found at " .. exec, nil
 end
 
 --- @type string|nil

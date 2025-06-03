@@ -8,15 +8,18 @@ local M = {}
 
 ---@param callback fun(err: string|nil)
 function M.ensure_app_downloaded(callback)
-  M.validate_app_version(vim.schedule_wrap(function(correct_app_version)
-    if correct_app_version then
+  M.validate_app_version(vim.schedule_wrap(function(err)
+    if not err then
       callback(nil)
       return
     end
 
-    M.download_app(function(err)
-      if err then
-        callback("Couldn't download picker app: " .. err)
+    -- This error is not fatal, we just need to download the app.
+    utils.log(err, vim.log.levels.INFO)
+
+    M.download_app(function(err2)
+      if err2 then
+        callback("Couldn't download picker app: " .. err2)
         return
       end
       utils.exec = nil
@@ -25,19 +28,23 @@ function M.ensure_app_downloaded(callback)
   end))
 end
 
----@param callback fun(valid: boolean)
+---@param callback fun(err: string?)
 function M.validate_app_version(callback)
-  local exec = utils.executable_full_path()
-  if not exec then
-    callback(false)
+  local err, exec = utils.executable_full_path()
+  if err then
+    callback(err)
     return
   end
   vim.system({ exec, "--version" }, {}, function(out)
     if out.code ~= 0 then
-      callback(false)
+      callback("Picker app failed to run\nstdout: " .. out.stdout .. "\nstderr: " .. out.stderr)
       return
     end
-    callback(out.stdout:find(version) ~= nil)
+    if out.stdout:find(version) then
+      callback(nil)
+    else
+      callback("Picker app version mismatch: expected " .. version .. ", got " .. out.stdout:match("[%d%.]+"))
+    end
   end)
 end
 
@@ -174,9 +181,8 @@ function M.download_app(callback)
         os.remove(cwd .. "/" .. archive_basename)
 
         utils.log(function()
-          return "Extraction success, binary in " .. cwd
-        end, vim.log.levels.DEBUG)
-        utils.log("Picker app downloaded", vim.log.levels.INFO)
+          return "Picker app downloaded to " .. cwd .. "/" .. utils.executable()
+        end, vim.log.levels.INFO)
 
         callback(nil)
       end)
@@ -251,9 +257,8 @@ function M.download_parser(callback)
       M.write_parser_version()
 
       utils.log(function()
-        return "Parser located at " .. cwd
-      end, vim.log.levels.DEBUG)
-      utils.log("Parser downloaded", vim.log.levels.INFO)
+        return "Parser downloaded to " .. cwd .. "/" .. out_lib
+      end, vim.log.levels.INFO)
       callback(nil)
     end)
   )

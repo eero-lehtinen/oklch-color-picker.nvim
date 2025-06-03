@@ -93,9 +93,9 @@ local function start_app()
     end
   end
 
-  local exec = utils.executable_full_path()
-  if exec == nil then
-    utils.log("Picker executable not found", vim.log.levels.ERROR)
+  local err, exec = utils.executable_full_path()
+  if err then
+    utils.log(err, vim.log.levels.error)
     return false
   end
 
