@@ -59,13 +59,13 @@ function M.is_macos()
   return jit.os == "OSX"
 end
 
-function M.is_wsl()
+function M.is_wsl_and_use_exe()
   return opts.wsl_use_windows_app and vim.env.WSL_INTEROP ~= nil
 end
 
 ---@return string
 function M.executable()
-  local executable_ext = (M.is_windows() or M.is_wsl()) and ".exe" or ""
+  local executable_ext = (M.is_windows() or M.is_wsl_and_use_exe()) and ".exe" or ""
   return "oklch-color-picker" .. executable_ext
 end
 

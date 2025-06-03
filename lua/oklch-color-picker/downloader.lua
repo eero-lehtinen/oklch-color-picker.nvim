@@ -117,7 +117,7 @@ function M.get_target_info(kind)
 
   if jit.os == "OSX" and rust_arch then
     return nil, rust_arch .. "-apple-darwin", ".tar.gz"
-  elseif (jit.os == "Windows" or (kind == "app" and utils.is_wsl())) and rust_arch == "x86_64" then
+  elseif (jit.os == "Windows" or (kind == "app" and utils.is_wsl_and_use_exe())) and rust_arch == "x86_64" then
     return nil, "x86_64-pc-windows-msvc", ".zip"
   elseif jit.os == "Linux" and rust_arch == "x86_64" then
     return nil, "x86_64-unknown-linux-gnu", ".tar.gz"
@@ -178,6 +178,11 @@ function M.download_app(callback)
           return
         end
 
+        if utils.is_wsl_and_use_exe() then
+          -- Zip files extracted in WSL don't have execute permissions by default.
+          vim.uv.fs_chmod(cwd .. "/" .. utils.executable(), 493) -- 0755 in octal
+        end
+
         os.remove(cwd .. "/" .. archive_basename)
 
         utils.log(function()
@@ -193,7 +198,7 @@ function M.download_app(callback)
           { cwd = cwd },
           on_extracted
         )
-      elseif utils.is_wsl() then
+      elseif utils.is_wsl_and_use_exe() then
         if vim.fn.executable("unzip") ~= 1 then
           callback("'unzip' not found, please install it")
           return
