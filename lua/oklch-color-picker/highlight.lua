@@ -125,6 +125,8 @@ function M.disable()
   end
 end
 
+local decoration_provider_added = false
+
 function M.enable()
   if not M.parse or not opts or opts.enabled then
     return
@@ -134,18 +136,26 @@ function M.enable()
   M.clear_hl_cache()
   M.update_emphasis_values()
 
-  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_loaded(bufnr) then
-      M.on_buf_enter(bufnr)
-    end
+  if not decoration_provider_added then
+    vim.api.nvim_set_decoration_provider(ns, {
+      on_start = function()
+        if not opts.enabled then
+          return false
+        end
+      end,
+      on_win = function(_, _, bufnr, toprow, botrow)
+        M.init_buf(bufnr)
+        local buf_data = M.bufs[bufnr]
+        if not buf_data then
+          return false
+        end
+        M.update_view(bufnr, buf_data, toprow, botrow)
+        M.process_update(bufnr, buf_data)
+        return false
+      end,
+    })
+    decoration_provider_added = true
   end
-
-  vim.api.nvim_create_autocmd({ "BufNew", "BufEnter", "BufReadPost" }, {
-    group = gr,
-    callback = function(data)
-      M.on_buf_enter(data.buf)
-    end,
-  })
 
   vim.api.nvim_create_autocmd("LspAttach", {
     group = gr,
@@ -200,7 +210,7 @@ M.bufs = {}
 M.buf_attached = {}
 
 --- @param bufnr number
-M.on_buf_enter = vim.schedule_wrap(function(bufnr)
+M.init_buf = function(bufnr)
   if not vim.api.nvim_buf_is_valid(bufnr) then
     return
   end
@@ -208,21 +218,25 @@ M.on_buf_enter = vim.schedule_wrap(function(bufnr)
   if ignore_ft[ft] then
     return
   end
+  if vim.api.nvim_get_option_value("buftype", { buf = bufnr }) == "terminal" then
+    return
+  end
 
   if not M.buf_attached[bufnr] then
     local attached = vim.api.nvim_buf_attach(bufnr, false, {
       on_bytes = function(_, _, _, start_row, _, _, old_end_row, _, _, new_end_row, _, _)
+        local buf_data = M.bufs[bufnr]
+        if buf_data == nil then
+          return
+        end
         if new_end_row < old_end_row then
           -- We deleted some lines.
           -- It's possible that we uncovered new unhighlighted colors from the bottom
           -- of the view, so update the rest of the view.
-          M.update_lines(bufnr, start_row, 1e9, false)
+          M.update_lines(bufnr, buf_data, start_row, 1e9, false)
         else
-          M.update_lines(bufnr, start_row, start_row + new_end_row + 1, false)
+          M.update_lines(bufnr, buf_data, start_row, start_row + new_end_row + 1, false)
         end
-      end,
-      on_reload = function()
-        M.update_view(bufnr)
       end,
       on_detach = function()
         local buf_data = M.bufs[bufnr]
@@ -240,8 +254,7 @@ M.on_buf_enter = vim.schedule_wrap(function(bufnr)
     M.buf_attached[bufnr] = attached
   end
 
-  if M.bufs[bufnr] then
-    M.update_view(bufnr)
+  if M.bufs[bufnr] ~= nil then
     return
   end
 
@@ -253,35 +266,26 @@ M.on_buf_enter = vim.schedule_wrap(function(bufnr)
     pending_timer = assert(vim.uv.new_timer()),
     pending_timer_lsp = assert(vim.uv.new_timer()),
   }
-
-  M.update_view(bufnr)
-
-  vim.api.nvim_create_autocmd({ "WinScrolled", "VimResized" }, {
-    group = gr,
-    buffer = bufnr,
-    callback = function()
-      M.update_view(bufnr)
-    end,
-  })
-end)
+end
 
 --- @param bufnr integer
-function M.update_view(bufnr)
-  local buf_data = M.bufs[bufnr]
-  if buf_data == nil then
+--- @param buf_data BufData
+--- @param top integer
+--- @param bottom integer
+function M.update_view(bufnr, buf_data, top, bottom)
+  if top == buf_data.prev_view.top and bottom == buf_data.prev_view.bottom then
+    -- No change in view, nothing to do.
     return
   end
-
-  local top, bottom = M.get_view(bufnr)
   if top < buf_data.prev_view.top and bottom <= buf_data.prev_view.bottom then
     -- scrolled up
-    M.update_lines(bufnr, 0, buf_data.prev_view.top + 1, true)
+    M.update_lines(bufnr, buf_data, 0, buf_data.prev_view.top + 1, true)
   elseif bottom > buf_data.prev_view.bottom and top >= buf_data.prev_view.top then
     -- scrolled down
-    M.update_lines(bufnr, buf_data.prev_view.bottom, 1e9, true)
+    M.update_lines(bufnr, buf_data, buf_data.prev_view.bottom, 1e9, true)
   else
     -- large jump
-    M.update_lines(bufnr, 0, 1e9, true)
+    M.update_lines(bufnr, buf_data, 0, 1e9, true)
   end
   buf_data.prev_view.top = top
   buf_data.prev_view.bottom = bottom
@@ -322,19 +326,11 @@ function M.set_lsp_perf_logging(enabled)
 end
 
 --- @param bufnr integer
+--- @param buf_data BufData
 --- @param from_line integer
 --- @param to_line integer
 --- @param scroll boolean
-function M.update_lines(bufnr, from_line, to_line, scroll)
-  local buf_data = M.bufs[bufnr]
-  if buf_data == nil then
-    return
-  end
-
-  if vim.api.nvim_get_option_value("buftype", { buf = bufnr }) == "terminal" then
-    return
-  end
-
+function M.update_lines(bufnr, buf_data, from_line, to_line, scroll)
   local top, bottom = M.get_view(bufnr)
   if buf_data.pending_updates == nil then
     buf_data.pending_updates = {
@@ -345,16 +341,6 @@ function M.update_lines(bufnr, from_line, to_line, scroll)
     buf_data.pending_updates.from_line = max(min(buf_data.pending_updates.from_line, from_line), top)
     buf_data.pending_updates.to_line = min(max(buf_data.pending_updates.to_line, to_line), bottom)
   end
-
-  local delay = assert(scroll and opts.scroll_delay or opts.edit_delay)
-  buf_data.pending_timer:stop()
-  buf_data.pending_timer:start(
-    delay,
-    0,
-    vim.schedule_wrap(function()
-      M.process_update(bufnr)
-    end)
-  )
 
   -- The whole buffer is updated, so no need to run when scrolling.
   if not scroll then
@@ -393,10 +379,10 @@ M.update_lsp = function(bufnr, buf_data)
   )
 end
 
----@param bufnr integer
-function M.process_update(bufnr)
-  local buf_data = M.bufs[bufnr]
-  if buf_data == nil or buf_data.pending_updates == nil then
+--- @param bufnr integer
+--- @param buf_data BufData
+function M.process_update(bufnr, buf_data)
+  if buf_data.pending_updates == nil then
     return
   end
 
@@ -416,7 +402,7 @@ function M.process_update(bufnr)
 
   local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
 
-  M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
+  M.highlight_lines(bufnr, buf_data, lines, from_line, ft)
 
   if M.perf_logging then
     local ms = (vim.uv.hrtime() - t) / 1000000
@@ -646,11 +632,11 @@ local lsp_line_extmarks = {}
 local new_line_extmarks = {}
 
 ---@param bufnr integer
+---@param buf_data BufData
 ---@param lines string[]
 ---@param from_line integer
 ---@param ft string
----@param buf_data BufData
-function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
+function M.highlight_lines(bufnr, buf_data, lines, from_line, ft)
   local ft_patterns = get_ft_patterns(ft)
   local parse = M.parse
 
