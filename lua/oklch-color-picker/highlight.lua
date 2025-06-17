@@ -273,6 +273,9 @@ function M.update_view(bufnr)
   end
 
   local top, bottom = M.get_view(bufnr)
+  if top == buf_data.prev_view.top and bottom == buf_data.prev_view.bottom then
+    return
+  end
   if top < buf_data.prev_view.top and bottom <= buf_data.prev_view.bottom then
     -- scrolled up
     M.update_lines(bufnr, 0, buf_data.prev_view.top + 1, true)
