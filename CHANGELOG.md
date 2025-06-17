@@ -1,5 +1,14 @@
 # Changelog
 
+## [3.5.4](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.3...v3.5.4) (2025-06-17)
+
+
+### Bug Fixes
+
+* avoid errors with invalid buffers ([5e92882](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/5e92882270ef39c358924996648c23d2a121251a))
+* do nothing if view hasn't moved ([36310d8](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/36310d857d0012f1f4867fc6fa6853d376cc7f9f))
+* use FileType event for initializing highlighting ([6e4ff81](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/6e4ff8158fd1606510cd608a3750e70593623d0b))
+
 ## [3.5.3](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.2...v3.5.3) (2025-06-03)
 
 
