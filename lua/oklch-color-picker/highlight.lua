@@ -138,7 +138,7 @@ function M.delete_buf_data(bufnr)
     buf_data.pending_timer_lsp:close()
   end
   M.bufs[bufnr] = nil
-  vim.api.nvim_clear_autocmds({ buffer = bufnr, group = gr })
+  pcall(vim.api.nvim_clear_autocmds, { buffer = bufnr, group = gr })
 end
 
 function M.disable()
