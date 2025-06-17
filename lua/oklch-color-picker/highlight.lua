@@ -110,19 +110,49 @@ function M.setup(opts_, patterns_, auto_download)
   end
 end
 
+---@param bufnr number
+function M.clear_buf_hl(bufnr)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
+
+  pcall(vim.api.nvim_buf_clear_namespace, bufnr, ns, 0, -1)
+
+  local buf_data = M.bufs[bufnr]
+  if buf_data == nil then
+    return
+  end
+
+  for _, lsp_ns in ipairs(buf_data.lsp_namespaces_list) do
+    pcall(vim.api.nvim_buf_clear_namespace, bufnr, lsp_ns, 0, -1)
+  end
+end
+
+--- @param bufnr number
+function M.delete_buf_data(bufnr)
+  local buf_data = M.bufs[bufnr]
+  if buf_data then
+    buf_data.pending_timer:stop()
+    buf_data.pending_timer:close()
+    buf_data.pending_timer_lsp:stop()
+    buf_data.pending_timer_lsp:close()
+  end
+  M.bufs[bufnr] = nil
+  vim.api.nvim_clear_autocmds({ buffer = bufnr, group = gr })
+end
+
 function M.disable()
   if not opts or not opts.enabled then
     return
   end
   opts.enabled = false
 
-  M.bufs = {}
   vim.api.nvim_clear_autocmds({ group = gr })
   for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_loaded(bufnr) then
-      pcall(vim.api.nvim_buf_clear_namespace, bufnr, ns, 0, -1)
-    end
+    M.delete_buf_data(bufnr)
+    M.clear_buf_hl(bufnr)
   end
+  M.bufs = {}
 end
 
 function M.enable()
@@ -134,16 +164,10 @@ function M.enable()
   M.clear_hl_cache()
   M.update_emphasis_values()
 
-  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_loaded(bufnr) then
-      M.on_buf_enter(bufnr)
-    end
-  end
-
-  vim.api.nvim_create_autocmd({ "BufNew", "BufEnter", "BufReadPost" }, {
+  vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
     group = gr,
     callback = function(data)
-      M.on_buf_enter(data.buf)
+      M.init_buf(data.buf)
     end,
   })
 
@@ -200,12 +224,16 @@ M.bufs = {}
 M.buf_attached = {}
 
 --- @param bufnr number
-M.on_buf_enter = vim.schedule_wrap(function(bufnr)
+M.init_buf = function(bufnr)
   if not vim.api.nvim_buf_is_valid(bufnr) then
     return
   end
   local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
   if ignore_ft[ft] then
+    if M.bufs[bufnr] then
+      M.clear_buf_hl(bufnr)
+      M.delete_buf_data(bufnr)
+    end
     return
   end
 
@@ -222,26 +250,18 @@ M.on_buf_enter = vim.schedule_wrap(function(bufnr)
         end
       end,
       on_reload = function()
-        M.update_view(bufnr)
+        M.update_view(bufnr, true)
       end,
       on_detach = function()
-        local buf_data = M.bufs[bufnr]
-        if buf_data then
-          buf_data.pending_timer:stop()
-          buf_data.pending_timer:close()
-          buf_data.pending_timer_lsp:stop()
-          buf_data.pending_timer_lsp:close()
-        end
-        M.bufs[bufnr] = nil
+        M.delete_buf_data(bufnr)
         M.buf_attached[bufnr] = nil
-        vim.api.nvim_clear_autocmds({ buffer = bufnr, group = gr })
       end,
     })
     M.buf_attached[bufnr] = attached
   end
 
   if M.bufs[bufnr] then
-    M.update_view(bufnr)
+    M.update_view(bufnr, true)
     return
   end
 
@@ -254,7 +274,7 @@ M.on_buf_enter = vim.schedule_wrap(function(bufnr)
     pending_timer_lsp = assert(vim.uv.new_timer()),
   }
 
-  M.update_view(bufnr)
+  M.update_view(bufnr, true)
 
   vim.api.nvim_create_autocmd({ "WinScrolled", "VimResized" }, {
     group = gr,
@@ -263,20 +283,28 @@ M.on_buf_enter = vim.schedule_wrap(function(bufnr)
       M.update_view(bufnr)
     end,
   })
-end)
+end
 
 --- @param bufnr integer
-function M.update_view(bufnr)
+--- @param force? boolean
+function M.update_view(bufnr, force)
   local buf_data = M.bufs[bufnr]
   if buf_data == nil then
     return
   end
 
   local top, bottom = M.get_view(bufnr)
-  if top == buf_data.prev_view.top and bottom == buf_data.prev_view.bottom then
+
+  if force then
+    M.update_lines(bufnr, 0, 1e9, true)
+    buf_data.prev_view.top = top
+    buf_data.prev_view.bottom = bottom
     return
   end
-  if top < buf_data.prev_view.top and bottom <= buf_data.prev_view.bottom then
+
+  if top == buf_data.prev_view.top and bottom == buf_data.prev_view.bottom then
+    return
+  elseif top < buf_data.prev_view.top and bottom <= buf_data.prev_view.bottom then
     -- scrolled up
     M.update_lines(bufnr, 0, buf_data.prev_view.top + 1, true)
   elseif bottom > buf_data.prev_view.bottom and top >= buf_data.prev_view.top then
