@@ -192,6 +192,10 @@ function M.enable()
       M.enable()
     end,
   })
+
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    M.init_buf(bufnr)
+  end
 end
 
 ---@return boolean -- true if enabled, false if disabled
