@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.5](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.4...v3.5.5) (2025-06-30)
+
+
+### Bug Fixes
+
+* use BufEnter instead of BufWinEnter ([d064ab3](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/d064ab37d46945f0960ee1b1f215c4335f4e4639))
+
 ## [3.5.4](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.3...v3.5.4) (2025-06-17)
 
 
