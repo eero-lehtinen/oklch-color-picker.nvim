@@ -164,7 +164,7 @@ function M.enable()
   M.clear_hl_cache()
   M.update_emphasis_values()
 
-  vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
+  vim.api.nvim_create_autocmd({ "FileType", "BufEnter" }, {
     group = gr,
     callback = function(data)
       M.init_buf(data.buf)
