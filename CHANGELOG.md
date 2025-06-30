@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.6](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.5...v3.5.6) (2025-06-30)
+
+
+### Bug Fixes
+
+* highlights on files opened at startup ([d428738](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/d428738ea3dda8064ba8d301251ef3824e8c30db))
+
 ## [3.5.5](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.4...v3.5.5) (2025-06-30)
 
 
