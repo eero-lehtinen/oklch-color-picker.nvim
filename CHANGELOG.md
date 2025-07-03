@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.7](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.6...v3.5.7) (2025-07-03)
+
+
+### Bug Fixes
+
+* lsp deprecation warning in nvim 0.12 ([f3625db](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/f3625db2f3e82bdfe81998be58615309b1c69c77))
+
 ## [3.5.6](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.5...v3.5.6) (2025-06-30)
 
 
