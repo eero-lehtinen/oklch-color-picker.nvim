@@ -821,6 +821,19 @@ local function convert_lsp_range_to_nvim(range, bufnr, offset_encoding)
   end
 end
 
+---@type fun(client: vim.lsp.Client, method: string, params: any, handler: any, bufnr: integer): boolean|nil
+local client_request
+if vim.fn.has("nvim-0.11") == 1 then
+  client_request = function(client, method, params, handler, bufnr)
+    return client:request(method, params, handler, bufnr)
+  end
+else
+  client_request = function(client, method, params, handler, bufnr)
+    ---@diagnostic disable-next-line: param-type-mismatch
+    return client.request(method, params, handler, bufnr)
+  end
+end
+
 ---@param bufnr integer
 ---@param callback fun()
 function M.process_update_lsp(bufnr, callback)
@@ -893,8 +906,7 @@ function M.process_update_lsp(bufnr, callback)
       end
     end
 
-    ---@diagnostic disable-next-line: param-type-mismatch (Changed in 0.11, still using 0.10 compatible API)
-    local status = client.request(color_method, params, lsp_handler, bufnr)
+    local status = client_request(client, color_method, params, lsp_handler, bufnr)
 
     if not status then
       done = done + 1
