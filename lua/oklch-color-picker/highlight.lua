@@ -598,6 +598,8 @@ function M.make_set_extmark()
   local reuse_mark = {
     priority = opts.priority,
     strict = false,
+    undo_restore = false,
+    invalidate = true,
   }
   if opts.style == "background" or opts.style == "foreground" then
     set_extmark = function(bufnr, namespace, line_n, start_col, end_col, group)
