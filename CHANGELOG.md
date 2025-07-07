@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.5.8](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.7...v3.5.8) (2025-07-07)
+
+
+### Bug Fixes
+
+* respect priority on cached extmarks ([c12febc](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/c12febc153da71bc397b36f631da298a4b6ce967))
+* some highlights wrongly staying cached when deleting lines ([473c3e4](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/473c3e4047be437a517de68ae29ea8cb70ada508))
+
 ## [3.5.7](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.6...v3.5.7) (2025-07-03)
 
 
