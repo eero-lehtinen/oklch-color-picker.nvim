@@ -4,7 +4,6 @@
 
 <img src="https://github.com/user-attachments/assets/6907165d-e238-40dc-82db-9160788fb1fe" alt="screenshot" width="100%">
 
-
 ## Features
 
 - Select and edit buffer colors in a graphical picker
@@ -82,10 +81,12 @@ local default_opts = {
     -- Prevent attaching to buffers with these filetypes.
     ignore_ft = { "blink-cmp-menu" },
 
-    -- Tint the highlight background for 'foreground' and 'virtual' styles when the color is too close to the editor background.
+    -- Tint the highlight background for 'foreground' and 'virtual' styles when the
+    -- found color is too close to the editor background.
     -- Set `emphasis = false` to disable.
     emphasis = {
-      -- Distance (0..1) to the editor background where emphasis activates (first item for dark themes, second for light ones).
+      -- Distance (0..1) to the editor background where emphasis activates
+      -- (first item for dark themes, second for light ones).
       threshold = { 0.1, 0.17 },
       -- How much (0..255) to offset the color (first item for dark colors, second for light ones).
       amount = { 45, -80 },
@@ -93,10 +94,6 @@ local default_opts = {
 
     -- List of LSP clients that are allowed to highlight colors:
     -- By default, only fairly performant and useful LSPs are enabled.
-    -- "tailwindcss", "cssls", and "css_variables" all highlight small files in 2-10ms
-    -- (still a lot slower than the ~0.1 ms of this plugin, but they give some extra features).
-    -- Some LSPs are very slow like "svelte" (>1000 ms) even in tiny files and don't give new features.
-    -- "lua_ls" is also not worth enabling because it never finds any colors.
     -- Set `enabled_lsps = true` to enable all LSPs anyways.
     enabled_lsps = { "tailwindcss", "cssls", "css_variables" },
     -- Async delay in ms, LSPs also have their own latency.

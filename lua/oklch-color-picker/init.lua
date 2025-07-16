@@ -35,22 +35,21 @@ local M = {}
 ---@field virtual_text? string
 --- Less than user hl by default (:help vim.highlight.priorities)
 ---@field priority? number
----Prevent attaching to buffers with these filetypes.
+--- Prevent attaching to buffers with these filetypes.
 ---@field ignore_ft? string[]
----Tint the highlight background for 'foreground' and 'virtual' styles when the color is too close to the editor background.
+--- Tint the highlight background for 'foreground' and 'virtual' styles when the
+--- found color is too close to the editor background.
+--- Set `emphasis = false` to disable.
 ---@field emphasis? oklch.highlight.EmphasisOpts|false
 --- List of LSP clients that are allowed to highlight colors:
 --- By default, only fairly performant and useful LSPs are enabled.
---- "tailwindcss", "cssls", and "css_variables" all highlight small files in 2-10ms
---- (still a lot slower than the 0.1 ms of this plugin, but they give some extra features).
---- Some LSPs are very slow like "svelte" (>1000 ms) even in tiny files and don't give new features.
---- "lua_ls" is also not worth enabling because it never finds any colors.
 --- Set `enabled_lsps = true` to enable all LSPs anyways.
 ---@field enabled_lsps? string[]|true
 ---@field lsp_delay? number
 
 ---@class oklch.highlight.EmphasisOpts
---- Distance (0..1) to the editor background where emphasis activates (first item for dark themes, second for light ones).
+--- Distance (0..1) to the editor background where emphasis activates
+--- (first item for dark themes, second for light ones).
 ---@field threshold? [number, number]
 --- How much (0..255) to offset the color (first item for dark colors, second for light ones).
 ---@field amount? [number, number]
