@@ -1,4 +1,4 @@
-*oklch-color-picker.nvim.txt*    For NVIM v0.10.0    Last change: 2025 July 16
+*oklch-color-picker.nvim.txt*    For NVIM v0.10.0    Last change: 2025 July 29
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -119,6 +119,9 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
         enabled_lsps = { "tailwindcss", "cssls", "css_variables" },
         -- Async delay in ms, LSPs also have their own latency.
         lsp_delay = 120,
+    
+        -- Disable builtin LSP colors introduced in Nvim 0.12 to avoid conflicts.
+        disable_builtin_lsp_colors = true,
       },
     
       patterns = {
