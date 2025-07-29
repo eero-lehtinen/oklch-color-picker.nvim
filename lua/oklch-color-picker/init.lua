@@ -44,8 +44,10 @@ local M = {}
 --- List of LSP clients that are allowed to highlight colors:
 --- By default, only fairly performant and useful LSPs are enabled.
 --- Set `enabled_lsps = true` to enable all LSPs anyways.
----@field enabled_lsps? string[]|true
+---@field enabled_lsps? string[]|boolean
 ---@field lsp_delay? number
+--- Disable builtin LSP colors introduced in Nvim 0.12 to avoid conflicts.
+---@field disable_builtin_lsp_colors? boolean
 
 ---@class oklch.highlight.EmphasisOpts
 --- Distance (0..1) to the editor background where emphasis activates
@@ -78,6 +80,7 @@ local default_opts = {
     },
     enabled_lsps = { "tailwindcss", "cssls", "css_variables" },
     lsp_delay = 120,
+    disable_builtin_lsp_colors = true,
   },
 
   patterns = {

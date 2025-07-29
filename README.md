@@ -98,6 +98,9 @@ local default_opts = {
     enabled_lsps = { "tailwindcss", "cssls", "css_variables" },
     -- Async delay in ms, LSPs also have their own latency.
     lsp_delay = 120,
+
+    -- Disable builtin LSP colors introduced in Nvim 0.12 to avoid conflicts.
+    disable_builtin_lsp_colors = true,
   },
 
   patterns = {

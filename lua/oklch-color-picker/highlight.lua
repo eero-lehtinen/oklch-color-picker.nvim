@@ -174,6 +174,9 @@ function M.enable()
   vim.api.nvim_create_autocmd("LspAttach", {
     group = gr,
     callback = function(data)
+      if opts.disable_builtin_lsp_colors and vim.lsp.document_color then
+        vim.lsp.document_color.enable(false, data.buf)
+      end
       local buf_data = M.bufs[data.buf]
       if buf_data == nil then
         return
