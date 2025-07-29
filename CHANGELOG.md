@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.9](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.8...v3.5.9) (2025-07-29)
+
+
+### Bug Fixes
+
+* disable builtin lsp colors to avoid conflicts ([cc0b412](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/cc0b41263ac0013c47450aaaa0ed358b1d776a68))
+
 ## [3.5.8](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.7...v3.5.8) (2025-07-07)
 
 
