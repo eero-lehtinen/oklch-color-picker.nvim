@@ -138,6 +138,9 @@ function M.delete_buf_data(bufnr)
     buf_data.pending_timer_lsp:close()
   end
   M.bufs[bufnr] = nil
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
   pcall(vim.api.nvim_clear_autocmds, { buffer = bufnr, group = gr })
 end
 
@@ -232,7 +235,7 @@ M.buf_attached = {}
 
 --- @param bufnr number
 M.init_buf = function(bufnr)
-  if not vim.api.nvim_buf_is_valid(bufnr) then
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
     return
   end
   local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
@@ -297,6 +300,10 @@ end
 function M.update_view(bufnr, force)
   local buf_data = M.bufs[bufnr]
   if buf_data == nil then
+    return
+  end
+
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
     return
   end
 
@@ -369,6 +376,10 @@ function M.update_lines(bufnr, from_line, to_line, scroll)
     return
   end
 
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
+
   if vim.api.nvim_get_option_value("buftype", { buf = bufnr }) == "terminal" then
     return
   end
@@ -435,6 +446,10 @@ end
 function M.process_update(bufnr)
   local buf_data = M.bufs[bufnr]
   if buf_data == nil or buf_data.pending_updates == nil then
+    return
+  end
+
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
     return
   end
 
@@ -857,6 +872,10 @@ function M.process_update_lsp(bufnr, callback)
     return
   end
 
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    return
+  end
+
   local t = vim.uv.hrtime()
 
   local params = { textDocument = vim.lsp.util.make_text_document_params(bufnr) }
@@ -877,7 +896,7 @@ function M.process_update_lsp(bufnr, callback)
       results = results --[[@as LspColor[]|nil]]
       local buf_data = M.bufs[bufnr]
 
-      if buf_data then
+      if buf_data and vim.api.nvim_buf_is_loaded(bufnr) then
         if not err and results then
           local get_mark_start = {}
           local get_mark_end = {}
