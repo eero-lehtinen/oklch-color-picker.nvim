@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.10](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.9...v3.5.10) (2025-09-01)
+
+
+### Bug Fixes
+
+* add buf loaded checks in async callbacks to avoid errors ([ded99e5](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/ded99e532bea911bd130d04abce1329fd68ba60e))
+
 ## [3.5.9](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.8...v3.5.9) (2025-07-29)
 
 
