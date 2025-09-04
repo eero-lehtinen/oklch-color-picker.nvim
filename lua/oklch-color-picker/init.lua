@@ -169,6 +169,11 @@ function M.setup(opts_)
     return
   end
 
+  if not jit then
+    utils.log("oklch-color-picker.nvim requires Neovim built with LuaJIT", vim.log.levels.ERROR)
+    return
+  end
+
   opts = vim.tbl_deep_extend("force", default_opts, opts_ or {})
   utils.setup(opts)
 
