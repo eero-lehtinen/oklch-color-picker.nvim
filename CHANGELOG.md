@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.5.11](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.10...v3.5.11) (2025-09-04)
+
+
+### Bug Fixes
+
+* add a check for the existence of luajit ([7b98963](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/7b9896322d3ea1c7c800a2af26a6296daa1b881a))
+
 ## [3.5.10](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.9...v3.5.10) (2025-09-01)
 
 
