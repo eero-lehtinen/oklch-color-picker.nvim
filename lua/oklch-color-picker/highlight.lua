@@ -180,7 +180,7 @@ function M.enable()
       if opts.disable_builtin_lsp_colors and vim.lsp.document_color then
         vim.lsp.document_color.enable(false, data.buf)
       end
-      local buf_data = M.bufs[data.buf]
+      local buf_data = M.get_buf_data(data.buf)
       if buf_data == nil then
         return
       end
@@ -296,14 +296,19 @@ M.init_buf = function(bufnr)
 end
 
 --- @param bufnr integer
+--- @return BufData|nil
+function M.get_buf_data(bufnr)
+  if not vim.api.nvim_buf_is_loaded(bufnr) then
+    return nil
+  end
+  return M.bufs[bufnr]
+end
+
+--- @param bufnr integer
 --- @param force? boolean
 function M.update_view(bufnr, force)
-  local buf_data = M.bufs[bufnr]
+  local buf_data = M.get_buf_data(bufnr)
   if buf_data == nil then
-    return
-  end
-
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
     return
   end
 
@@ -371,12 +376,8 @@ end
 --- @param to_line integer
 --- @param scroll boolean
 function M.update_lines(bufnr, from_line, to_line, scroll)
-  local buf_data = M.bufs[bufnr]
+  local buf_data = M.get_buf_data(bufnr)
   if buf_data == nil then
-    return
-  end
-
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
     return
   end
 
@@ -426,7 +427,7 @@ M.update_lsp = function(bufnr, buf_data)
     vim.schedule_wrap(function()
       buf_data.lsp_in_flight = true
       M.process_update_lsp(bufnr, function()
-        local buf_data = M.bufs[bufnr]
+        local buf_data = M.get_buf_data(bufnr)
         if buf_data == nil then
           return
         end
@@ -444,12 +445,8 @@ end
 
 ---@param bufnr integer
 function M.process_update(bufnr)
-  local buf_data = M.bufs[bufnr]
+  local buf_data = M.get_buf_data(bufnr)
   if buf_data == nil or buf_data.pending_updates == nil then
-    return
-  end
-
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
     return
   end
 
@@ -867,12 +864,8 @@ end
 ---@param bufnr integer
 ---@param callback fun()
 function M.process_update_lsp(bufnr, callback)
-  local buf_data = M.bufs[bufnr]
+  local buf_data = M.get_buf_data(bufnr)
   if buf_data == nil then
-    return
-  end
-
-  if not vim.api.nvim_buf_is_loaded(bufnr) then
     return
   end
 
@@ -894,9 +887,9 @@ function M.process_update_lsp(bufnr, callback)
 
     local lsp_handler = function(err, results)
       results = results --[[@as LspColor[]|nil]]
-      local buf_data = M.bufs[bufnr]
+      local buf_data = M.get_buf_data(bufnr)
 
-      if buf_data and vim.api.nvim_buf_is_loaded(bufnr) then
+      if buf_data then
         if not err and results then
           local get_mark_start = {}
           local get_mark_end = {}
