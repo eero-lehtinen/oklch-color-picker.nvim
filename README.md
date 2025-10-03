@@ -201,26 +201,6 @@ require("oklch-color-picker").open_picker()
 
 The command `:ColorPickOklch` can be used instead of `pick_under_cursor()`.
 
-#### Definitions
-
-```lua
---- @param opts? picker.PickUnderCursorOpts
---- @return boolean success true if a color was found and picker opened
-function pick_under_cursor(opts)
-
---- @param opts? picker.OpenPickerOpts
---- @return boolean success true if the picker was able to open
-function open_picker(opts)
-
----@class picker.PickUnderCursorOpts
----@field force_format? string auto detect by default
----@field fallback_open? picker.OpenPickerOpts open the picker anyway if no color under the cursor is found
-
----@class picker.OpenPickerOpts
----@field initial_color? string any color that the picker can parse, e.g. "#fff" (uses a random hex color by default)
----@field force_format? string auto detect by default
-```
-
 ### Highlighting
 
 ```lua
