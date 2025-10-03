@@ -122,12 +122,17 @@ local function start_app()
   return true
 end
 
+--- @class oklch.picker.CursorData
+--- @field pos [number, number]
+--- @field color string
+--- @field color_format string|nil
+
 --- @param bufnr number
 --- @param line string
 --- @param line_n number
 --- @param cursor_col number
 --- @param ft string
---- @return { pos: [number, number], color: string, color_format: string|nil }| nil
+--- @return oklch.picker.CursorData | nil
 local function find_color(bufnr, line, line_n, cursor_col, ft)
   for _, pattern_list in ipairs(final_patterns) do
     if pattern_list.ft(ft) then
@@ -198,6 +203,18 @@ local function cursor_info()
   local bufnr = vim.api.nvim_get_current_buf()
 
   return row, col, bufnr
+end
+
+
+--- Extract color information from under the cursor if any, without opening the picker.
+--- @return oklch.picker.CursorData | nil
+function M.color_under_cursor()
+  local row, col, bufnr = cursor_info()
+
+  local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
+  local ft = vim.api.nvim_get_option_value("filetype", { buf = 0 })
+
+   return find_color(bufnr, line, row, col, ft)
 end
 
 ---@class picker.PickUnderCursorOpts
