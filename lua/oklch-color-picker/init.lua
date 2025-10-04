@@ -250,6 +250,7 @@ M.components_to_number = highlight.rgb_pack
 
 M.pick_under_cursor = picker.pick_under_cursor
 M.open_picker = picker.open_picker
+M.color_under_cursor = picker.color_under_cursor
 
 M.highlight = {
   enable = highlight.enable,
