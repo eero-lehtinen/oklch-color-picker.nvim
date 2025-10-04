@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.11...v3.6.0) (2025-10-04)
+
+
+### Features
+
+* **API:** expose current color data under the cursor ([#63](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/63)) ([e6e3e0c](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/e6e3e0c3251f8abc2fe677ec836e742424f79555))
+
 ## [3.5.11](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.5.10...v3.5.11) (2025-09-04)
 
 
