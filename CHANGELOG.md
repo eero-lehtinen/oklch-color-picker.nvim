@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.7.1...v3.8.0) (2025-11-11)
+
+
+### Features
+
+* add ARM builds for Windows and Linux ([73bea66](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/73bea669516d077ca6a249d6fdf93082e9585e52))
+
 ## [3.7.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.7.0...v3.7.1) (2025-11-11)
 
 
