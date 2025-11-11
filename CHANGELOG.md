@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.7.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.7.0...v3.7.1) (2025-11-11)
+
+
+### Bug Fixes
+
+* properly delete archive directory after download ([371ecb2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/371ecb2534c4031abef6013cf632b50b2dcf1a1b))
+* use tar for unzipping for windows too ([aaac096](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/aaac0965400c5e6f7144d51d6d18bc242062443f))
+
 ## [3.7.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.6.0...v3.7.0) (2025-11-01)
 
 
