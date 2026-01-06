@@ -215,6 +215,11 @@ function M.toggle()
   return opts.enabled
 end
 
+---@return boolean -- true if enabled, false if disabled
+function M.is_enabled()
+  return opts.enabled
+end
+
 ---@class BufData
 ---@field pending_updates { from_line: integer, to_line: integer }|nil
 ---@field prev_view { top: integer, bottom: integer }
