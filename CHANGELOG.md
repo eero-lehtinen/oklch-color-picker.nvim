@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.8.0...v3.9.0) (2026-01-06)
+
+
+### Features
+
+* Expose highlight.is_enabled() ([#70](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/70)) ([9bb0554](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/9bb0554ca87f344c5ca17a7c230087c765abbe2c))
+
 ## [3.8.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.7.1...v3.8.0) (2025-11-11)
 
 
