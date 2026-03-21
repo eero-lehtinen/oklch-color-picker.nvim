@@ -178,7 +178,7 @@ function M.enable()
     group = gr,
     callback = function(data)
       if opts.disable_builtin_lsp_colors and vim.lsp.document_color then
-        vim.lsp.document_color.enable(false, data.buf)
+        vim.lsp.document_color.enable(false, { bufnr = data.buf })
       end
       local buf_data = M.get_buf_data(data.buf)
       if buf_data == nil then
