@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.9.0...v3.9.1) (2026-03-22)
+
+
+### Bug Fixes
+
+* correct argument structure for document_color.enable in latest 0.12 nightly ([#73](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/73)) ([c4f0774](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/c4f0774d57d7e9705401496bd70c9e2611e427ff))
+
 ## [3.9.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.8.0...v3.9.0) (2026-01-06)
 
 
