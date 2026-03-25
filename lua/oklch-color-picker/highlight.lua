@@ -158,6 +158,8 @@ function M.disable()
   M.bufs = {}
 end
 
+local warned_document_color = false
+
 function M.enable()
   if not M.parse or not opts or opts.enabled then
     return
@@ -178,7 +180,14 @@ function M.enable()
     group = gr,
     callback = function(data)
       if opts.disable_builtin_lsp_colors and vim.lsp.document_color then
-        vim.lsp.document_color.enable(false, { bufnr = data.buf })
+        local ok, err = pcall(vim.lsp.document_color.enable, false, { bufnr = data.buf })
+        if not ok and not warned_document_color then
+          warned_document_color = true
+          utils.log(
+            "Failed to disable builtin LSP colors: " .. tostring(err) .. ". Please update to the latest Neovim nightly.",
+            vim.log.levels.WARN
+          )
+        end
       end
       local buf_data = M.get_buf_data(data.buf)
       if buf_data == nil then
