@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.9.1...v3.9.2) (2026-03-25)
+
+
+### Bug Fixes
+
+* warn instead of crash with document color call ([720e49b](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/720e49be41c1754b4e5705bc814e6c33a3380d04))
+
 ## [3.9.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.9.0...v3.9.1) (2026-03-22)
 
 
