@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.0.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.9.3...v4.0.0) (2026-04-01)
+
+
+### ⚠ BREAKING CHANGES
+
+* migrate tailwind colors to v4
+
+### Features
+
+* migrate tailwind colors to v4 ([56ad296](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/56ad296bdc279676f43d75f205db089cd62809b2))
+
 ## [3.9.3](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.9.2...v3.9.3) (2026-03-25)
 
 
