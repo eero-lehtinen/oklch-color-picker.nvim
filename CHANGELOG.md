@@ -1,5 +1,22 @@
 # Changelog
 
+## [4.1.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v4.0.0...v4.1.0) (2026-04-09)
+
+
+### Features
+
+* add an uninstall function ([28c23a3](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/28c23a3b1eec8f78b838f2e1f49935a0735aae0b))
+* expose and document more hightlight functions ([c1f9de3](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/c1f9de30ad562734a36d20c1d33b39ef7bba50ac))
+
+
+### Bug Fixes
+
+* bug in unescaped pattern check ([d62085b](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/d62085b753b610dd11f93aa9b6f72f86bda7286c))
+* make binary archive directory deletion more robust ([6fbd5e2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/6fbd5e2ccc21e635b7736345087da06db5e3ccb2))
+* make sure patterns don't compound if setup is called multiple times ([093da0f](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/093da0fdcd0ba10cd4a6cfe98c3a85292fd73e42))
+* type annotations ([f994c2e](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/f994c2e94cd3879c0a4cfe0f1624204d3cceab00))
+* typo in error log level ([965be94](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/965be94975735798589f71f9f5e292decfe3cf16))
+
 ## [4.0.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v3.9.3...v4.0.0) (2026-04-01)
 
 
