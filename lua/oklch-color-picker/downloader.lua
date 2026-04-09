@@ -143,12 +143,7 @@ function M.download_app(callback)
 
   utils.log("Downloading picker app...", vim.log.levels.INFO)
 
-  if vim.fn.executable("curl") ~= 1 then
-    callback("'curl' not found, please install it")
-    return
-  end
-
-  vim.system(
+  local err = utils.system(
     { "curl", "--fail", "-o", archive, "-L", url },
     { cwd = cwd },
     vim.schedule_wrap(function(out)
@@ -166,15 +161,15 @@ function M.download_app(callback)
         end
 
         vim.uv.fs_unlink(cwd .. "/" .. archive)
-        local success, err = vim.uv.fs_rename(
+        local success, rename_err = vim.uv.fs_rename(
           cwd .. "/" .. archive_basename .. "/" .. utils.executable(),
           cwd .. "/" .. utils.executable()
         )
-        if err or not success then
+        if rename_err or not success then
           if utils.is_windows() then
-            err = "\n\nYou likely have the picker app open somewhere. Close it and try again.\n\n" .. err
+            rename_err = "\n\nYou likely have the picker app open somewhere. Close it and try again.\n\n" .. rename_err
           end
-          callback("Picker app rename after download failed: " .. err)
+          callback("Picker app rename after download failed: " .. rename_err)
           return
         end
 
@@ -192,13 +187,27 @@ function M.download_app(callback)
         callback(nil)
       end)
 
-      if vim.fn.executable("tar") ~= 1 then
-        callback("'tar' not found, please install it")
-        return
+      local extract_cmd
+      if archive_ext == ".zip" then
+        if vim.fn.executable("unzip") == 1 then
+          extract_cmd = { "unzip", archive }
+        else
+          utils.log("'unzip' not found, falling back to 'tar'", vim.log.levels.WARN)
+          extract_cmd = { "tar", "xf", archive }
+        end
+      else
+        extract_cmd = { "tar", "xf", archive }
       end
-      vim.system({ "tar", "xzf", archive }, { cwd = cwd }, on_extracted)
+
+      local extract_err = utils.system(extract_cmd, { cwd = cwd }, on_extracted)
+      if extract_err then
+        callback(extract_err)
+      end
     end)
   )
+  if err then
+    callback(err)
+  end
 end
 
 ---@param callback fun(err: string|nil)
@@ -220,14 +229,9 @@ function M.download_parser(callback)
 
   local out_lib = "parser_lua_module" .. lib_ext
 
-  if vim.fn.executable("curl") ~= 1 then
-    callback("'curl' not found, please install it")
-    return
-  end
-
   -- Download to a temporary file to avoid crashing:
   -- https://developer.apple.com/documentation/security/updating-mac-software
-  vim.system(
+  local err = utils.system(
     { "curl", "--fail", "-o", out_lib .. ".tmp", "-L", url },
     { cwd = cwd },
     vim.schedule_wrap(function(out)
@@ -236,12 +240,13 @@ function M.download_parser(callback)
         return
       end
 
-      local success, err = vim.uv.fs_rename(cwd .. "/" .. out_lib .. ".tmp", cwd .. "/" .. out_lib)
-      if err or not success then
+      local success, rename_err = vim.uv.fs_rename(cwd .. "/" .. out_lib .. ".tmp", cwd .. "/" .. out_lib)
+      if rename_err or not success then
         if utils.is_windows() then
-          err = "\n\nYou likely have another Nvim instance using the library. Close it and try again.\n\n" .. err
+          rename_err = "\n\nYou likely have another Nvim instance using the library. Close it and try again.\n\n"
+            .. rename_err
         end
-        callback("Parser rename after download failed: " .. err)
+        callback("Parser rename after download failed: " .. rename_err)
         return
       end
 
@@ -253,6 +258,9 @@ function M.download_parser(callback)
       callback(nil)
     end)
   )
+  if err then
+    callback(err)
+  end
 end
 
 return M

@@ -110,4 +110,18 @@ function M.get_lib_extension()
   return ".so"
 end
 
+--- Like vim.system, but checks that cmd[1] is executable first.
+--- Returns an error string if not found, nil on success.
+---@param cmd string[]
+---@param opts vim.SystemOpts
+---@param on_exit fun(out: vim.SystemCompleted)
+---@return string|nil
+function M.system(cmd, opts, on_exit)
+  if vim.fn.executable(cmd[1]) ~= 1 then
+    return "'" .. cmd[1] .. "' not found, please install it"
+  end
+  vim.system(cmd, opts, on_exit)
+  return nil
+end
+
 return M
