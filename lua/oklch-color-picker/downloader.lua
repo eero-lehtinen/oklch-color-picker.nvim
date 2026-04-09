@@ -183,7 +183,7 @@ function M.download_app(callback)
           vim.uv.fs_chmod(cwd .. "/" .. utils.executable(), 493) -- 0755 in octal
         end
 
-        vim.uv.fs_rmdir(cwd .. "/" .. archive_basename)
+        vim.fn.delete(cwd .. "/" .. archive_basename, "rf")
 
         utils.log(function()
           return "Picker app v" .. version .. " downloaded to " .. cwd .. "/" .. utils.executable()
