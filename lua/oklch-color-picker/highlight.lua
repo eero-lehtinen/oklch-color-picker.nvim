@@ -386,11 +386,17 @@ function M.set_lsp_perf_logging(enabled)
   M.lsp_perf_logging = enabled
 end
 
+local in_perf_log = false
+
 --- @param bufnr integer
 --- @param from_line integer
 --- @param to_line integer
 --- @param scroll boolean
 function M.update_lines(bufnr, from_line, to_line, scroll)
+  if in_perf_log then
+    return
+  end
+
   local buf_data = M.get_buf_data(bufnr)
   if buf_data == nil then
     return
@@ -484,8 +490,10 @@ function M.process_update(bufnr)
   M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
 
   if M.perf_logging then
+    in_perf_log = true
     local ms = (vim.uv.hrtime() - t) / 1000000
-    print(format("color highlighting took: %.3f ms, lines %d to %d", ms, from_line, to_line))
+    print(format("color highlighting took: %.3f ms, lines %d to %d in buf %d", ms, from_line, to_line, bufnr))
+    in_perf_log = false
   end
 end
 
@@ -942,8 +950,10 @@ function M.process_update_lsp(bufnr, callback)
       end
 
       if M.lsp_perf_logging then
+        in_perf_log = true
         local ms = (vim.uv.hrtime() - t) / 1000000
         print(format("lsp color highlighting (%s) took: %.3f ms", client.name, ms))
+        in_perf_log = false
       end
       done = done + 1
       if done == expected then
