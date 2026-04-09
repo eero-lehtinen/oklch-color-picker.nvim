@@ -95,7 +95,7 @@ local function start_app()
 
   local err, exec = utils.executable_full_path()
   if err then
-    utils.log(err, vim.log.levels.error)
+    utils.log(err, vim.log.levels.ERROR)
     return false
   end
 
@@ -205,7 +205,6 @@ local function cursor_info()
   return row, col, bufnr
 end
 
-
 --- Extract color information from under the cursor if any, without opening the picker.
 --- @return oklch.picker.CursorData | nil
 function M.color_under_cursor()
@@ -214,7 +213,7 @@ function M.color_under_cursor()
   local line = vim.api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
   local ft = vim.api.nvim_get_option_value("filetype", { buf = 0 })
 
-   return find_color(bufnr, line, row, col, ft)
+  return find_color(bufnr, line, row, col, ft)
 end
 
 ---@class picker.PickUnderCursorOpts
