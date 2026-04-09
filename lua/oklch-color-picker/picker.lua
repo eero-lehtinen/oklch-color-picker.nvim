@@ -7,7 +7,7 @@ local M = {}
 ---@type oklch.FinalPatternList[]
 local final_patterns
 
----@param final_patterns_ oklch.FinalPatternList
+---@param final_patterns_ oklch.FinalPatternList[]
 function M.setup(final_patterns_)
   final_patterns = final_patterns_
 end

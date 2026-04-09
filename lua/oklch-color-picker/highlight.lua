@@ -743,7 +743,7 @@ function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
     ---@param match_end integer
     ---@param text string
     ---@param priority integer
-    ---@return boolean|integer
+    ---@return boolean
     local should_create_extmark = function(match_start, match_end, text, priority)
       for i = 2, new_line_extmarks_length, 2 do
         if new_line_extmarks[i - 1] <= match_end and new_line_extmarks[i] > match_start then
