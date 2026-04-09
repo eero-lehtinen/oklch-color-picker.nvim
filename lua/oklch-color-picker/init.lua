@@ -248,6 +248,13 @@ function M.setup(opts_)
   end
 end
 
+function M.uninstall()
+  highlight.disable()
+  utils.exec = nil
+  vim.fn.delete(utils.get_path(), "rf")
+  utils.log("Uninstalled downloaded files from " .. utils.get_path(), vim.log.levels.INFO)
+end
+
 M.components_to_number = highlight.rgb_pack
 
 M.pick_under_cursor = picker.pick_under_cursor
