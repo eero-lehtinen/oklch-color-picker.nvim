@@ -45,6 +45,7 @@ local ignore_ft = {}
 function M.setup(opts_, patterns_, auto_download)
   opts = opts_
   patterns = patterns_
+  ft_patterns_cache = {}
 
   if M.make_set_extmark() then
     utils.log("Invalid config.highlight.style, highlighting disabled", vim.log.levels.ERROR)

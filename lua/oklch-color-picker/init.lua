@@ -183,6 +183,8 @@ function M.setup(opts_)
     end, { desc = "Color pick text under cursor with the Oklch color picker" })
   end
 
+  final_patterns = {}
+
   for key, pattern_list in pairs(opts.patterns) do
     if pattern_list and pattern_list[1] ~= nil then
       local ft = function()
