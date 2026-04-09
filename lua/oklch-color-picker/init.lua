@@ -130,7 +130,7 @@ local final_patterns = {}
 
 local empty_group_re = vim.regex([[\(%\)\@<!()]])
 assert(empty_group_re)
-local unescaped_paren_re = vim.regex([=[\(%\)\@<!\[()\]]=])
+local unescaped_paren_re = vim.regex([=[\(%\)\@<![()]]=])
 assert(unescaped_paren_re)
 
 ---@param pattern string
