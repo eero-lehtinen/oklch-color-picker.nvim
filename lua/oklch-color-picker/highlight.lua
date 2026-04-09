@@ -1,5 +1,7 @@
 local utils = require("oklch-color-picker.utils")
 local downloader = require("oklch-color-picker.downloader")
+local ra = require("oklch-color-picker.reusable_array")
+local ra_new, ra_push, ra_clear = ra.new, ra.push, ra.clear
 
 local find, sub, format = string.find, string.sub, string.format
 local insert = table.insert
@@ -38,6 +40,8 @@ local hl_group = {}
 
 ---@type table<string, boolean>
 local ignore_ft = {}
+
+local ft_patterns_cache = {}
 
 --- @param opts_ oklch.highlight.Opts
 --- @param patterns_ oklch.FinalPatternList[]
@@ -480,7 +484,7 @@ function M.process_update(bufnr)
   local lines = vim.api.nvim_buf_get_lines(bufnr, from_line, to_line, false)
 
   for i, line in ipairs(lines) do
-    if string.len(line) > 1000 then
+    if #line > 1000 then
       lines[i] = sub(line, 1, 1000)
     end
   end
@@ -678,8 +682,6 @@ function M.make_set_extmark()
   end
 end
 
-local ft_patterns_cache = {}
-
 ---@param ft string
 ---@return oklch.FinalPatternList[]
 local function get_ft_patterns(ft)
@@ -720,9 +722,74 @@ local mark_cache_end = {}
 local mark_cache_text = {}
 local mark_cache_priority = {}
 
-local line_extmarks = {}
-local lsp_line_extmarks = {}
-local new_line_extmarks = {}
+local empty_opts = {}
+
+-- Reusable range args for nvim_buf_get_extmarks
+local range_start = { 0, 0 }
+local range_end = { 0, -1 }
+
+-- Per-line state (set in highlight_lines loop, read by should_create_extmark)
+local new_extmark_starts = ra_new()
+local new_extmark_ends = ra_new()
+local cur_lsp_ns_list = {}
+
+-- Current line's slice boundaries into the flat API result arrays.
+-- Extmarks are returned sorted by (row, col), so each line is a contiguous slice.
+local all_extmarks_arr = {}
+local line_extmark_from = 0
+local line_extmark_to = 0
+local lsp_extmarks_arr = {} ---@type table<integer, table>
+local lsp_line_from = {} ---@type table<integer, integer>
+local lsp_line_to = {} ---@type table<integer, integer>
+
+---@param match_start integer
+---@param match_end integer
+---@param text string
+---@param priority integer
+---@return boolean
+local function should_create_extmark(match_start, match_end, text, priority)
+  for i = 1, new_extmark_starts.n do
+    if new_extmark_starts[i] <= match_end and new_extmark_ends[i] > match_start then
+      return false
+    end
+  end
+
+  for _, lsp_ns in ipairs(cur_lsp_ns_list) do
+    local arr = lsp_extmarks_arr[lsp_ns]
+    for idx = lsp_line_from[lsp_ns], lsp_line_to[lsp_ns] do
+      local extmark = arr[idx]
+      if extmark[3] <= match_end then
+        if mark_cache_end[extmark[1]] > match_start then
+          return false
+        end
+      end
+    end
+  end
+
+  for idx = line_extmark_from, line_extmark_to do
+    local extmark = all_extmarks_arr[idx]
+    if extmark[3] <= match_end then
+      if mark_cache_end[extmark[1]] > match_start then
+        if
+          extmark[3] == match_start
+          and mark_cache_end[extmark[1]] == match_end
+          and mark_cache_text[extmark[1]] == text
+          and mark_cache_priority[extmark[1]] == priority
+        then
+          -- The old extmark is the same as the new one, so reuse it.
+          -- Mark the extmark as used so we don't delete it.
+          extmark[2] = -1
+          return false
+        end
+
+        -- We are overlapping with a previous extmark, but it's not the same as the new one, so override it (if it has lower or the same priority).
+        return mark_cache_priority[extmark[1]] <= priority
+      end
+    end
+  end
+
+  return true
+end
 
 ---@param bufnr integer
 ---@param lines string[]
@@ -732,68 +799,43 @@ local new_line_extmarks = {}
 function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
   local ft_patterns = get_ft_patterns(ft)
   local parse = M.parse
+  cur_lsp_ns_list = buf_data.lsp_namespaces_list
+  local n_lines = #lines
 
-  local get_mark_start = { 0, 0 }
-  local get_mark_end = { 0, 0 }
+  range_start[1] = from_line
+  range_end[1] = from_line + n_lines - 1
+
+  all_extmarks_arr = nvim_buf_get_extmarks(bufnr, ns, range_start, range_end, empty_opts)
+  local extmark_cursor = 1
+  local extmark_count = #all_extmarks_arr
+
+  for _, lsp_ns in ipairs(cur_lsp_ns_list) do
+    lsp_extmarks_arr[lsp_ns] = nvim_buf_get_extmarks(bufnr, lsp_ns, range_start, range_end, empty_opts)
+    lsp_line_to[lsp_ns] = 0
+  end
 
   for i, line in ipairs(lines) do
     local line_n = from_line + i - 1
-    get_mark_start[1] = line_n
-    get_mark_start[2] = 0
-    get_mark_end[1] = line_n
-    get_mark_end[2] = -1
 
-    local new_line_extmarks_length = 0
+    ra_clear(new_extmark_starts)
+    ra_clear(new_extmark_ends)
 
-    line_extmarks = nvim_buf_get_extmarks(bufnr, ns, get_mark_start, get_mark_end, {})
-    for _, lsp_ns in ipairs(buf_data.lsp_namespaces_list) do
-      lsp_line_extmarks[lsp_ns] = nvim_buf_get_extmarks(bufnr, lsp_ns, get_mark_start, get_mark_end, {})
+    -- Advance cursor to find this line's extmark slice
+    line_extmark_from = extmark_cursor
+    while extmark_cursor <= extmark_count and all_extmarks_arr[extmark_cursor][2] == line_n do
+      extmark_cursor = extmark_cursor + 1
     end
+    line_extmark_to = extmark_cursor - 1
 
-    ---@param match_start integer
-    ---@param match_end integer
-    ---@param text string
-    ---@param priority integer
-    ---@return boolean
-    local should_create_extmark = function(match_start, match_end, text, priority)
-      for i = 2, new_line_extmarks_length, 2 do
-        if new_line_extmarks[i - 1] <= match_end and new_line_extmarks[i] > match_start then
-          return false
-        end
+    for _, lsp_ns in ipairs(cur_lsp_ns_list) do
+      local arr = lsp_extmarks_arr[lsp_ns]
+      local cursor = lsp_line_to[lsp_ns] + 1
+      lsp_line_from[lsp_ns] = cursor
+      local count = #arr
+      while cursor <= count and arr[cursor][2] == line_n do
+        cursor = cursor + 1
       end
-
-      for _, lsp_ns in ipairs(buf_data.lsp_namespaces_list) do
-        for _, extmark in ipairs(lsp_line_extmarks[lsp_ns]) do
-          if extmark[3] <= match_end then
-            if mark_cache_end[extmark[1]] > match_start then
-              return false
-            end
-          end
-        end
-      end
-
-      for _, extmark in ipairs(line_extmarks) do
-        if extmark[3] <= match_end then
-          if mark_cache_end[extmark[1]] > match_start then
-            if
-              extmark[3] == match_start
-              and mark_cache_end[extmark[1]] == match_end
-              and mark_cache_text[extmark[1]] == text
-              and mark_cache_priority[extmark[1]] == priority
-            then
-              -- The old extmark is the same as the new one, so reuse it.
-              -- Mark the extmark as used so we don't delete it.
-              extmark[2] = -1
-              return false
-            end
-
-            -- We are overlapping with a previous extmark, but it's not the same as the new one, so override it (if it has lower or the same priority).
-            return mark_cache_priority[extmark[1]] <= priority
-          end
-        end
-      end
-
-      return true
+      lsp_line_to[lsp_ns] = cursor - 1
     end
 
     for pat_i, pattern_list in ipairs(ft_patterns) do
@@ -824,9 +866,8 @@ function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
               mark_cache_end[mark_id] = match_end --[[@as integer]]
               mark_cache_text[mark_id] = text
               mark_cache_priority[mark_id] = priority
-              new_line_extmarks_length = new_line_extmarks_length + 2
-              new_line_extmarks[new_line_extmarks_length - 1] = match_start
-              new_line_extmarks[new_line_extmarks_length] = match_end
+              ra_push(new_extmark_starts, match_start)
+              ra_push(new_extmark_ends, match_end)
             end
           end
 
@@ -836,7 +877,8 @@ function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
       end
     end
 
-    for _, extmark in ipairs(line_extmarks) do
+    for idx = line_extmark_from, line_extmark_to do
+      local extmark = all_extmarks_arr[idx]
       if extmark[2] ~= -1 then
         -- The extmark was not used, so delete it.
         nvim_buf_del_extmark(bufnr, ns, extmark[1])
