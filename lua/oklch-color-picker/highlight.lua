@@ -501,7 +501,10 @@ for i = 0, 255 do
   linear_lookup[i] = to_linear(i / 255)
 end
 
-local function rgb_unpack(rgb)
+--- Splits a combined 0xRRGGBB color into { r, g, b } (0-255).
+---@param rgb integer
+---@return [integer, integer, integer]
+function M.rgb_unpack(rgb)
   local r = rshift(rgb, 16)
   local g = band(rshift(rgb, 8), 0xff)
   local b = band(rgb, 0xff)
@@ -566,7 +569,7 @@ local dark_emphasis = 0
 function M.update_emphasis_values()
   local hl = get_hl("Normal")
   if hl.bg then
-    bg_color = rgb_unpack(hl.bg)
+    bg_color = M.rgb_unpack(hl.bg)
   else
     bg_color = vim.api.nvim_get_option_value("background", {}) == "light" and { 255, 255, 255 } or { 0, 0, 0 }
   end
@@ -593,11 +596,11 @@ local function compute_color_group(rgb)
   local group_name = format("OCP_%06x", rgb)
 
   if opts.style == "background" then
-    local opposite = is_light(rgb_unpack(rgb)) and 0x000000 or 0xFFFFFF
+    local opposite = is_light(M.rgb_unpack(rgb)) and 0x000000 or 0xFFFFFF
     hl_group.fg = opposite
     hl_group.bg = rgb
   else
-    local color = rgb_unpack(rgb)
+    local color = M.rgb_unpack(rgb)
     local bg = nil
 
     if emphasis_threshold < 1. and color_distance(bg_color, color) < emphasis_threshold * 765 then

@@ -261,13 +261,20 @@ M.pick_under_cursor = picker.pick_under_cursor
 M.open_picker = picker.open_picker
 M.color_under_cursor = picker.color_under_cursor
 
-M.highlight = {
+M.highlight = setmetatable({
   enable = highlight.enable,
   disable = highlight.disable,
   toggle = highlight.toggle,
+  is_enabled = highlight.is_enabled,
   set_perf_logging = highlight.set_perf_logging,
   set_lsp_perf_logging = highlight.set_lsp_perf_logging,
-  parse = highlight.parse,
-}
+  rgb_pack = highlight.rgb_pack,
+  rgb_unpack = highlight.rgb_unpack,
+}, {
+  -- `parse` is nil at require-time, so look it up dynamically.
+  __index = function(_, key)
+    return highlight[key]
+  end,
+})
 
 return M

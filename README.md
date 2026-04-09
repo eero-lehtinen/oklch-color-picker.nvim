@@ -208,6 +208,26 @@ The command `:ColorPickOklch` can be used instead of `pick_under_cursor()`.
 require("oklch-color-picker").highlight.disable()
 require("oklch-color-picker").highlight.enable()
 require("oklch-color-picker").highlight.toggle()
+require("oklch-color-picker").highlight.is_enabled()
+```
+
+### Parsing
+
+```lua
+local hl = require("oklch-color-picker").highlight
+
+-- Parse a color string with the parse library.
+-- Available after setup (and parser library loading) completes.
+-- Returns a packed 0xRRGGBB number or nil. Format is auto detected if not given.
+hl.parse("#ff00ff")      --> 0xff00ff
+hl.parse("rgb(255 0 0)") --> 0xff0000
+
+-- Unpack a 0xRRGGBB number into { r, g, b } (0-255).
+hl.rgb_unpack(0xff00ff)  --> { 255, 0, 255 }
+
+-- Pack r, g, b (0-255) into a 0xRRGGBB number.
+-- Useful in custom_parse functions for custom patterns.
+hl.rgb_pack(255, 0, 255) --> 0xff00ff
 ```
 
 ### Color Formats
