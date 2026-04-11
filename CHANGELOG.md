@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.1.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v4.1.0...v4.1.1) (2026-04-11)
+
+
+### Bug Fixes
+
+* make unzipping on WSL more robust ([#81](https://github.com/eero-lehtinen/oklch-color-picker.nvim/issues/81)) ([5ef401b](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/5ef401ba2ca04f4bc557b2b0a8de08ff495697e5))
+* recursive perf log with vim ui 2 ([40c5833](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/40c58331099dc5ad7dba59a619434902e7dfdb89))
+
+
+### Performance Improvements
+
+* reuse even more table memory while highlighting ([76a8c9c](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/76a8c9c0bf6dfd11e01279f872da0b752e0ede66))
+
 ## [4.1.0](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v4.0.0...v4.1.0) (2026-04-09)
 
 
