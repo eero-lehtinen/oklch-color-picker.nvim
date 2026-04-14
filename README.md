@@ -33,7 +33,6 @@ Requires Neovim 0.10+
   event = "VeryLazy",
   version = "*",
   keys = {
-    -- One handed keymap recommended, you will be using the mouse
     {
       "<leader>v",
       function() require("oklch-color-picker").pick_under_cursor() end,
@@ -43,6 +42,22 @@ Requires Neovim 0.10+
   ---@type oklch.Opts
   opts = {},
 }
+```
+
+[vim.pack](https://neovim.io/doc/user/pack.html) (Neovim 0.12+)
+
+```lua
+vim.pack.add({
+  {
+    src = "https://github.com/eero-lehtinen/oklch-color-picker.nvim",
+    version = vim.version.range("*"),
+  },
+})
+require("oklch-color-picker").setup({})
+
+vim.keymap.set("n", "<leader>v", function()
+  require("oklch-color-picker").pick_under_cursor()
+end, { desc = "Color pick under cursor" })
 ```
 
 This plugin automatically downloads the picker application and a color parser library from the releases page of [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker) (it's open source too in a different repo!). The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ performance and startup time. There are prebuilt binaries for Linux, macOS, and Windows.
