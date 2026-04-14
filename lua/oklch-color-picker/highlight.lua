@@ -891,41 +891,17 @@ local color_method = "textDocument/documentColor"
 
 ---@alias LspColor lsp.ColorInformation|{ packed_color: integer }
 
-local byteindex
-if vim.fn.has("nvim-0.11") == 1 then
-  byteindex = function(line, col, offset_encoding)
-    return vim.str_byteindex(line, offset_encoding, col, false)
-  end
-else
-  byteindex = function(line, col, offset_encoding)
-    return vim.lsp.util._str_byteindex_enc(line, col, offset_encoding)
-  end
-end
-
 ---@param range lsp.Range
 ---@param bufnr integer
 ---@param offset_encoding 'utf-8'|'utf-16'|'utf-32'
 local function convert_lsp_range_to_nvim(range, bufnr, offset_encoding)
   local line = vim.api.nvim_buf_get_lines(bufnr, range.start.line, range.start.line + 1, false)[1] or ""
-  range.start.character = byteindex(line, range.start.character, offset_encoding)
+  range.start.character = vim.str_byteindex(line, offset_encoding, range.start.character, false)
   if range["end"].line == range.start.line then
-    range["end"].character = byteindex(line, range["end"].character, offset_encoding)
+    range["end"].character = vim.str_byteindex(line, offset_encoding, range["end"].character, false)
   else
     range["end"].line = range.start.line
     range["end"].character = #line
-  end
-end
-
----@type fun(client: vim.lsp.Client, method: string, params: any, handler: any, bufnr: integer): boolean|nil
-local client_request
-if vim.fn.has("nvim-0.11") == 1 then
-  client_request = function(client, method, params, handler, bufnr)
-    return client:request(method, params, handler, bufnr)
-  end
-else
-  client_request = function(client, method, params, handler, bufnr)
-    ---@diagnostic disable-next-line: param-type-mismatch
-    return client.request(method, params, handler, bufnr)
   end
 end
 
@@ -1003,7 +979,7 @@ function M.process_update_lsp(bufnr, callback)
       end
     end
 
-    local status = client_request(client, color_method, params, lsp_handler, bufnr)
+    local status = client:request(color_method, params, lsp_handler, bufnr)
 
     if not status then
       done = done + 1

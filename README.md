@@ -23,7 +23,7 @@
 
 ## Installation
 
-Requires Neovim 0.10+
+Requires Neovim 0.11+
 
 [lazy.nvim](https://github.com/folke/lazy.nvim)
 

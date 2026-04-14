@@ -164,8 +164,8 @@ end
 
 ---@param opts_? oklch.Opts
 function M.setup(opts_)
-  if vim.fn.has("nvim-0.10") == 0 then
-    utils.log("oklch-color-picker.nvim requires Neovim 0.10+", vim.log.levels.ERROR)
+  if vim.fn.has("nvim-0.11") == 0 then
+    utils.log("oklch-color-picker.nvim requires Neovim 0.11+", vim.log.levels.ERROR)
     return
   end
 
