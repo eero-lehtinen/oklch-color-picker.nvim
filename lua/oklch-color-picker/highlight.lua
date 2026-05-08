@@ -592,17 +592,26 @@ function M.update_emphasis_values()
 end
 
 local hex_color_groups = {}
+local n_hex_color_groups = 0
 
 function M.clear_hl_cache()
   hex_color_groups = {}
+  n_hex_color_groups = 0
 end
 
 --- @param rgb number
---- @return string
+--- @return string | nil
 local function compute_color_group(rgb)
   local cached_group_name = hex_color_groups[rgb]
   if cached_group_name ~= nil then
     return cached_group_name
+  end
+
+  -- Implements the same fix as https://github.com/neovim/neovim/pull/39133.
+  -- Vim limits hl groups to 19999, so limit our groups to half that and leave
+  -- the other half for other plugins/features.
+  if n_hex_color_groups >= 10000 then
+    return nil
   end
 
   local group_name = format("OCP_%06x", rgb)
@@ -630,6 +639,7 @@ local function compute_color_group(rgb)
   nvim_set_hl(0, group_name, hl_group)
 
   hex_color_groups[rgb] = group_name
+  n_hex_color_groups = n_hex_color_groups + 1
 
   return group_name
 end
@@ -861,13 +871,15 @@ function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
 
             if rgb then
               local group = compute_color_group(rgb)
-              local mark_id = set_extmark(bufnr, ns, line_n, match_start, match_end --[[@as integer]], group)
+              if group ~= nil then
+                local mark_id = set_extmark(bufnr, ns, line_n, match_start, match_end --[[@as integer]], group)
 
-              mark_cache_end[mark_id] = match_end --[[@as integer]]
-              mark_cache_text[mark_id] = text
-              mark_cache_priority[mark_id] = priority
-              ra_push(new_extmark_starts, match_start)
-              ra_push(new_extmark_ends, match_end)
+                mark_cache_end[mark_id] = match_end --[[@as integer]]
+                mark_cache_text[mark_id] = text
+                mark_cache_priority[mark_id] = priority
+                ra_push(new_extmark_starts, match_start)
+                ra_push(new_extmark_ends, match_end)
+              end
             end
           end
 
@@ -983,8 +995,10 @@ function M.process_update_lsp(bufnr, callback)
               float_to_int8(result.color.blue)
             )
             local group = compute_color_group(result.packed_color)
-            local mark_id = set_extmark(bufnr, lsp_ns, line_n, get_mark_start[2], get_mark_end[2], group)
-            mark_cache_end[mark_id] = get_mark_end[2] --[[@as integer]]
+            if group ~= nil then
+              local mark_id = set_extmark(bufnr, lsp_ns, line_n, get_mark_start[2], get_mark_end[2], group)
+              mark_cache_end[mark_id] = get_mark_end[2] --[[@as integer]]
+            end
           end
         end
 
