@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.1.2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v4.1.1...v4.1.2) (2026-05-08)
+
+
+### Bug Fixes
+
+* limit maximum number of hl groups ([32b29a9](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/32b29a985d6d1571142bbb389225656b2e7241aa))
+
 ## [4.1.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v4.1.0...v4.1.1) (2026-04-11)
 
 
