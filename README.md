@@ -23,7 +23,9 @@
 
 ## Installation
 
-Requires Neovim 0.10+
+Requires Neovim 0.12+.
+
+Neovim 0.10 and 0.11 are supported in version 4 (set `version = "^4"`).
 
 [lazy.nvim](https://github.com/folke/lazy.nvim)
 
