@@ -6,6 +6,46 @@ local github_url = "https://github.com/eero-lehtinen/oklch-color-picker/releases
 
 local M = {}
 
+--- Read a sidecar version file and return its contents, or nil if the file is
+--- missing or unreadable. Both the app and the parser keep one so startup can
+--- confirm the installed artifact is current without touching the artifact.
+---@param name string
+---@param callback fun(found: string|nil)
+local function read_version_file(name, callback)
+  vim.uv.fs_open(utils.get_path() .. "/" .. name, "r", 438, function(err, fd)
+    if err or not fd then
+      utils.log(err or "", vim.log.levels.DEBUG)
+      return callback(nil)
+    end
+
+    vim.uv.fs_read(fd, 1024, 0, function(read_err, data)
+      vim.uv.fs_close(fd)
+      return callback(not read_err and data or nil)
+    end)
+  end)
+end
+
+---@param name string
+local function write_version_file(name)
+  vim.uv.fs_open(utils.get_path() .. "/" .. name, "w", 438, function(err, fd)
+    if err or not fd then
+      utils.log(function()
+        return "Couldn't open version file for writing: " .. (err or "")
+      end, vim.log.levels.WARN)
+      return
+    end
+
+    vim.uv.fs_write(fd, version, 0, function(write_err)
+      vim.uv.fs_close(fd)
+      if write_err then
+        utils.log(function()
+          return "Couldn't write version file: " .. write_err
+        end, vim.log.levels.WARN)
+      end
+    end)
+  end)
+end
+
 ---@param callback fun(err: string|nil)
 function M.ensure_app_downloaded(callback)
   M.validate_app_version(vim.schedule_wrap(function(err)
@@ -30,35 +70,35 @@ end
 
 ---@param callback fun(err: string?)
 function M.validate_app_version(callback)
-  local err, exec = utils.executable_full_path()
+  local err = utils.executable_full_path()
   if err then
     callback(err)
     return
   end
-  vim.system({ exec, "--version" }, {}, function(out)
-    if out.code ~= 0 then
-      callback("Picker app failed to run\nstdout: " .. out.stdout .. "\nstderr: " .. out.stderr)
-      return
-    end
-    if out.stdout:find(version) then
+  read_version_file("app_version", function(found)
+    if found == version then
       callback(nil)
+    elseif found == nil then
+      callback("Picker app version file missing")
     else
-      callback("Picker app version mismatch: expected " .. version .. ", got " .. out.stdout:match("[%d%.]+"))
+      callback("Picker app outdated: expected " .. version .. ", found " .. found)
     end
   end)
 end
 
 ---@param callback fun(err: string|nil)
 function M.ensure_parser_downloaded(callback)
-  M.validate_parser_version(vim.schedule_wrap(function(correct_parser_version)
-    if correct_parser_version then
+  M.validate_parser_version(vim.schedule_wrap(function(err)
+    if not err then
       callback(nil)
       return
     end
 
-    M.download_parser(function(err)
-      if err then
-        callback("Couldn't download parser library: " .. err)
+    utils.log(err, vim.log.levels.INFO)
+
+    M.download_parser(function(err2)
+      if err2 then
+        callback("Couldn't download parser library: " .. err2)
         return
       end
       callback(nil)
@@ -66,38 +106,16 @@ function M.ensure_parser_downloaded(callback)
   end))
 end
 
----@param callback fun(valid: boolean)
+---@param callback fun(err: string?)
 function M.validate_parser_version(callback)
-  vim.uv.fs_open(utils.get_path() .. "/parser_version", "r", 438, function(err, fd)
-    if err or not fd then
-      utils.log(err or "", vim.log.levels.DEBUG)
-      return callback(false)
+  read_version_file("parser_version", function(found)
+    if found == version then
+      callback(nil)
+    elseif found == nil then
+      callback("Parser version file missing")
+    else
+      callback("Parser outdated: expected " .. version .. ", found " .. found)
     end
-
-    vim.uv.fs_read(fd, 1024, 0, function(read_err, data)
-      vim.uv.fs_close(fd)
-      return callback(not read_err and data == version)
-    end)
-  end)
-end
-
-function M.write_parser_version()
-  vim.uv.fs_open(utils.get_path() .. "/parser_version", "w", 438, function(err, fd)
-    if err or not fd then
-      utils.log(function()
-        return "Couldn't open version file for writing: " .. (err or "")
-      end, vim.log.levels.WARN)
-      return
-    end
-
-    vim.uv.fs_write(fd, version, 0, function(write_err)
-      vim.uv.fs_close(fd)
-      if write_err then
-        utils.log(function()
-          return "Couldn't write version file:" .. write_err
-        end, vim.log.levels.WARN)
-      end
-    end)
   end)
 end
 
@@ -180,6 +198,8 @@ function M.download_app(callback)
 
         vim.fn.delete(cwd .. "/" .. archive_basename, "rf")
 
+        write_version_file("app_version")
+
         utils.log(function()
           return "Picker app v" .. version .. " downloaded to " .. cwd .. "/" .. utils.executable()
         end, vim.log.levels.INFO)
@@ -250,7 +270,7 @@ function M.download_parser(callback)
         return
       end
 
-      M.write_parser_version()
+      write_version_file("parser_version")
 
       utils.log(function()
         return "Parser v" .. version .. " downloaded to " .. cwd .. "/" .. out_lib
