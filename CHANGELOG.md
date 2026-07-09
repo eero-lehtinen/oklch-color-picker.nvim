@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v5.0.1...v5.0.2) (2026-07-09)
+
+
+### Bug Fixes
+
+* make picker version detection faster & more robust ([3579d59](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/3579d59b908a6493ee93aa0408dbb16cf6862c60))
+
 ## [5.0.1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v5.0.0...v5.0.1) (2026-07-09)
 
 
