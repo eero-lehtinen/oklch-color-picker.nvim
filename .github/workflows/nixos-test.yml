@@ -32,7 +32,7 @@ jobs:
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: eero-lehtinen/nixpkgs
-          ref: 6452b65f2014e8fc9e6167d1a4d6d1baef018fd7 # oklch-color-picker-nvim-test
+          ref: f846a4e3efe6135ac25c03c2b758cf70c9023940 # oklch-color-picker-nvim-test
           path: nixpkgs
 
       - name: Install Nix and configure KVM
