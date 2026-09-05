@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.3](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v5.0.2...v5.0.3) (2026-09-05)
+
+
+### Bug Fixes
+
+* support externally managed picker dependencies ([06e1881](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/06e188161a599fdd14c9f439be0a2c97e9ef30fb))
+
 ## [5.0.2](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v5.0.1...v5.0.2) (2026-07-09)
 
 
