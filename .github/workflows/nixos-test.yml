@@ -1,0 +1,58 @@
+name: NixOS integration test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  nixos:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Check out plugin release 5.0.3
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: 8de20a4f986fc9be771a9cc021706e2a2cc0f962 # v5.0.3
+          path: release
+
+      - name: Check out pinned Nixpkgs
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: NixOS/nixpkgs
+          ref: 793e4f335bcb409d4107e7daae1dedf2e93d3bde
+          path: nixpkgs
+
+      - name: Install Nix and configure KVM
+        uses: DeterminateSystems/nix-installer-action@b67ad2f0e8376a0bc947db191e4484285b6f5b56
+
+      - name: Check hardware virtualization
+        run: test -r /dev/kvm && test -w /dev/kvm
+
+      - name: Build NixOS test driver
+        run: |
+          mkdir -p test-results
+          nix-build tests/nixos -A driver \
+            --arg nixpkgs ./nixpkgs \
+            --arg pluginSrc ./release \
+            --out-link nixos-test-driver 2>&1 | tee test-results/build.log
+
+      - name: Run NixOS integration test
+        run: |
+          nixos-test-driver/bin/nixos-test-driver \
+            -o "$PWD/test-results" 2>&1 | tee test-results/test.log
+
+      - name: Upload logs and screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: nixos-test-results
+          path: test-results/
+          if-no-files-found: ignore
