@@ -143,6 +143,7 @@ local default_opts = {
   register_cmds = true,
 
   -- Download Rust binaries automatically.
+  -- When false, use the picker from PATH and normal Lua parser lookup without version checks.
   auto_download = true,
 
   -- Use the Windows version of the app on WSL instead of using unreliable WSLg.

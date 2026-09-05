@@ -12,6 +12,7 @@ local M = {}
 ---@field patterns? table<string, oklch.PatternList|false>
 ---@field register_cmds? boolean
 --- Download Rust binaries automatically.
+--- When false, use the picker from PATH and normal Lua parser lookup without version checks.
 ---@field auto_download? boolean
 --- Use the Windows version of the app on WSL instead of using unreliable WSLg
 ---@field wsl_use_windows_app? boolean
