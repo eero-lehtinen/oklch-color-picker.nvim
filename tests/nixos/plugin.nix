@@ -1,10 +1,13 @@
 { pkgs, pluginSrc }:
 
+let
+  picker = import ./picker.nix { inherit pkgs; };
+in
 pkgs.vimPlugins.oklch-color-picker-nvim.overrideAttrs (old: {
   version = "5.0.3";
   src = pluginSrc;
 
-  runtimeDeps = (old.runtimeDeps or [ ]) ++ [ pkgs.oklch-color-picker ];
+  runtimeDeps = (old.runtimeDeps or [ ]) ++ [ picker ];
 
   postPatch = (old.postPatch or "") + ''
     substituteInPlace lua/oklch-color-picker/init.lua \
@@ -13,7 +16,7 @@ pkgs.vimPlugins.oklch-color-picker-nvim.overrideAttrs (old: {
 
   postInstall = (old.postInstall or "") + ''
     ln -s \
-      ${pkgs.oklch-color-picker}/lib/libparser_lua_module${pkgs.stdenv.hostPlatform.extensions.sharedLibrary} \
+      ${picker}/lib/libparser_lua_module${pkgs.stdenv.hostPlatform.extensions.sharedLibrary} \
       "$target/lua/parser_lua_module.so"
   '';
 })

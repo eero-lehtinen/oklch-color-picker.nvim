@@ -12,6 +12,11 @@ defaults:
 
 jobs:
   nixos:
+    name: NixOS (${{ matrix.backend }})
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [x11, wayland]
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -42,6 +47,7 @@ jobs:
           nix-build tests/nixos -A driver \
             --arg nixpkgs ./nixpkgs \
             --arg pluginSrc ./release \
+            --argstr backend '${{ matrix.backend }}' \
             --out-link nixos-test-driver 2>&1 | tee test-results/build.log
 
       - name: Run NixOS integration test
@@ -53,6 +59,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: nixos-test-results
+          name: nixos-test-results-${{ matrix.backend }}
           path: test-results/
           if-no-files-found: ignore
