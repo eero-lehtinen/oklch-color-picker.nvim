@@ -64,6 +64,19 @@ end, { desc = "Color pick under cursor" })
 
 This plugin automatically downloads the picker application and a color parser library from the releases page of [the picker application repository](https://github.com/eero-lehtinen/oklch-color-picker) (it's open source too in a different repo!). The picker is a standalone ⚡Rust⚡ application with ⚡blazing fast⚡ performance and startup time. There are prebuilt binaries for Linux, macOS, and Windows.
 
+### NixOS
+
+The downloaded binaries don't work properly on NixOS. Install the
+[`oklch-color-picker`](https://search.nixos.org/packages?query=oklch-color-picker)
+package and disable the download in plugin options:
+
+```lua
+opts = { auto_download = false }
+```
+
+The plugin finds the picker app from `PATH` and the parser library from
+the package's `lib` directory.
+
 ## Showcase
 
 ### Video
