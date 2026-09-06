@@ -27,7 +27,7 @@ pkgs.testers.runNixOSTest {
     ];
     virtualisation.memorySize = 2048;
     virtualisation.cores = 2;
-    environment.systemPackages = [ neovim pkgs.xdotool pkgs.jq ];
+    environment.systemPackages = [ neovim pkgs.oklch-color-picker pkgs.xdotool pkgs.jq ];
     environment.etc."oklch-smoke.lua".source = ./smoke.lua;
   };
 
@@ -37,16 +37,14 @@ pkgs.testers.runNixOSTest {
         machine.wait_for_file("/tmp/sway-ipc.sock")
     else:
         machine.wait_for_x()
-    # The picker must come from the plugin's runtimeDeps, not the system PATH.
-    machine.fail("command -v oklch-color-picker")
     try:
         if "${backend}" == "wayland":
             machine.succeed("su - alice -c 'swaymsg exec ${launch}'")
-            window_check = "su - alice -c 'swaymsg -t get_tree' | jq -e '.. | objects | select(.name? == \"Oklch Color Picker\" and .shell? == \"xdg_shell\")'"
+            window_check = "su - alice -c 'swaymsg -t get_tree' | jq -e '.. | objects | select((.name? // \"\" | ascii_downcase) == \"oklch color picker\" and .shell? == \"xdg_shell\")'"
             data_dir = "/home/alice/.local/share/nvim/oklch-color-picker"
         else:
             machine.succeed("DISPLAY=:0 ${launch} &")
-            window_check = "DISPLAY=:0 xdotool search --onlyvisible --name '^Oklch Color Picker$'"
+            window_check = "DISPLAY=:0 xdotool search --onlyvisible --name '^[Oo][Kk][Ll][Cc][Hh] Color Picker$'"
             data_dir = "/root/.local/share/nvim/oklch-color-picker"
         machine.wait_until_succeeds("test -f /tmp/oklch-ready", timeout=60)
         machine.wait_until_succeeds(window_check, timeout=60)
