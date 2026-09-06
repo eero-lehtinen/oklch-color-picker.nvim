@@ -77,19 +77,21 @@ function M.executable_full_path()
     return nil, M.exec
   end
   if not opts.auto_download then
-    local exec = vim.fn.exepath(M.executable())
-    if exec == "" then
-      return "Picker executable not found in PATH: " .. M.executable(), nil
+    local path_exec = vim.fn.exepath(M.executable())
+    if path_exec ~= "" then
+      M.exec = path_exec
+      return nil, M.exec
     end
-    M.exec = exec
-    return nil, M.exec
   end
   local exec = M.get_path() .. "/" .. M.executable()
   if vim.fn.executable(exec) == 1 then
     M.exec = exec
     return nil, M.exec
   end
-  return "Picker executable not found at " .. exec, nil
+  if opts.auto_download then
+    return "Picker executable not found at " .. exec, nil
+  end
+  return "Picker executable not found in PATH or at " .. exec, nil
 end
 
 --- @type string|nil

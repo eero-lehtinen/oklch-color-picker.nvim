@@ -143,7 +143,9 @@ local default_opts = {
   register_cmds = true,
 
   -- Download Rust binaries automatically.
-  -- When false, use the picker from PATH and normal Lua parser lookup without version checks.
+  -- When false, skip downloads and version checks. The picker is searched in PATH and then
+  -- the plugin data directory. The parser is searched in the lib directory next to the
+  -- picker, the runtimepath, and then the data directory.
   auto_download = true,
 
   -- Use the Windows version of the app on WSL instead of using unreliable WSLg.
