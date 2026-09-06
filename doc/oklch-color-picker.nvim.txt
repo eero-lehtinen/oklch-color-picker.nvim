@@ -82,6 +82,21 @@ in a different repo!). The picker is a standalone ⚡Rust⚡ application with
 for Linux, macOS, and Windows.
 
 
+NIXOS ~
+
+The downloaded binaries don’t work properly on NixOS. Install the
+`oklch-color-picker`
+<https://search.nixos.org/packages?query=oklch-color-picker> package and
+disable the download in plugin options:
+
+>lua
+    opts = { auto_download = false }
+<
+
+The plugin finds the picker app from `PATH` and the parser library from the
+package’s `lib` directory.
+
+
 SHOWCASE                                    *oklch-color-picker.nvim-showcase*
 
 
