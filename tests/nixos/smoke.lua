@@ -1,6 +1,6 @@
 local ok, err = xpcall(function()
   local plugin = require("oklch-color-picker")
-  plugin.setup({ auto_download = false })
+  plugin.setup({})
   assert(plugin.highlight.parse("#ff0000") == 0xff0000, "Parser returned the wrong color")
 
   vim.api.nvim_buf_set_lines(0, 0, -1, false, { "#ff0000" })

@@ -1,7 +1,6 @@
 { pkgs, pluginSrc }:
 
-pkgs.vimUtils.buildVimPlugin {
-  pname = "oklch-color-picker.nvim";
+pkgs.vimPlugins.oklch-color-picker-nvim.overrideAttrs {
   version = "dev";
   src = pkgs.lib.fileset.toSource {
     root = pluginSrc;

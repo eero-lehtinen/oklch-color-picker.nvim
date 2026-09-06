@@ -1,10 +1,10 @@
 # NixOS test
 
-Tests the README's NixOS instructions: the plugin is built from the current
-checkout, the `oklch-color-picker` package is installed system-wide, and
-`auto_download = false`. In X11 and Wayland VMs it loads the parser, opens the
-picker, and checks that no plugin data directory was created. Nixpkgs is
-`nixos-unstable`.
+Tests the proposed `vimPlugins.oklch-color-picker-nvim` override from the
+`oklch-color-picker-nvim-test` branch of the eero-lehtinen/nixpkgs fork, with the
+current checkout as the plugin source and no picker on the system PATH. In X11
+and Wayland VMs it loads the parser, opens the picker, and checks that no plugin
+data directory was created.
 
 Run **Actions → NixOS integration test → Run workflow**. Logs and a screenshot
 are uploaded as `nixos-test-results-x11` and `nixos-test-results-wayland`. For

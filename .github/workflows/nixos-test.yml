@@ -22,11 +22,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Check out Nixpkgs
+      - name: Check out Nixpkgs with the proposed plugin override
         uses: actions/checkout@v7
         with:
-          repository: NixOS/nixpkgs
-          ref: nixos-unstable
+          repository: eero-lehtinen/nixpkgs
+          ref: efc5e5817510b06f3e9ea8879755b9ba2ca8cf63 # oklch-color-picker-nvim-test
           path: nixpkgs
 
       - name: Install Nix and configure KVM

@@ -27,7 +27,7 @@ pkgs.testers.runNixOSTest {
     ];
     virtualisation.memorySize = 2048;
     virtualisation.cores = 2;
-    environment.systemPackages = [ neovim pkgs.oklch-color-picker pkgs.xdotool pkgs.jq ];
+    environment.systemPackages = [ neovim pkgs.xdotool pkgs.jq ];
     environment.etc."oklch-smoke.lua".source = ./smoke.lua;
   };
 
@@ -37,6 +37,8 @@ pkgs.testers.runNixOSTest {
         machine.wait_for_file("/tmp/sway-ipc.sock")
     else:
         machine.wait_for_x()
+    # The picker must come from the plugin's runtimeDeps, not the system PATH.
+    machine.fail("command -v oklch-color-picker")
     try:
         if "${backend}" == "wayland":
             machine.succeed("su - alice -c 'swaymsg exec ${launch}'")
