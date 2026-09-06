@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.5](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v5.0.4...v5.0.5) (2026-09-06)
+
+
+### Bug Fixes
+
+* find packaged picker and parser when auto_download is false ([788f7e1](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/788f7e165954f412af7dfda7f5d223dea366367d))
+
 ## [5.0.4](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v5.0.3...v5.0.4) (2026-09-05)
 
 
