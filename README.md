@@ -68,7 +68,7 @@ This plugin automatically downloads the picker application and a color parser li
 
 The downloaded binaries don't work properly on NixOS. Install the
 [`oklch-color-picker`](https://search.nixos.org/packages?query=oklch-color-picker)
-package and disable the download in plugin options:
+package and disable automatic downloads in plugin options:
 
 ```lua
 opts = { auto_download = false }
