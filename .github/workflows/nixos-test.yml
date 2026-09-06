@@ -22,17 +22,17 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
-      - name: Check out plugin release 5.0.3
+      - name: Check out plugin under test
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: 8de20a4f986fc9be771a9cc021706e2a2cc0f962 # v5.0.3
+          ref: 788f7e165954f412af7dfda7f5d223dea366367d # master
           path: release
 
       - name: Check out Nixpkgs with the proposed packaging changes
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           repository: eero-lehtinen/nixpkgs
-          ref: f846a4e3efe6135ac25c03c2b758cf70c9023940 # oklch-color-picker-nvim-test
+          ref: efc5e5817510b06f3e9ea8879755b9ba2ca8cf63 # oklch-color-picker-nvim-test
           path: nixpkgs
 
       - name: Install Nix and configure KVM
