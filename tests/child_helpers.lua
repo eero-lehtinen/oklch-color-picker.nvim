@@ -14,6 +14,7 @@ M.notifications = {}
 ---@param opts table|string|nil a Lua expression when msgpack cannot carry it
 ---@param expect_disabled boolean|nil highlighting is expected to fail to start
 function M.setup(opts, expect_disabled)
+  ---@diagnostic disable-next-line: duplicate-set-field
   vim.notify = function(msg, level)
     table.insert(M.notifications, { msg = msg, level = level })
   end
@@ -45,8 +46,8 @@ end
 ---@param buf integer
 ---@return table
 function M.mark_detail(buf)
-  local m = vim.api.nvim_buf_get_extmarks(buf, M.ns, 0, -1, { details = true })[1]
-  local d = m[4]
+  local m = assert(vim.api.nvim_buf_get_extmarks(buf, M.ns, 0, -1, { details = true })[1])
+  local d = assert(m[4])
   return {
     start_col = m[3],
     end_col = d.end_col,
@@ -185,7 +186,7 @@ end
 function M.marks(buf, client)
   local out = {}
   for _, m in ipairs(vim.api.nvim_buf_get_extmarks(buf, namespace(client), 0, -1, { details = true })) do
-    local d = m[4]
+    local d = assert(m[4])
     local group = d.hl_group or (d.virt_text and d.virt_text[1][2]) or "none"
     local pos = m[2] == d.end_row and string.format("%d:%d-%d", m[2], m[3], d.end_col)
       or string.format("%d:%d-%d:%d", m[2], m[3], d.end_row, d.end_col)
@@ -287,6 +288,7 @@ M.system_calls = {}
 function M.stub_system()
   M.system_calls = {}
   require("oklch-color-picker.utils").exec = "fake-picker"
+  ---@diagnostic disable-next-line: duplicate-set-field
   vim.system = function(cmd, opts, on_exit)
     table.insert(M.system_calls, { cmd = cmd, stdout = opts.stdout, on_exit = on_exit })
     return {}

@@ -14,7 +14,7 @@ local T = MiniTest.new_set({
 
 ---@param mark table
 ---@param group table
----@return table
+---@return table, table
 local function shape(mark, group)
   return vim.tbl_extend("force", {
     start_col = 0,

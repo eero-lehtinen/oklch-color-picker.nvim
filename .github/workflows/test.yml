@@ -3,6 +3,10 @@ name: Tests
 on:
   push:
   pull_request:
+  schedule:
+    # Daily against Neovim nightly. A failure here emails the repository owner.
+    - cron: "0 4 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,11 +22,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        nvim: [stable, nightly]
+        # Pushes and pull requests test both versions; the daily run only nightly.
+        nvim: ${{ fromJSON((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '["nightly"]' || '["stable", "nightly"]') }}
     runs-on: ${{ matrix.os }}
-    # Nightly breaks for reasons outside this repository often enough that it
-    # should not block a merge.
-    continue-on-error: ${{ matrix.nvim == 'nightly' }}
+    # Nightly is informational on pushes and pull requests and must not block
+    # a merge. It is the only version on the schedule, where it does fail.
+    continue-on-error: ${{ matrix.nvim == 'nightly' && github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
@@ -34,7 +39,7 @@ jobs:
           version: ${{ matrix.nvim }}
 
       - name: Cache test dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: tests/.deps
           key: deps-${{ matrix.os }}-${{ hashFiles('lua/oklch-color-picker/downloader.lua') }}
@@ -45,14 +50,54 @@ jobs:
       - name: Run tests
         run: nvim --headless -u tests/minimal_init.lua -c "lua MiniTest.run()"
 
+  typecheck:
+    name: lua-language-server / nvim ${{ matrix.nvim }}
+    strategy:
+      fail-fast: false
+      matrix:
+        nvim: ${{ fromJSON((github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && '["nightly"]' || '["stable", "nightly"]') }}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.nvim == 'nightly' && github.event_name != 'schedule' && github.event_name != 'workflow_dispatch' }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.nvim }}
+
+      - name: Install latest lua-language-server
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$(gh release view --repo LuaLS/lua-language-server --json tagName --jq .tagName)"
+          echo "lua-language-server $version"
+          mkdir -p "$RUNNER_TEMP/luals"
+          curl --fail -sSL "https://github.com/LuaLS/lua-language-server/releases/download/$version/lua-language-server-$version-linux-x64.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP/luals"
+          echo "$RUNNER_TEMP/luals/bin" >> "$GITHUB_PATH"
+
+      - name: Type check
+        run: |
+          export VIMRUNTIME="$(nvim --clean --headless -c 'lua io.write(vim.env.VIMRUNTIME)' -c q)"
+          if ! lua-language-server --check . --checklevel=Warning --configpath .luarc.json \
+              --logpath "$RUNNER_TEMP/luals-log" --check_out_path "$RUNNER_TEMP/check.json"; then
+            jq -r 'to_entries[] | .key as $f | .value[] | "\($f):\(.range.start.line + 1) [\(.code)] \(.message)"' \
+              "$RUNNER_TEMP/check.json"
+            exit 1
+          fi
+
   stylua:
     name: stylua
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
 
-      - uses: JohnnyMorganz/stylua-action@v4
+      - uses: JohnnyMorganz/stylua-action@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: latest

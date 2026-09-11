@@ -27,7 +27,20 @@ nvim --headless -u tests/minimal_init.lua -c "lua MiniTest.run_file('tests/test_
 ```
 
 Exit code is nonzero on failure. CI runs the same commands on Linux, Windows
-and macOS against stable and nightly Neovim.
+and macOS against stable and nightly Neovim on every push. Nightly does not
+block a merge there. A daily scheduled run tests nightly alone and fails for
+real, so that upstream breakage is noticed before a release.
+
+## Type check
+
+`.luarc.json` configures lua-language-server with Neovim's own type
+annotations from `$VIMRUNTIME`, which also flags deprecated APIs. CI runs it on
+`lua` and `tests` at warning level. Locally:
+
+```sh
+VIMRUNTIME=$(nvim --clean --headless -c 'lua io.write(vim.env.VIMRUNTIME)' -c q) \
+  lua-language-server --check . --checklevel=Warning --configpath .luarc.json
+```
 
 ## Structure
 
