@@ -131,6 +131,7 @@ function M.clear_buf_hl(bufnr)
   for _, lsp_ns in ipairs(buf_data.lsp_namespaces_list) do
     pcall(vim.api.nvim_buf_clear_namespace, bufnr, lsp_ns, 0, -1)
   end
+  buf_data.mark_caches = {}
 end
 
 --- @param bufnr number
@@ -242,8 +243,16 @@ end
 ---@field lsp_queued boolean|nil
 ---@field lsp_namespaces table<string, integer>
 ---@field lsp_namespaces_list table<integer, integer>
+---@field mark_caches table<integer, MarkCache> keyed by namespace id
 ---@field pending_timer uv.uv_timer_t
 ---@field pending_timer_lsp uv.uv_timer_t
+
+--- Extmark ids restart at 1 for every (buffer, namespace) pair, so cached
+--- mark attributes must be scoped the same way.
+---@class MarkCache
+---@field ends table<integer, integer> mark id -> end col
+---@field texts table<integer, string> mark id -> matched text
+---@field priorities table<integer, integer> mark id -> priority
 
 --- @type { [integer]: BufData }
 M.bufs = {}
@@ -299,6 +308,7 @@ M.init_buf = function(bufnr)
     lsp_colors = {},
     lsp_namespaces = {},
     lsp_namespaces_list = {},
+    mark_caches = {},
     pending_timer = assert(vim.uv.new_timer()),
     pending_timer_lsp = assert(vim.uv.new_timer()),
   }
@@ -728,9 +738,25 @@ local function get_lsp_namespace(client_name, buf_data)
   return namespace
 end
 
-local mark_cache_end = {}
-local mark_cache_text = {}
-local mark_cache_priority = {}
+---@param buf_data BufData
+---@param ns_id integer
+---@return MarkCache
+local function get_mark_cache(buf_data, ns_id)
+  local cache = buf_data.mark_caches[ns_id]
+  if cache == nil then
+    cache = { ends = {}, texts = {}, priorities = {} }
+    buf_data.mark_caches[ns_id] = cache
+  end
+  return cache
+end
+
+---@param cache MarkCache
+---@param mark_id integer
+local function forget_mark(cache, mark_id)
+  cache.ends[mark_id] = nil
+  cache.texts[mark_id] = nil
+  cache.priorities[mark_id] = nil
+end
 
 local empty_opts = {}
 
@@ -742,6 +768,10 @@ local range_end = { 0, -1 }
 local new_extmark_starts = ra_new()
 local new_extmark_ends = ra_new()
 local cur_lsp_ns_list = {}
+local cur_mark_caches = {} ---@type table<integer, MarkCache>
+local cur_mark_ends = {} ---@type table<integer, integer>
+local cur_mark_texts = {} ---@type table<integer, string>
+local cur_mark_priorities = {} ---@type table<integer, integer>
 
 -- Current line's slice boundaries into the flat API result arrays.
 -- Extmarks are returned sorted by (row, col), so each line is a contiguous slice.
@@ -766,10 +796,11 @@ local function should_create_extmark(match_start, match_end, text, priority)
 
   for _, lsp_ns in ipairs(cur_lsp_ns_list) do
     local arr = lsp_extmarks_arr[lsp_ns]
+    local lsp_ends = cur_mark_caches[lsp_ns].ends
     for idx = lsp_line_from[lsp_ns], lsp_line_to[lsp_ns] do
       local extmark = arr[idx]
       if extmark[3] <= match_end then
-        if mark_cache_end[extmark[1]] > match_start then
+        if lsp_ends[extmark[1]] > match_start then
           return false
         end
       end
@@ -779,12 +810,13 @@ local function should_create_extmark(match_start, match_end, text, priority)
   for idx = line_extmark_from, line_extmark_to do
     local extmark = all_extmarks_arr[idx]
     if extmark[3] <= match_end then
-      if mark_cache_end[extmark[1]] > match_start then
+      local mark_id = extmark[1]
+      if cur_mark_ends[mark_id] > match_start then
         if
           extmark[3] == match_start
-          and mark_cache_end[extmark[1]] == match_end
-          and mark_cache_text[extmark[1]] == text
-          and mark_cache_priority[extmark[1]] == priority
+          and cur_mark_ends[mark_id] == match_end
+          and cur_mark_texts[mark_id] == text
+          and cur_mark_priorities[mark_id] == priority
         then
           -- The old extmark is the same as the new one, so reuse it.
           -- Mark the extmark as used so we don't delete it.
@@ -793,7 +825,7 @@ local function should_create_extmark(match_start, match_end, text, priority)
         end
 
         -- We are overlapping with a previous extmark, but it's not the same as the new one, so override it (if it has lower or the same priority).
-        return mark_cache_priority[extmark[1]] <= priority
+        return cur_mark_priorities[mark_id] <= priority
       end
     end
   end
@@ -810,6 +842,9 @@ function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
   local ft_patterns = get_ft_patterns(ft)
   local parse = M.parse
   cur_lsp_ns_list = buf_data.lsp_namespaces_list
+  cur_mark_caches = buf_data.mark_caches
+  local main_cache = get_mark_cache(buf_data, ns)
+  cur_mark_ends, cur_mark_texts, cur_mark_priorities = main_cache.ends, main_cache.texts, main_cache.priorities
   local n_lines = #lines
 
   range_start[1] = from_line
@@ -820,6 +855,7 @@ function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
   local extmark_count = #all_extmarks_arr
 
   for _, lsp_ns in ipairs(cur_lsp_ns_list) do
+    get_mark_cache(buf_data, lsp_ns)
     lsp_extmarks_arr[lsp_ns] = nvim_buf_get_extmarks(bufnr, lsp_ns, range_start, range_end, empty_opts)
     lsp_line_to[lsp_ns] = 0
   end
@@ -874,9 +910,9 @@ function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
               if group ~= nil then
                 local mark_id = set_extmark(bufnr, ns, line_n, match_start, match_end --[[@as integer]], group)
 
-                mark_cache_end[mark_id] = match_end --[[@as integer]]
-                mark_cache_text[mark_id] = text
-                mark_cache_priority[mark_id] = priority
+                cur_mark_ends[mark_id] = match_end --[[@as integer]]
+                cur_mark_texts[mark_id] = text
+                cur_mark_priorities[mark_id] = priority
                 ra_push(new_extmark_starts, match_start)
                 ra_push(new_extmark_ends, match_end)
               end
@@ -894,12 +930,14 @@ function M.highlight_lines(bufnr, lines, from_line, ft, buf_data)
       if extmark[2] ~= -1 then
         -- The extmark was not used, so delete it.
         nvim_buf_del_extmark(bufnr, ns, extmark[1])
+        forget_mark(main_cache, extmark[1])
       end
     end
   end
 end
 
 local color_method = "textDocument/documentColor"
+local overlap_opts = { overlap = true }
 
 ---@alias LspColor lsp.ColorInformation|{ packed_color: integer }
 
@@ -951,6 +989,9 @@ function M.process_update_lsp(bufnr, callback)
           local get_mark_end = {}
           local lsp_ns = get_lsp_namespace(client.name, buf_data)
           nvim_buf_clear_namespace(bufnr, lsp_ns, 0, -1)
+          buf_data.mark_caches[lsp_ns] = nil
+          local lsp_cache = get_mark_cache(buf_data, lsp_ns)
+          local main_cache = get_mark_cache(buf_data, ns)
 
           for _, result in ipairs(results) do
             convert_lsp_range_to_nvim(result.range, bufnr, client.offset_encoding or "utf-16")
@@ -961,8 +1002,9 @@ function M.process_update_lsp(bufnr, callback)
             get_mark_start[2] = result.range.start.character
             get_mark_end[2] = result.range["end"].character
             -- Override non-LSP marks
-            for _, m in ipairs(nvim_buf_get_extmarks(bufnr, ns, get_mark_start, get_mark_end, { overlap = true })) do
+            for _, m in ipairs(nvim_buf_get_extmarks(bufnr, ns, get_mark_start, get_mark_end, overlap_opts)) do
               nvim_buf_del_extmark(bufnr, ns, m[1])
+              forget_mark(main_cache, m[1])
             end
 
             result.packed_color = M.rgb_pack(
@@ -973,7 +1015,7 @@ function M.process_update_lsp(bufnr, callback)
             local group = compute_color_group(result.packed_color)
             if group ~= nil then
               local mark_id = set_extmark(bufnr, lsp_ns, line_n, get_mark_start[2], get_mark_end[2], group)
-              mark_cache_end[mark_id] = get_mark_end[2] --[[@as integer]]
+              lsp_cache.ends[mark_id] = get_mark_end[2] --[[@as integer]]
             end
           end
         end
