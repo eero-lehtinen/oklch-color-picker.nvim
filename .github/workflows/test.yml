@@ -1,0 +1,59 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / nvim ${{ matrix.nvim }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        nvim: [stable, nightly]
+    runs-on: ${{ matrix.os }}
+    # Nightly breaks for reasons outside this repository often enough that it
+    # should not block a merge.
+    continue-on-error: ${{ matrix.nvim == 'nightly' }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Neovim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.nvim }}
+
+      - name: Cache test dependencies
+        uses: actions/cache@v4
+        with:
+          path: tests/.deps
+          key: deps-${{ matrix.os }}-${{ hashFiles('lua/oklch-color-picker/downloader.lua') }}
+
+      - name: Bootstrap
+        run: nvim --headless -l tests/bootstrap.lua
+
+      - name: Run tests
+        run: nvim --headless -u tests/minimal_init.lua -c "lua MiniTest.run()"
+
+  stylua:
+    name: stylua
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --check lua tests

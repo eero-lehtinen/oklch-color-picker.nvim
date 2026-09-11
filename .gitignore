@@ -3,3 +3,4 @@
 /parser_lua_module.*
 *_version
 /doc/tags
+/tests/.deps/
