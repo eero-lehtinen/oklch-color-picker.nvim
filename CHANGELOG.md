@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.0.6](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v5.0.5...v5.0.6) (2026-09-11)
+
+
+### Bug Fixes
+
+* scope extmark caches per buffer and namespace ([5a8e601](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/5a8e601071f6c26790bd7c909c9165995efd5a08))
+* stale and off-by-one extmark overlap checks ([b207c4b](https://github.com/eero-lehtinen/oklch-color-picker.nvim/commit/b207c4be5769db010d3f714e78d6d343befe945d))
+
 ## [5.0.5](https://github.com/eero-lehtinen/oklch-color-picker.nvim/compare/v5.0.4...v5.0.5) (2026-09-06)
 
 
