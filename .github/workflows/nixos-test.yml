@@ -30,7 +30,7 @@ jobs:
           path: nixpkgs
 
       - name: Install Nix and configure KVM
-        uses: DeterminateSystems/nix-installer-action@v22
+        uses: DeterminateSystems/nix-installer-action@v23
 
       - name: Check hardware virtualization
         run: test -r /dev/kvm && test -w /dev/kvm
