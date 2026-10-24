@@ -1,5 +1,5 @@
 *oklch-color-picker.nvim.txt*
-                            For NVIM v0.12.0    Last change: 2026 September 06
+                              For NVIM v0.12.0    Last change: 2026 October 24
 
 ==============================================================================
 Table of Contents                  *oklch-color-picker.nvim-table-of-contents*
@@ -68,7 +68,7 @@ lazy.nvim <https://github.com/folke/lazy.nvim>
       },
     })
     require("oklch-color-picker").setup({})
-    
+
     vim.keymap.set("n", "<leader>v", function()
       require("oklch-color-picker").pick_under_cursor()
     end, { desc = "Color pick under cursor" })
@@ -117,12 +117,12 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
     local default_opts = {
       highlight = {
         enabled = true,
-    
+
         -- Async delay in ms.
         edit_delay = 60,
         -- Async delay in ms.
         scroll_delay = 0,
-    
+
         -- Options: 'background'|'foreground'|'virtual_left'|'virtual_eol'|'foreground+virtual_left'|'foreground+virtual_eol'
         style = "background",
         bold = false,
@@ -131,10 +131,10 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
         virtual_text = "■ ",
         -- Less than user hl by default (:help vim.highlight.priorities)
         priority = 175,
-    
+
         -- Prevent attaching to buffers with these filetypes.
         ignore_ft = { "blink-cmp-menu" },
-    
+
         -- Tint the highlight background for 'foreground' and 'virtual' styles when the
         -- found color is too close to the editor background.
         -- Set `emphasis = false` to disable.
@@ -145,49 +145,49 @@ DEFAULT OPTIONS                      *oklch-color-picker.nvim-default-options*
           -- How much (0..255) to offset the color (first item for dark colors, second for light ones).
           amount = { 45, -80 },
         },
-    
+
         -- List of LSP clients that are allowed to highlight colors:
         -- By default, only fairly performant and useful LSPs are enabled.
         -- Set `enabled_lsps = true` to enable all LSPs anyways.
         enabled_lsps = { "tailwindcss", "cssls", "css_variables" },
         -- Async delay in ms, LSPs also have their own latency.
         lsp_delay = 120,
-    
+
         -- Disable builtin LSP colors introduced in Nvim 0.12 to avoid conflicts.
         disable_builtin_lsp_colors = true,
       },
-    
+
       patterns = {
         hex = { priority = -1, "()#%x%x%x+%f[%W]()" },
         hex_literal = { priority = -1, "()0x%x%x%x%x%x%x+%f[%W]()" },
-    
+
         -- Rgb and Hsl support modern and legacy formats:
         -- rgb(10 10 10 / 50%) and rgba(10, 10, 10, 0.5)
         css_rgb = { priority = -1, "()rgba?%(.-%)()" },
         css_hsl = { priority = -1, "()hsla?%(.-%)()" },
         css_oklch = { priority = -1, "()oklch%([^,]-%)()" },
-    
+
         tailwind = {
           priority = -2,
           custom_parse = tailwind.custom_parse,
           "%f[%w][%l%-]-%-()%l-%-%d%d%d?%f[%W]()",
         },
-    
+
         -- Allows any digits, dots, commas or whitespace within brackets.
         numbers_in_brackets = { priority = -10, "%(()[%d.,%s]+()%)" },
       },
-    
+
       register_cmds = true,
-    
+
       -- Download Rust binaries automatically.
       -- When false, skip downloads and version checks. The picker is searched in PATH and then
       -- the plugin data directory. The parser is searched in the lib directory next to the
       -- picker, the runtimepath, and then the data directory.
       auto_download = true,
-    
+
       -- Use the Windows version of the app on WSL instead of using unreliable WSLg.
       wsl_use_windows_app = true,
-    
+
       log_level = vim.log.levels.INFO,
     }
 <
@@ -235,7 +235,7 @@ DEFINE YOUR OWN PATTERNS: ~
           "vec3%(()[%d.,%s]+()%)", -- Gets `.1,.2,.3` from code `vec3(.1,.2,.3)`
           "vec4%(()[%d.,%s]+()%)",
         },
-    
+
         -- Replace default css patterns to match only modern formats:
         -- (no "a" suffix in name or commas)
         css_rgb = { "()rgb%([^,]-%)()" },
@@ -257,7 +257,7 @@ PICKING ~
     require('oklch-color-picker').pick_under_cursor({ force_format = "raw_oklch" })
     -- Call `open_picker` as a fallback with default options if there was no color under the cursor.
     require('oklch-color-picker').pick_under_cursor({ fallback_open = {} })
-    
+
     -- Open the picker ignoring whatever is under the cursor. Useful for inserting new colors.
     require("oklch-color-picker").open_picker()
 <
@@ -280,16 +280,16 @@ PARSING ~
 
 >lua
     local hl = require("oklch-color-picker").highlight
-    
+
     -- Parse a color string with the parse library.
     -- Available after setup (and parser library loading) completes.
     -- Returns a packed 0xRRGGBB number or nil. Format is auto detected if not given.
     hl.parse("#ff00ff")      --> 0xff00ff
     hl.parse("rgb(255 0 0)") --> 0xff0000
-    
+
     -- Unpack a 0xRRGGBB number into { r, g, b } (0-255).
     hl.rgb_unpack(0xff00ff)  --> { 255, 0, 255 }
-    
+
     -- Pack r, g, b (0-255) into a 0xRRGGBB number.
     -- Useful in custom_parse functions for custom patterns.
     hl.rgb_pack(255, 0, 255) --> 0xff00ff
