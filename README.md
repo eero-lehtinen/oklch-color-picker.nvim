@@ -85,7 +85,7 @@ https://github.com/user-attachments/assets/822b5717-133d-4caf-a198-cbe3337bf87a
 
 ### LSP features
 
-<img width=550 src="https://github.com/user-attachments/assets/05750119-acc0-4e4e-b923-fe19005bde2f">
+<img height="297" alt="image" src="https://github.com/user-attachments/assets/e8dad6dd-0bf7-47b3-a9c7-3efaad93311b" />
 
 ## Default Options
 
@@ -172,7 +172,7 @@ local default_opts = {
 
 ### Choose highlighting style:
 
-<img width=600 src="https://github.com/user-attachments/assets/6d4774c6-80a1-46ef-a9cc-f17ae8553c8a">
+<img height="160" alt="image" src="https://github.com/user-attachments/assets/e4aab0fd-0844-4516-a4a7-e57d80057964" />
 
 ### Disable default patterns by setting them to false:
 
